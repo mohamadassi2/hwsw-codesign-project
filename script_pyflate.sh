@@ -78,6 +78,13 @@ fi
 echo 0  > /proc/sys/kernel/kptr_restrict       2>/dev/null || true
 echo -1 > /proc/sys/kernel/perf_event_paranoid 2>/dev/null || true
 perf --version; venv/bin/python --version
+echo "--- sampling events available in this guest:"
+for e in cycles cpu-clock task-clock; do
+  if perf record -q -e $e -F 999 -o /tmp/probe.data -- true >/dev/null 2>&1 && \
+     [ "$(perf script -i /tmp/probe.data 2>/dev/null | grep -c . || echo 0)" -gt 0 ]; then
+    echo "    $e: works"; else echo "    $e: no samples"; fi
+done | tee "$OUT/perf_events_probe.txt"
+rm -f /tmp/probe.data
 
 PY=venv/bin/python
 BASE=benchmarks/$B/run_benchmark.py         # byte-identical to upstream pyperformance
@@ -91,6 +98,32 @@ flame(){
   else
     echo "flame graph: no stacks for $svg" ; rm -f "$svg"
   fi
+}
+# perf_rec TAG -- CMD...: record a profile that actually contains stacks.
+# A KVM guest usually has no sampling PMU, so the default `cycles` event never
+# fires and perf.data comes out empty ("The perf.data data has no samples!").
+# cpu-clock is a software event driven by an hrtimer and always works. Python
+# is built without frame pointers, so plain -g gives one-deep stacks; DWARF
+# unwinding gives the real call graph. Try the best option first and fall back.
+perf_rec(){
+  local tag=$1; shift; [ "$1" = "--" ] && shift
+  local data="$OUT/perf_$tag.data" n=0 opt
+  for opt in "-e cpu-clock -F 999 --call-graph dwarf,16384" \
+             "-e cpu-clock -F 999 --call-graph fp" \
+             "-e cpu-clock -F 999" \
+             "-F 999 -g"; do
+    # shellcheck disable=SC2086  # opt is a deliberate word-split option list
+    perf record -q $opt -o "$data" -- "$@" >/dev/null 2>&1 || true
+    n=$(perf script -i "$data" 2>/dev/null | grep -c . || true)
+    if [ "${n:-0}" -gt 0 ]; then
+      echo "perf record ($tag): '$opt' -> $n script lines"
+      echo "$opt" > "$OUT/perf_${tag}.event"
+      return 0
+    fi
+    echo "perf record ($tag): '$opt' produced no samples, trying the next option"
+  done
+  echo "perf record ($tag): no sampling event worked in this environment"
+  return 0
 }
 # perf_flame TAG TITLE: perf report + folded stacks + flame graph for $OUT/perf_TAG.data
 perf_flame(){
@@ -110,14 +143,12 @@ $PY "$BASE" -o "$OUT/${B}_base.json" 2>&1 | tail -2
 # ---------------------------------------------------------------- 2. profile baseline
 log "perf record -F 999 -g on the baseline (guide's form, python3-dbg)"
 if [ -d venv-dbg ]; then
-  perf record -q -F 999 -g -o "$OUT/perf_base_dbg.data" -- \
-      venv-dbg/bin/python -m pyperformance run --bench $B --fast -o "$OUT/scratch_dbg.json" >/dev/null 2>&1 || true
+  perf_rec base_dbg -- venv-dbg/bin/python -m pyperformance run --bench $B --fast -o "$OUT/scratch_dbg.json"
   perf report -i "$OUT/perf_base_dbg.data" --stdio > "$OUT/perf_report_base_dbg.txt" 2>/dev/null || true
 fi
 log "perf record on the benchmark worker directly (cleaner attribution)"
 # (a --worker run prints its JSON to stdout, which we discard here; pyperf rejects -o in worker mode)
-perf record -q -F 999 -g -o "$OUT/perf_base.data" -- \
-    $PY "$BASE" --worker --loops 4 -n 3 -w 1 >/dev/null
+perf_rec base -- $PY "$BASE" --worker --loops 4 -n 3 -w 1
 perf_flame base "$B baseline: perf -F999 -g (KVM guest)"
 log "py-spy (Python-level frames) on the baseline"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_base.folded" -- \
@@ -128,8 +159,7 @@ flame "$OUT/pyspy_base.folded" "$OUT/flame_${B}_base_pyspy.svg" "$B baseline: Py
 log "optimized version, same pyperf runner"
 $PY "$OPT" -o "$OUT/${B}_opt.json" 2>&1 | tail -2
 log "profile the optimized version the same way"
-perf record -q -F 999 -g -o "$OUT/perf_opt.data" -- \
-    $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null
+perf_rec opt -- $PY "$OPT" --worker --loops 4 -n 3 -w 1
 perf_flame opt "$B optimized: perf -F999 -g (KVM guest)"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_opt.folded" -- \
     $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1 || echo "py-spy failed on the optimized run (see trace.log)"
