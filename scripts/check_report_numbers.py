@@ -95,6 +95,17 @@ if _mb and _mo:
     check("mdp conclusion quotes the measured speedup", f"gives {_mb/_mo:.2f}x in the course VM" in _md, f"{_mb/_mo:.2f}x")
     check("mdp conclusion quotes the measured percentage", f"{100*(1-_mo/_mb):.1f}% less time" in _md)
 
+# ---------------------------------------------------------------- reproducibility section
+_rb = mean_of(os.path.join(ROOT, "results", "reproducibility", "pyflate", "pyflate_base.json"))
+_ro = mean_of(os.path.join(ROOT, "results", "reproducibility", "pyflate", "pyflate_opt.json"))
+if _b and _o and _rb and _ro:
+    check("reproducibility: pyflate shipped speedup quoted", f"{_b/_o:.3f}x shipped" in _pf, f"{_b/_o:.3f}x")
+    check("reproducibility: pyflate earlier speedup quoted", f"{_rb/_ro:.3f}x earlier" in _pf, f"{_rb/_ro:.3f}x")
+_rmb = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_base.json"))
+_rmo = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_opt.json"))
+if _mb and _mo and _rmb and _rmo:
+    check("reproducibility: mdp both speedups quoted", f"{_rmb/_rmo:.3f}x against the\n    shipped {_mb/_mo:.3f}x" in _md, f"{_rmb/_rmo:.3f} / {_mb/_mo:.3f}")
+
 # ---------------------------------------------------------------- derived: accelerator
 SYMBOLS, CYCLES = 148271, 148272
 txt = report_text("pyflate")

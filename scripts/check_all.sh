@@ -15,4 +15,5 @@ fi
 echo "== 1/3 optimizations vs originals"; $PY scripts/local_check.py all "${REPS:-3}"
 echo "== 2/3 report numbers";            $PY scripts/check_report_numbers.py | head -1
 echo "== 3/3 slide numbers";             $PY scripts/check_deck_numbers.py   | head -1
+echo "== drift against the independent run"; $PY scripts/compare_runs.py results results/reproducibility | tail -1
 echo "all checks passed"

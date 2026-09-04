@@ -263,6 +263,16 @@ passes in every run.
     part is what hardware is good at; the second part is not.
 
 
+4.4 Reproducibility
+    results/reproducibility/ holds an earlier, independent run of the same
+    scripts in the same guest. Comparing it with the shipped set
+    (scripts/compare_runs.py results results/reproducibility): the optimized
+    time differs by 0.46% and the speedup by
+    0.42% (2.385x shipped against
+    2.375x earlier); the largest wall-clock difference across both
+    benchmarks is 0.72%. The ratio we report is stable to well inside 1%
+    between runs, which is smaller than the run-to-run spread pyperf prints.
+
 5. Hardware acceleration proposal
 ----------------------------------------------------------------------------------
 5.1 What we accelerate
