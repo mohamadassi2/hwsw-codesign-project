@@ -12,6 +12,8 @@ HW=$(cd "$(dirname "$0")/.." && pwd)
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 cp -r "$HW" "$TMP/hw"; cp -r "$HW/../benchmarks" "$TMP/benchmarks"; cp -r "$HW/../scripts" "$TMP/scripts"
 cd "$TMP/hw"
+make vectors >/dev/null 2>&1 || { echo "cannot build tb/vectors - is python3 available?"; exit 1; }
+[ -s tb/vectors/expected.txt ] || { echo "tb/vectors/expected.txt is empty"; exit 1; }
 
 run() {   # run NAME 'sed-expression' FILE
   local name=$1 expr=$2 file=$3
@@ -22,8 +24,10 @@ run() {   # run NAME 'sed-expression' FILE
   out=$(make sim 2>&1) && rc=0 || rc=$?
   mv "$file.orig" "$file"
   local summary; summary=$(echo "$out" | grep -E 'decoded|errors|PASS|FAIL|TIMEOUT|X on' | tail -2 | tr '\n' ' ' | cut -c1-150)
-  if [ "$rc" -ne 0 ]; then echo "[$name] KILLED   (make exit $rc)  $summary"
-  else                     echo "[$name] ESCAPED  (make exit 0)   $summary"; fi
+  if echo "$out" | grep -q 'decoded 0 symbols'; then
+    echo "[$name] INVALID  (the run decoded nothing - vectors missing?)  $summary"
+  elif [ "$rc" -ne 0 ]; then echo "[$name] KILLED   (make exit $rc)  $summary"
+  else                       echo "[$name] ESCAPED  (make exit 0)   $summary"; fi
 }
 
 echo "control (no mutation): $( (rm -rf build; make sim 2>&1) | grep -E 'decoded|PASS|FAIL' | tail -1)"

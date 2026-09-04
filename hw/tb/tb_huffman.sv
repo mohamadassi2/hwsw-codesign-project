@@ -134,7 +134,16 @@ module tb_huffman;
             end
         end
         $fclose(fd);
-        if (i != nsym) begin $display("expected.txt has %0d lines, meta says %0d", i, nsym); nsym = i; end
+        // A testbench with no vectors would otherwise "pass": wait(nchk==nsym)
+        // returns at once for nsym==0 and errors stays 0. Refuse to run instead.
+        if (i != nsym) begin
+            $display("FAIL: expected.txt has %0d lines, meta.txt says %0d", i, nsym);
+            $fatal(1);
+        end
+        if (nsym == 0) begin
+            $display("FAIL: no expected symbols - run gen_vectors.py first");
+            $fatal(1);
+        end
         // compressed bytes -> 32-bit words, starting at bit `skip_bits`
         $readmemh("tb/vectors/stream.hex", bytes, 0, nbytes - 1);   // exactly the bytes the file holds
         nwords = ((nbytes * 8 - skip_bits) + 31) / 32;
@@ -175,6 +184,11 @@ module tb_huffman;
                  real'(nchk) / real'(last_cycle - first_cycle + 1), errors);
         $display("total bits consumed: %0d  (avg %.2f bits/symbol)", nbytes*8 - skip_bits > 0 ? sum_len() : 0,
                  real'(sum_len()) / real'(nchk));
+        // Belt and braces: a run that checked nothing is not a pass.
+        if (nchk == 0) begin
+            $display("FAIL: decoded no symbols");
+            $fatal(1);
+        end
         if (errors == 0) $display("PASS");
         else begin
             $display("FAIL (%0d errors)", errors);
