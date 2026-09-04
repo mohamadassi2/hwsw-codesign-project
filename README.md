@@ -11,12 +11,14 @@ compressed block.
 
 | | baseline | optimized | improvement | output |
 |---|---|---|---|---|
-| pyflate | 351.5 ms | 160.4 ms | **2.19× — 54.4% faster** | byte-identical, md5 `afa004a6…` |
-| mdp     | 1473.4 ms | 375.6 ms | **3.92× — 74.5% faster** | bit-identical result |
+| pyflate | 1.129 s | 475.2 ms | **2.37× — 57.9% less time** | byte-identical, md5 `afa004a6…` |
+| mdp     | 4.993 s | 1.315 s | **3.80× — 73.7% less time** | bit-identical result |
 
-Both are far above the 7% the assignment asks for. The times above are from the
-development machine (Python 3.9); the course-VM measurements the reports quote
-are produced by the two scripts below and land in `results/`.
+Measured inside the course QEMU/KVM guest (Ubuntu 22.04, one vCPU, Xeon
+E5-2630 v3) by the two scripts below; the raw files are in `results/`, and
+`scripts/check_all.sh` recomputes every figure in this table, the reports and
+the slides from them. Both improvements are far above the 7% the assignment
+asks for.
 
 ## Layout
 

@@ -124,6 +124,16 @@ def main():
                           ("output bytes", "399,360")):
         (oks if needle.replace(",", "") in present or needle in txt else fails).append(label)
 
+    # ---- README headline table must match too ---------------------------------
+    rd = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()
+    for label, val, fmt in (("README pyflate speedup", pb / po, "{:.2f}"),
+                            ("README mdp speedup", mb / mo, "{:.2f}"),
+                            ("README pyflate % less", 100 * (1 - po / pb), "{:.1f}"),
+                            ("README mdp % less", 100 * (1 - mo / mb), "{:.1f}"),
+                            ("README pyflate baseline s", pb, "{:.3f}"),
+                            ("README mdp baseline s", mb, "{:.3f}")):
+        (oks if fmt.format(val) in rd else fails).append(f"{label}: README should say {fmt.format(val)}")
+
     print(f"PASS {len(oks)}   FAIL {len(fails)}")
     for l in oks:
         print("  pass ", l)
