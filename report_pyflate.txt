@@ -348,6 +348,17 @@ passes in every run.
     reader accepts a refill in the same cycle the decoder consumes, so the
     buffer never runs dry even at the longest codes.
 
+    The test was also shown to be able to fail. hw/tb/mutate.sh injects six
+    specific bugs into the RTL one at a time - the symbol output driven to X,
+    sym_valid held low, the hit comparison relaxed to <=, the base adder off by
+    one, the priority encoder reversed, the barrel shift one bit short - and
+    runs the same make sim for each; hw/tb/MUTATIONS.md records the outcome,
+    every one caught. The first two used to pass: a comparison against X is
+    itself X, which an if treats as false, and a watchdog timeout only printed
+    a message before exiting 0. The testbench now compares with !==, counts X
+    on sym or len as an error, treats a timeout as a failure, and makes
+    make sim exit non-zero.
+
     What the cycle count does not include: programming the six tables costs a
     further ~1,000 write cycles per bzip2 block, which the host does once
     before streaming the block; and the selector list, which says
