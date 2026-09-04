@@ -24,3 +24,8 @@ Longest topological path in huffman_accel_top (length=65):
 #   total  ~19.4 kbit  (~2.4 KB) of SRAM
 
 # For comparison, the same design with the tables flattened into flip-flops (first synth run):
+#   (from the first run, log not kept)   huffman_accel_top total: 51,592 cells in the decoder + 890 in the bit reader
+#     decoder: 17,712 $_DFFE_PP_ + 11 $_DFF_PN0_ (the table bits as flops), 22,225 $_MUX_ (their read muxes),
+#              3,862 AND, 3,653 NAND, 1,600 OR, 918 NOR, 803 ANDNOT, 651 ORNOT, 63 XNOR, 44 XOR, 50 NOT
+#     bit reader: 72 flops, 427 MUX, 133 AND, 118 NAND, 51 ANDNOT, 39 OR, 17 ORNOT, 8 NOR, 8 NOT, 13 XNOR, 4 XOR
+#   -> ~95% of that design is table storage; the memory-based figures above are the ones to use.

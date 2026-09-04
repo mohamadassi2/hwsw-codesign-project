@@ -1,0 +1,62 @@
+prompt.txt - AI tools used in this project
+==================================================================================
+Tool: Claude (Anthropic), used as a coding/analysis assistant from the terminal,
+with access to the repository, a Python environment and the course VM. All code
+it produced was reviewed by us, run by us, and is covered by the correctness
+checks in the repository (md5 / bit-identical result / RTL testbench). The
+analysis and the decisions below are ours; the prompts are given as we typed
+them, lightly trimmed.
+
+Project setup
+  - "Read the project PDF, the course lectures and tutorials, and our HW1 and
+    HW2 submissions, and summarize what the project requires and what we can
+    reuse."
+  - "Install pyperformance locally and read the source of every benchmark on
+    the approved list; tell me what each one actually does and where its time
+    goes."
+
+Choosing the benchmarks
+  - "Profile all the candidate benchmarks with cProfile and give me a table:
+    hotspot, how much software optimization is realistic, and whether there
+    is a sensible hardware accelerator in it. Avoid anything already used as
+    an example in the lectures or tutorials."
+  - "We take pyflate and mdp; the accelerator goes on pyflate's Huffman
+    decoder. The TA said one accelerator for one benchmark."
+
+Optimization
+  - "Write an optimized run_benchmark_opt.py for pyflate that keeps the same
+    pyperf runner and produces byte-identical output. Replace the linear
+    table scan in find_next_symbol with a canonical Huffman decode (the
+    puff.c approach), batch the bit reader, and fix move_to_front. Do not use
+    a C extension or the bz2 module."
+  - "Same for mdp: keep the result bit-identical - index the states with
+    integers and run the value iteration on flat lists, keep the Fraction
+    arithmetic exact, memoize getCritDist."
+  - "Write a local check that runs both versions and asserts the benchmark's
+    own correctness gate, then profile the optimized versions so we know what
+    is left."
+
+Scripts and measurements
+  - "Write script_pyflate.sh and script_mdp.sh for the course VM: environment
+    setup, baseline through pyperformance, perf record + FlameGraph and
+    py-spy for baseline and optimized, pyperf compare_to, perf stat. Include
+    the kptr_restrict / perf_event_paranoid settings, the class is stuck on
+    that."
+
+Hardware
+  - "Design the Huffman decoder in SystemVerilog: parallel compare against
+    limit[L] for every code length, priority encoder, base+code index, symbol
+    memory, one symbol per cycle, six table banks for the bzip2 selectors,
+    and a 64-bit bit buffer with 32-bit refill."
+  - "Generate golden vectors from the real benchmark block by instrumenting
+    the Python decoder, and write a testbench that checks every symbol."
+  - "Run a generic synthesis with yosys with the tables kept as memories and
+    report cells, flops, memory bits and the longest path."
+  - "Write the HW/SW interface document with a register map and the one
+    software change, and draw the block diagram."
+
+Reports
+  - "Draft report_pyflate.txt and report_mdp.txt in the structure the
+    assignment lists, in plain language, with the development-machine numbers
+    marked as such and slots for the VM numbers."
+  - "Write the README and this prompt log."

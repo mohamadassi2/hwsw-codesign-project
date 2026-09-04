@@ -1,0 +1,163 @@
+report_mdp.txt
+==================================================================================
+HW/SW Co-design (00460882) - final project
+Benchmark: mdp  (pyperformance)
+Team: Mohamad Assi (212343594), Ido Sefi (208008698)
+
+Files that belong to this report
+  benchmarks/mdp/run_benchmark.py       the benchmark exactly as pyperformance ships it
+  benchmarks/mdp/run_benchmark_opt.py   our optimized version (same pyperf runner, same result)
+  script_mdp.sh                         environment, baseline, flame graphs, optimized run, comparison
+  results/mdp/                          everything script_mdp.sh wrote in the course VM
+
+
+1. Overview
+----------------------------------------------------------------------------------
+mdp solves a small Markov decision process: a turn-based battle between two
+"Pokemon-like" fighters, where one side chooses actions and the other side's
+actions and the damage rolls are random. Battle.evaluate() builds the state
+graph reachable from the initial state and runs value iteration on it until
+the win probability of the initial state is known to within a tolerance
+(0.192 in the benchmark); the result must be 0.89873589887 +- 1e-6.
+
+Libraries. Standard library only: collections (namedtuple, defaultdict),
+fractions.Fraction for exact probabilities, and pyperf. No C extension on the
+hot path.
+
+Data structures and algorithm.
+  - A state is a tuple of namedtuples: (fixed data, hp, status, stat mods,
+    stats) for each side plus an "extra" field. States are used as dict keys.
+  - Successor sets are computed lazily and memoized in Battle.successors:
+    choice nodes list the possible actions; chance nodes carry a list of
+    (next state, probability) pairs. Probabilities are computed exactly with
+    Fraction (getDamages / getCritDist / _applyActionSide1) and converted to
+    float when the successor list is finalized.
+  - topoSort() orders all reachable states with an explicit stack.
+  - Value iteration keeps a lower bound dmin and an upper bound dmax per
+    state, sweeps the states in topological order updating them in place
+    (choice nodes take the max over successors, chance nodes the
+    probability-weighted sum), freezes states whose bounds have met, and
+    stops when the bounds of the initial state are within the tolerance.
+
+
+2. Initial analysis
+----------------------------------------------------------------------------------
+Tools as for pyflate: perf record + FlameGraph and py-spy in the course VM
+(flame_mdp_base_*.svg), cProfile for call counts.
+
+Where the time goes (cProfile, one evaluate(), baseline):
+                                       self     cum       calls
+  Battle.evaluate                      18.6%   98.0%           1
+  <genexpr> sum(dmin[sp2]*p ...)       14.8%   14.8%   2,018,493
+  <genexpr> sum(dmax[sp2]*p ...)       14.0%   14.0%   2,018,493
+  Fraction.__new__                      6.8%    9.0%     489,683
+  builtins.sum                          6.8%   35.6%     521,459
+  Fraction._add                         6.4%   15.4%     360,473
+  Battle.getSuccessors                  6.3%   37.0%     784,243
+  Fraction forward()                    2.5%   19.4%     378,892
+  builtins.max                          2.3%    6.2%     312,568
+  getCritDist                           2.0%   18.4%       3,659
+
+Reading it: about two thirds of the run is the value-iteration sweep itself
+(evaluate's own body, the two generator expressions and sum/max), and about a
+fifth is Fraction arithmetic while the successor graph is built. The sweep is
+slow for a reason the flame graph does not show but the code does: dmin, dmax
+and frozen are dictionaries keyed by the state tuples, and every update does
+several lookups of a key that is a tuple of namedtuples - each lookup hashes
+the whole nested structure. getSuccessors() is called from inside the sweep
+for every state, twice per node (once for dmin and once for dmax), and the
+generator expressions are re-created each time. The Fraction cost comes from
+getCritDist being called 3,659 times with only a few dozen distinct argument
+tuples, recomputing the same exact distributions.
+
+Hardware counters in the VM (results/mdp/perfstat_base.txt): TODO-VM.
+
+
+3. Optimizations
+----------------------------------------------------------------------------------
+Both changes are in benchmarks/mdp/run_benchmark_opt.py; the diff against the
+shipped file is small and local.
+
+3.1 Value iteration on integer-indexed flat lists
+    After topoSort, evaluate() assigns each state a small integer once and
+    builds, per state, a tuple of successor indices and (for chance nodes) a
+    tuple of probabilities. The sweep then runs on plain lists: vmin[i],
+    vmax[i], fz[i], with the successor indices already resolved. The sweep
+    order, the in-place (Gauss-Seidel) update, the freezing rule and the
+    order of the floating-point additions are exactly those of the original
+    (sum() starts from 0 and adds left to right; so does our loop), so the
+    converged values are the same doubles. At the end the values are written
+    back into self.min / self.max / self.frozen so the object looks as it
+    did before.
+
+3.2 Memoized damage distributions
+    getCritDist keeps a dictionary from its argument tuple to the finished
+    distribution. The arithmetic is untouched and still exact; it is simply
+    not repeated. (The cache is a module-level dict; within one evaluate()
+    call it is what removes the repeated work. We also checked that clearing
+    it between calls changes nothing about the result.)
+
+What we did not do: replacing Fraction by float in the probability math would
+be faster still, but it changes the probabilities at the last bits and we
+preferred a version whose result is provably identical to the original
+rather than one that merely stays inside the tolerance.
+
+Correctness. scripts/local_check.py runs both versions:
+    baseline  0.8987358988699915
+    optimized 0.8987358988699915        difference 0.0
+    |optimized - expected| = 8.5e-15  (gate is 1e-6)
+
+
+4. Performance comparison
+----------------------------------------------------------------------------------
+4.1 Course VM (the numbers that count; results/mdp/)
+    TODO-VM  pyperformance run --bench mdp (baseline)
+    TODO-VM  pyperf baseline vs optimized, compare_to table
+    TODO-VM  perf stat -r 3 counters for both
+
+4.2 Development machine (orientation only; Apple silicon, Python 3.9, min of 5)
+        baseline   1,473 ms per evaluate()
+        optimized    376 ms                   3.92x faster
+
+4.3 After the optimization (cProfile, optimized)
+                                       self     cum
+  Battle.evaluate (the sweep)          37.4%   96.1%
+  Fraction.__new__                      7.7%   10.0%
+  _applyActionSide1                     5.9%   30.9%
+  Fraction._add                         5.6%   13.5%
+  builtins.max                          3.5%
+  applyHPChange / namedtuple._replace   5.4%
+    The sweep is now the honest cost of the algorithm - a few million
+    multiply-adds and maxes in the interpreter. The next third is building
+    the successor graph with exact Fractions (each state is built once, so
+    memoization does not help there), and namedtuple._replace for the hp
+    updates.
+
+
+5. Hardware acceleration proposal
+----------------------------------------------------------------------------------
+Not applicable to this benchmark: the project's single accelerator targets
+pyflate (report_pyflate.txt, hw/), following the course staff's instruction
+to design one hardware component for one of the two benchmarks.
+
+For completeness, what the profile says would be the candidate here: the
+value-iteration sweep is, per chance node, a sparse dot product
+sum_j p_ij * V_j followed by a compare, and per choice node a max over a few
+values - a sparse matrix-vector product repeated until convergence. That maps
+onto the dataflow / MAC-array pattern from lecture 5 (stream the (index,
+probability) pairs of each row through a multiply-accumulate unit, read V
+from a small local memory, write V back), and the graph here is small enough
+(a few thousand states, a few tens of thousands of edges) to sit entirely in
+on-chip memory. We did not design it; after the software fix the sweep is
+~37% of a 0.4 s run, and the exact-Fraction graph construction that remains
+is not a datapath problem.
+
+
+6. Conclusion
+----------------------------------------------------------------------------------
+The benchmark's cost was not the value iteration itself but the way it was
+indexed: dictionary lookups keyed by nested tuples inside the hottest loop,
+plus exact-arithmetic distributions recomputed thousands of times. Indexing
+the graph once and memoizing the distributions gives 3.9x (TODO-VM: VM ratio)
+with a result identical to the original to the last bit, which is the kind of
+change we would be comfortable shipping to the benchmark suite itself.
