@@ -135,10 +135,15 @@ perf_flame(){
 }
 
 # ---------------------------------------------------------------- 1. baseline
+# Sampling: 10 worker processes x 3 values is well past what a mean and standard
+# deviation need, and keeps a two-benchmark run inside one VM session (mdp costs
+# about 8 s per value in the guest). Override with PYPERF_OPTS if you want more.
+PYPERF_OPTS=${PYPERF_OPTS:--p 10 -n 3}
 log "baseline through the pyperformance framework itself"
-$PY -m pyperformance run $PPVENV --bench $B -o "$OUT/${B}_pyperformance_baseline.json" 2>&1 | tail -3
+$PY -m pyperformance run $PPVENV --bench $B --fast -o "$OUT/${B}_pyperformance_baseline.json" 2>&1 | tail -3
 log "baseline, same runner on the vendored copy (what we diff against)"
-$PY "$BASE" -o "$OUT/${B}_base.json" 2>&1 | tail -2
+# shellcheck disable=SC2086
+$PY "$BASE" $PYPERF_OPTS -o "$OUT/${B}_base.json" 2>&1 | tail -2
 
 # ---------------------------------------------------------------- 2. profile baseline
 log "perf record -F 999 -g on the baseline (guide's form, python3-dbg)"
@@ -148,21 +153,22 @@ if [ -d venv-dbg ]; then
 fi
 log "perf record on the benchmark worker directly (cleaner attribution)"
 # (a --worker run prints its JSON to stdout, which we discard here; pyperf rejects -o in worker mode)
-perf_rec base -- $PY "$BASE" --worker --loops 4 -n 3 -w 1
+perf_rec base -- $PY "$BASE" --worker --loops "${PROF_LOOPS:-4}" -n 2 -w 0
 perf_flame base "$B baseline: perf -F999 -g (KVM guest)"
 log "py-spy (Python-level frames) on the baseline"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_base.folded" -- \
-    $PY "$BASE" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1 || echo "py-spy failed on the baseline (see trace.log)"
+    $PY "$BASE" --worker --loops "${PROF_LOOPS:-4}" -n 2 -w 0 >/dev/null 2>&1 || echo "py-spy failed on the baseline (see trace.log)"
 flame "$OUT/pyspy_base.folded" "$OUT/flame_${B}_base_pyspy.svg" "$B baseline: Python frames (py-spy)" --colors python
 
 # ---------------------------------------------------------------- 3. optimized
 log "optimized version, same pyperf runner"
-$PY "$OPT" -o "$OUT/${B}_opt.json" 2>&1 | tail -2
+# shellcheck disable=SC2086
+$PY "$OPT" $PYPERF_OPTS -o "$OUT/${B}_opt.json" 2>&1 | tail -2
 log "profile the optimized version the same way"
-perf_rec opt -- $PY "$OPT" --worker --loops 4 -n 3 -w 1
+perf_rec opt -- $PY "$OPT" --worker --loops "${PROF_LOOPS:-4}" -n 2 -w 0
 perf_flame opt "$B optimized: perf -F999 -g (KVM guest)"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_opt.folded" -- \
-    $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1 || echo "py-spy failed on the optimized run (see trace.log)"
+    $PY "$OPT" --worker --loops "${PROF_LOOPS:-4}" -n 2 -w 0 >/dev/null 2>&1 || echo "py-spy failed on the optimized run (see trace.log)"
 flame "$OUT/pyspy_opt.folded" "$OUT/flame_${B}_opt_pyspy.svg" "$B optimized: Python frames (py-spy)" --colors python
 
 # ---------------------------------------------------------------- 4. compare + hardware counters
