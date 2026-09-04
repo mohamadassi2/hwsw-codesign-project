@@ -11,7 +11,10 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 B=pyflate
-OUT=results/$B; mkdir -p "$OUT"
+# This script REPLACES results/$B: the repository ships the set measured in the
+# course VM, and a rerun regenerates every file in it. pyperf refuses to write
+# an output file that already exists, so the old set is cleared first.
+OUT=results/$B; rm -rf "$OUT"; mkdir -p "$OUT"
 log(){ printf '\n=== %s  %s ===\n' "$(date +%T)" "$*"; }
 # Every command is traced into $OUT/trace.log, and a failing command names itself.
 exec 19>"$OUT/trace.log"; export BASH_XTRACEFD=19; set -x
