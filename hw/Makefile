@@ -19,3 +19,9 @@ vectors tb/vectors/expected.txt: gen_vectors.py ../benchmarks/pyflate/run_benchm
 	$(PY) gen_vectors.py
 clean:
 	rm -rf build
+
+# Regenerate docs/synthesis_yosys.txt from the RTL (Yosys, generic gates).
+synth:
+	@mkdir -p build
+	yosys -q synth.ys
+	@python3 tb/synth_report.py > ../docs/synthesis_yosys.txt && echo "wrote docs/synthesis_yosys.txt"
