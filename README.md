@@ -98,3 +98,7 @@ message states what was measured and why the change was made.
 To re-verify everything from the shipped files in one command:
 
     scripts/check_all.sh
+
+To confirm the hardware testbench can actually fail (mutation test, ~25 min):
+
+    cd hw && tb/mutate.sh
