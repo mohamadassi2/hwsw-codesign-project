@@ -1,10 +1,14 @@
 venv/
 venv-dbg/
 FlameGraph/
-results/
+wheels/
+flamegraph.tgz
 __pycache__/
 *.prof
 hw/build/
 hw/tb/vectors/
-wheels/
-flamegraph.tgz
+# results/ IS committed - it holds the flame graphs and profiling data the reports cite.
+# Only the bulky intermediates are left out:
+results/**/*.data
+results/**/scratch*.json
+results/**/trace.log

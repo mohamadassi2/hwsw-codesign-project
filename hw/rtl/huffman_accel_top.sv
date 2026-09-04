@@ -40,13 +40,14 @@ module huffman_accel_top #(
     // symbol output stream
     output logic [SYMW-1:0]    sym,
     output logic               sym_valid,
-    output logic               err
+    output logic               err,
+    // status, as exposed through the STATUS register (see docs/hw_sw_interface.md)
+    output logic               len_valid,   // a code was consumed this cycle
+    output logic [6:0]         level        // bits currently held in the bit buffer
 );
     logic [MAXBITS-1:0] peek;
     logic               peek_valid;
     logic [4:0]         len;
-    logic               len_valid;
-    logic [$clog2(65)-1:0] level;
 
     bitreader #(.MAXBITS(MAXBITS), .INW(INW), .BUFW(64)) u_bits (
         .clk(clk), .rst_n(rst_n),

@@ -5,17 +5,18 @@ Mohamad Assi (212343594), Ido Sefi (208008698).
 
 Two benchmarks from the pyperformance suite, **pyflate** and **mdp**, profiled
 with `perf`/flame graphs, optimized in pure Python with byte-identical output,
-and: for pyflate: a hardware accelerator for the canonical-Huffman symbol
+and, for pyflate, a hardware accelerator for the canonical-Huffman symbol
 decoder, written in SystemVerilog and verified against the benchmark's real
 compressed block.
 
-| | baseline | optimized | speedup | output |
+| | baseline | optimized | improvement | output |
 |---|---|---|---|---|
-| pyflate | see `results/pyflate/` | | **2.2×** (dev machine) | byte-identical, md5 `afa004a6…` |
-| mdp     | see `results/mdp/`     | | **3.9×** (dev machine) | bit-identical result |
+| pyflate | 351.5 ms | 160.4 ms | **2.19× — 54.4% faster** | byte-identical, md5 `afa004a6…` |
+| mdp     | 1473.4 ms | 375.6 ms | **3.92× — 74.5% faster** | bit-identical result |
 
-The VM measurements (the ones the reports quote) are produced by the two
-scripts below and land in `results/`.
+Both are far above the 7% the assignment asks for. The times above are from the
+development machine (Python 3.9); the course-VM measurements the reports quote
+are produced by the two scripts below and land in `results/`.
 
 ## Layout
 
@@ -28,6 +29,7 @@ benchmarks/<b>/run_benchmark.py      the benchmark exactly as pyperformance ship
 benchmarks/<b>/run_benchmark_opt.py  our optimized version, same pyperf runner
 benchmarks/pyflate/data/             the benchmark input (interpreter.tar.bz2)
 scripts/local_check.py               in-process correctness + speed check, baseline vs optimized
+scripts/summarize_results.py         turns results/ into the tables quoted in the reports
 hw/rtl/*.sv                          the accelerator: bit reader, decoder, top
 hw/tb/tb_huffman.sv                  self-checking testbench on the real benchmark block
 hw/gen_vectors.py                    dumps tables / bit stream / expected symbols from the software
@@ -35,7 +37,7 @@ hw/Makefile                          `make sim`, `make vectors`
 docs/hw_sw_interface.md              register map, data flow, the one software change
 docs/huffman_accel_block_diagram.svg block diagram
 docs/synthesis_yosys.txt             generic synthesis figures (cells, flops, memories, longest path)
-results/                             everything the scripts write (created at run time)
+results/                             flame graphs, perf reports, pyperf JSON and comparison tables
 ```
 
 ## Reproducing the measurements (course VM)

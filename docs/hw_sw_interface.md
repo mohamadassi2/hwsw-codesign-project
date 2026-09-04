@@ -3,7 +3,8 @@
 This describes how the accelerator in `hw/rtl/` plugs into pyflate. The
 software side is the optimized decoder in `benchmarks/pyflate/run_benchmark_opt.py`;
 the hardware replaces exactly one call site, `HuffmanTable.find_next_symbol`,
-which the profile shows is still ~50% of the optimized run.
+which the profile shows is still ~50% of the optimized run on its own, and ~62%
+together with the bit-extraction helpers it calls.
 
 ## What moves to hardware, what stays
 

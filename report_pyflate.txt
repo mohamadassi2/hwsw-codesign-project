@@ -101,9 +101,19 @@ builds three slices and a concatenation for every decoded byte. Finally the
 inverse BWT (bwt_transform + bwt_reverse, 15%) is a loop over 400 KB doing
 pointer chasing through a Python list; it is memory-latency bound by nature.
 
-This is not a cache or branch problem. perf stat in the VM (results/pyflate/
-perfstat_base.txt) shows the IPC and miss rates of an ordinary interpreter
-run; the instruction count is simply huge for the work done.
+This is not a cache or branch problem: the work per decoded symbol is simply
+enormous. perf stat in the VM (results/pyflate/perfstat_base.txt) gives the
+cycle and instruction counts of both builds, and the instruction count is what
+falls when the algorithm is fixed.
+
+A note on profiling inside the VM, because it cost us a day. perf stat counts
+correctly in the guest (KVM passes the PMU through), but perf record collects
+nothing with its default cycles event: a guest has no sampling PMU, so the
+event never fires, perf.data ends up empty and the flame graph comes out blank.
+Sampling has to use a software event instead, -e cpu-clock, which is driven by
+an hrtimer; and because CPython is built without frame pointers, the call graph
+needs --call-graph dwarf rather than plain -g. script_pyflate.sh probes the
+available events and records which one it used in results/pyflate/.
 
 
 3. Optimizations
@@ -179,7 +189,9 @@ passes in every run.
 4.2 Development machine (for orientation only)
     Apple silicon laptop, Python 3.9, one decode of the input, min of 5:
         baseline   351.5 ms
-        optimized  160.4 ms         2.19x faster
+        optimized  160.4 ms         2.19x faster, i.e. 54.4% less time
+    The assignment asks for at least 7% on two benchmarks; pyflate gives 54.4%
+    here and mdp 74.5% (report_mdp.txt), both well past that bar.
     The VM numbers above are the ones we quote in the presentation; the ratio
     is what we expect to carry over.
 
@@ -252,7 +264,7 @@ passes in every run.
                         is len, combinational, fed straight back to the bit
                         reader. idx = base[tsel][len] + code_len goes to the
                         symbol memory and the symbol comes out one clock later.
-                        Six banks of limit/base rows (20 x 43 bits) and six
+                        Six banks of limit/base rows (21 x 43 bits, lengths 0..20) and six
                         symbol memories (258 x 9 bits), written by software.
     huffman_accel_top.sv the two glued behind the register/stream interface.
     Control is minimal: run, tsel, and the table write port. Throughput is one

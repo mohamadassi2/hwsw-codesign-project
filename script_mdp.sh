@@ -4,7 +4,7 @@
 #
 # Meant to be run as root inside the course QEMU/KVM guest (Ubuntu 22.04), but it
 # only assumes: python3 (3.10), perf, git, network for pip/apt.  Everything it
-# produces lands in results/pyflate/.
+# produces lands in results/mdp/.
 #
 #   chmod +x script_mdp.sh && ./script_mdp.sh
 #
