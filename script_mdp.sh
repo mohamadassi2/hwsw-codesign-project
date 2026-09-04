@@ -18,13 +18,56 @@ log(){ printf '\n=== %s  %s ===\n' "$(date +%T)" "$*"; }
 log "environment"
 uname -r; nproc; grep -m1 'model name' /proc/cpuinfo || true
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y -qq python3-venv python3-pip python3-dbg git >/dev/null 2>&1 || true
-[ -d FlameGraph ] || git clone -q --depth 1 https://github.com/brendangregg/FlameGraph
-[ -d venv ]     || python3 -m venv venv
-venv/bin/pip install -q --disable-pip-version-check pyperf pyperformance py-spy
-# The guide's own example profiles python3-dbg -m pyperformance; give it its own venv.
-if command -v python3-dbg >/dev/null && [ ! -d venv-dbg ]; then
-  python3-dbg -m venv venv-dbg && venv-dbg/bin/pip install -q --disable-pip-version-check pyperformance
+
+# --- network inside the course VM --------------------------------------------
+# QEMU's user-mode NAT forwards the guest's DNS queries to the host's resolver.
+# When the host runs systemd-resolved (Ubuntu 24.04, as on the naranja servers)
+# that resolver is the 127.0.0.53 stub, which the NAT cannot reach: names fail
+# in the guest while plain TCP works, so apt and pip silently die.  Point the
+# guest at the real upstream servers (Technion's) instead; harmless elsewhere.
+if ! getent hosts pypi.org >/dev/null 2>&1; then
+  rm -f /etc/resolv.conf 2>/dev/null || true
+  printf 'nameserver 132.68.39.127\nnameserver 132.68.32.5\nnameserver 8.8.8.8\n' > /etc/resolv.conf 2>/dev/null || true
+fi
+if getent hosts pypi.org >/dev/null 2>&1 && timeout 15 curl -fsI https://pypi.org/simple/ >/dev/null 2>&1; then
+  ONLINE=1; echo "network: online"
+else
+  ONLINE=0; echo "network: offline - using the bundled wheels/ and flamegraph.tgz"
+fi
+if [ "$ONLINE" = 1 ]; then
+  apt-get update -qq >/dev/null 2>&1 || true
+  apt-get install -y -qq python3-venv python3-pip python3-dbg git curl >/dev/null 2>&1 || true
+fi
+
+# venv: the normal way, or (image without python3-venv) without ensurepip plus pip from a wheel
+if [ ! -x venv/bin/python ]; then
+  rm -rf venv
+  if ! python3 -m venv venv 2>/dev/null; then
+    python3 -m venv --without-pip venv
+    PIPWHL=$(ls wheels/pip-*.whl 2>/dev/null | head -1 || true)
+    [ -n "$PIPWHL" ] || { echo "python3-venv is missing and there is no wheels/pip-*.whl to bootstrap from"; exit 1; }
+    venv/bin/python "$PIPWHL/pip" install -q --no-index --find-links wheels pip
+  fi
+fi
+PIPOPT=""
+[ "$ONLINE" = 1 ] || PIPOPT="--no-index --find-links wheels"
+venv/bin/pip install -q --disable-pip-version-check $PIPOPT pyperf pyperformance py-spy
+
+# FlameGraph scripts
+if [ ! -d FlameGraph ]; then
+  git clone -q --depth 1 https://github.com/brendangregg/FlameGraph 2>/dev/null || tar xzf flamegraph.tgz
+fi
+
+# pyperformance normally builds its own venv per run (needs ensurepip and PyPI);
+# offline it reuses ours and pip resolves from wheels/.
+PPVENV=""
+if [ "$ONLINE" != 1 ]; then
+  PPVENV="--venv $PWD/venv"
+  export PIP_NO_INDEX=1 PIP_FIND_LINKS="$PWD/wheels"
+fi
+# The guide's own example profiles python3-dbg -m pyperformance; give it its own venv (online only).
+if [ "$ONLINE" = 1 ] && command -v python3-dbg >/dev/null && [ ! -d venv-dbg ]; then
+  python3-dbg -m venv venv-dbg && venv-dbg/bin/pip install -q --disable-pip-version-check pyperformance || rm -rf venv-dbg
 fi
 # perf inside the guest: without these two knobs `perf report` prints
 # "Kernel address maps were restricted" and call graphs are empty.
@@ -38,7 +81,7 @@ OPT=benchmarks/$B/run_benchmark_opt.py
 
 # ---------------------------------------------------------------- 1. baseline
 log "baseline through the pyperformance framework itself"
-$PY -m pyperformance run --bench $B -o "$OUT/${B}_pyperformance_baseline.json" 2>&1 | tail -3
+$PY -m pyperformance run $PPVENV --bench $B -o "$OUT/${B}_pyperformance_baseline.json" 2>&1 | tail -3
 log "baseline, same runner on the vendored copy (what we diff against)"
 $PY "$BASE" -o "$OUT/${B}_base.json" 2>&1 | tail -2
 

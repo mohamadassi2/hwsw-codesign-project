@@ -6,3 +6,5 @@ __pycache__/
 *.prof
 hw/build/
 hw/tb/vectors/
+wheels/
+flamegraph.tgz
