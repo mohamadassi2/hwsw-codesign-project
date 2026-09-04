@@ -3,7 +3,8 @@
 A testbench that cannot fail proves nothing. Each row injects one bug into the
 RTL, runs the real `make sim`, and records whether the test caught it (make
 exits non-zero, because the testbench calls $fatal on any error or timeout).
-Reproduce with `cd hw && tb/mutate.sh` (about 25 minutes on a laptop).
+Reproduce with `cd hw && tb/mutate.sh` inside the course VM (about an hour
+on its single vCPU).
 
 | mutation | verdict | make exit | what the testbench printed |
 |---|---|---|---|
