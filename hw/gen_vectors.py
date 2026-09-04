@@ -19,6 +19,32 @@ expected.txt and checks every (sym, len) against the software decoder.
 """
 import importlib.util, os, sys
 
+def _load_without_pyperf(name, path):
+    """Import a benchmark module without needing pyperf installed.
+
+    The benchmarks import pyperf at the top level and use it only for
+    perf_counter and the Runner in __main__. This harness needs neither, and a
+    grader running from a fresh clone will not have pyperf until a benchmark
+    script has built the virtual environment - so a minimal stand-in is
+    installed first if the real package is absent.
+    """
+    import importlib.util, sys, time, types
+    if "pyperf" not in sys.modules:
+        try:
+            import pyperf  # noqa: F401
+        except ImportError:
+            stub = types.ModuleType("pyperf")
+            stub.perf_counter = time.perf_counter
+            class _Runner:                      # only reached under __main__
+                def __init__(self, *a, **k):
+                    raise SystemExit("this script needs pyperf; run script_<benchmark>.sh first")
+            stub.Runner = _Runner
+            sys.modules["pyperf"] = stub
+    spec = importlib.util.spec_from_file_location(name, path)
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SRC  = os.path.join(ROOT, 'benchmarks', 'pyflate', 'run_benchmark_opt.py')
@@ -26,8 +52,7 @@ DATA = os.path.join(ROOT, 'benchmarks', 'pyflate', 'data', 'interpreter.tar.bz2'
 VEC  = os.path.join(HERE, 'tb', 'vectors')
 NBLOCKS = int(sys.argv[1]) if len(sys.argv) > 1 else 1
 
-spec = importlib.util.spec_from_file_location('pyflate_opt', SRC)
-pf = importlib.util.module_from_spec(spec); spec.loader.exec_module(pf)
+pf = _load_without_pyperf('pyflate_opt', SRC)
 
 tables = {}          # id(table) -> tsel
 rows   = []          # ("R"/"S", ...)
