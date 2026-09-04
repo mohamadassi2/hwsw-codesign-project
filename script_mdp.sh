@@ -93,14 +93,15 @@ if [ -d venv-dbg ]; then
   perf report -i "$OUT/perf_base_dbg.data" --stdio > "$OUT/perf_report_base_dbg.txt" 2>/dev/null || true
 fi
 log "perf record on the benchmark worker directly (cleaner attribution)"
+# (a --worker run prints its JSON to stdout, which we discard here; pyperf rejects -o in worker mode)
 perf record -q -F 999 -g -o "$OUT/perf_base.data" -- \
-    $PY "$BASE" --worker --loops 4 -n 3 -w 1 -o "$OUT/scratch.json" >/dev/null
+    $PY "$BASE" --worker --loops 4 -n 3 -w 1 >/dev/null
 perf report -i "$OUT/perf_base.data" --stdio --no-children --sort dso,symbol > "$OUT/perf_top_base.txt" 2>/dev/null
 perf script -i "$OUT/perf_base.data" 2>/dev/null | FlameGraph/stackcollapse-perf.pl > "$OUT/perf_base.folded"
 FlameGraph/flamegraph.pl --title "$B baseline: perf -F999 -g (KVM guest)" "$OUT/perf_base.folded" > "$OUT/flame_${B}_base_perf.svg"
 log "py-spy (Python-level frames) on the baseline"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_base.folded" -- \
-    $PY "$BASE" --worker --loops 4 -n 3 -w 1 -o "$OUT/scratch.json" >/dev/null 2>&1
+    $PY "$BASE" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1
 FlameGraph/flamegraph.pl --title "$B baseline: Python frames (py-spy)" --colors python "$OUT/pyspy_base.folded" > "$OUT/flame_${B}_base_pyspy.svg"
 
 # ---------------------------------------------------------------- 3. optimized
@@ -108,12 +109,12 @@ log "optimized version, same pyperf runner"
 $PY "$OPT" -o "$OUT/${B}_opt.json" 2>&1 | tail -2
 log "profile the optimized version the same way"
 perf record -q -F 999 -g -o "$OUT/perf_opt.data" -- \
-    $PY "$OPT" --worker --loops 4 -n 3 -w 1 -o "$OUT/scratch.json" >/dev/null
+    $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null
 perf report -i "$OUT/perf_opt.data" --stdio --no-children --sort dso,symbol > "$OUT/perf_top_opt.txt" 2>/dev/null
 perf script -i "$OUT/perf_opt.data" 2>/dev/null | FlameGraph/stackcollapse-perf.pl > "$OUT/perf_opt.folded"
 FlameGraph/flamegraph.pl --title "$B optimized: perf -F999 -g (KVM guest)" "$OUT/perf_opt.folded" > "$OUT/flame_${B}_opt_perf.svg"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_opt.folded" -- \
-    $PY "$OPT" --worker --loops 4 -n 3 -w 1 -o "$OUT/scratch.json" >/dev/null 2>&1
+    $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1
 FlameGraph/flamegraph.pl --title "$B optimized: Python frames (py-spy)" --colors python "$OUT/pyspy_opt.folded" > "$OUT/flame_${B}_opt_pyspy.svg"
 
 # ---------------------------------------------------------------- 4. compare + hardware counters
@@ -123,7 +124,7 @@ log "hardware counters, baseline vs optimized (perf stat -r 3)"
 for v in base opt; do
   f=$([ $v = base ] && echo "$BASE" || echo "$OPT")
   perf stat -r 3 -e task-clock,cycles,instructions,branches,branch-misses -o "$OUT/perfstat_${v}.txt" -- \
-      $PY "$f" --worker --loops 4 -n 1 -w 0 -o "$OUT/scratch.json" >/dev/null 2>&1 || true
+      $PY "$f" --worker --loops 4 -n 1 -w 0 >/dev/null 2>&1 || true
   grep -E 'task-clock|cycles|instructions|branch' "$OUT/perfstat_${v}.txt" | sed "s/^/  $v: /"
 done
 rm -f "$OUT"/scratch*.json "$OUT"/*.data
