@@ -1,0 +1,8 @@
+venv/
+venv-dbg/
+FlameGraph/
+results/
+__pycache__/
+*.prof
+hw/build/
+hw/tb/vectors/
