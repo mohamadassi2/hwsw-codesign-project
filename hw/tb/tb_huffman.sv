@@ -51,20 +51,27 @@ module tb_huffman;
     int first_cycle = -1, last_cycle = -1;
 
     // input stream: present word widx while any remain
-    // Continuous assignments rather than an always @* block: a combinational
-    // process that reads a word of a large array with a variable index puts the
-    // whole array on its sensitivity list, which Icarus Verilog 11 (the course
-    // VM's simulator) cannot handle - vvp aborts with an internal assertion.
-    assign in_valid = (widx < nwords) && run;
-    assign in_data  = words[widx];
-    assign in_last  = (widx == nwords - 1);
+    // Stimulus as plain Verilog-2001 processes with explicit sensitivity lists.
+    // Two things the course VM's Icarus Verilog 11.0 cannot simulate: an @*
+    // block that reads a word of a large array with a variable index (the whole
+    // array lands on the sensitivity list and vvp aborts), and a ?: in a
+    // continuous assignment over SystemVerilog int variables (vvp aborts with
+    // "recv_real not implemented"). Listing the scalar inputs explicitly avoids
+    // both; the behaviour is the same as an @* block.
+    always @(widx, nwords, run) begin
+        in_valid = (widx < nwords) && run;
+        in_data  = words[widx];
+        in_last  = (widx == nwords - 1);
+    end
     always @(posedge clk) if (in_valid && in_ready) widx <= widx + 1;
 
     // selector for the symbol about to be decoded
     int cur_tsel;
-    assign cur_tsel = (ndec < nsym) ? exp_tsel[ndec] : 0;   // same reason as above
-    assign tsel     = cur_tsel[2:0];
-    assign run      = run_en && (ndec < nsym);
+    always @(ndec, nsym, run_en) begin
+        cur_tsel = (ndec < nsym) ? exp_tsel[ndec] : 0;
+        tsel     = cur_tsel[2:0];
+        run      = run_en && (ndec < nsym);
+    end
 
     // count consumed lengths and check them
     always @(posedge clk) begin
