@@ -43,9 +43,10 @@ Data structures and algorithm.
 
 2. Initial analysis
 ----------------------------------------------------------------------------------
-Tools as for pyflate: perf record with -e cpu-clock (a guest has no sampling
-PMU, so the default cycles event yields no samples) plus the FlameGraph scripts
-and py-spy in the course VM, and cProfile for exact call counts.
+Tools as for pyflate: perf record with the software event -e cpu-clock (the
+default cycles event opens but never overflows in this guest - see the note in
+report_pyflate.txt section 2) plus the FlameGraph scripts, py-spy for
+Python-level frames, and cProfile for exact call counts.
 
 Where the time goes (cProfile, one evaluate(), baseline):
                                        self     cum       calls

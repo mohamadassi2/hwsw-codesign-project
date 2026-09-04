@@ -78,6 +78,16 @@ fi
 echo 0  > /proc/sys/kernel/kptr_restrict       2>/dev/null || true
 echo -1 > /proc/sys/kernel/perf_event_paranoid 2>/dev/null || true
 perf --version; venv/bin/python --version
+# Does the PMU overflow interrupt actually reach the guest? If the PMI line in
+# /proc/interrupts does not move across a hardware-event record, the counter is
+# emulated but never overflows, which is exactly the failure described in the report.
+{ echo "PMI/NMI before:"; grep -E "^\s*(NMI|PMI)" /proc/interrupts || true
+  perf record -q -e cycles -F 999 -o /tmp/probe.data -- sleep 3 >/dev/null 2>&1 || true
+  echo "PMI/NMI after a cycles record:"; grep -E "^\s*(NMI|PMI)" /proc/interrupts || true
+  echo "samples in that cycles record: $(perf script -i /tmp/probe.data 2>/dev/null | grep -c . || echo 0)"
+  echo "dmesg PMU line: $(dmesg 2>/dev/null | grep -i 'Performance Events' | tail -1)"
+} > "$OUT/pmu_diagnosis.txt" 2>&1
+cat "$OUT/pmu_diagnosis.txt"
 echo "--- sampling events available in this guest:"
 for e in cycles cpu-clock task-clock; do
   if perf record -q -e $e -F 999 -o /tmp/probe.data -- true >/dev/null 2>&1 && \
@@ -108,9 +118,10 @@ flame(){
 perf_rec(){
   local tag=$1; shift; [ "$1" = "--" ] && shift
   local data="$OUT/perf_$tag.data" n=0 opt
-  for opt in "-e cpu-clock -F 999 --call-graph dwarf,16384" \
-             "-e cpu-clock -F 999 --call-graph fp" \
-             "-e cpu-clock -F 999" \
+  for opt in "-e cpu-clock -F 499 --call-graph dwarf,32768" \
+             "-e cpu-clock -F 997 --call-graph dwarf,16384" \
+             "-e cpu-clock -F 997 --call-graph fp" \
+             "-e cpu-clock -F 997" \
              "-F 999 -g"; do
     # shellcheck disable=SC2086  # opt is a deliberate word-split option list
     perf record -q $opt -o "$data" -- "$@" >/dev/null 2>&1 || true

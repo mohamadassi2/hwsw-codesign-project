@@ -106,14 +106,52 @@ enormous. perf stat in the VM (results/pyflate/perfstat_base.txt) gives the
 cycle and instruction counts of both builds, and the instruction count is what
 falls when the algorithm is fixed.
 
-A note on profiling inside the VM, because it cost us a day. perf stat counts
-correctly in the guest (KVM passes the PMU through), but perf record collects
-nothing with its default cycles event: a guest has no sampling PMU, so the
-event never fires, perf.data ends up empty and the flame graph comes out blank.
-Sampling has to use a software event instead, -e cpu-clock, which is driven by
-an hrtimer; and because CPython is built without frame pointers, the call graph
-needs --call-graph dwarf rather than plain -g. script_pyflate.sh probes the
-available events and records which one it used in results/pyflate/.
+A note on profiling inside this VM, because it cost us a day and the reason is
+not the obvious one.
+
+What we observed: perf stat returns valid hardware counts in the guest, but
+perf record with its default cycles event finished with zero samples, so
+perf.data was empty, stackcollapse reported "Stack count is low (0)" and
+flamegraph.pl produced nothing.
+
+Why that combination is odd: KVM does emulate a guest PMU (QEMU's -cpu host
+enables CPUID leaf 0xA) and it does implement PMU-interrupt injection, so
+neither "there is no PMU" nor "sampling is unsupported" fits. Both would have
+announced themselves: perf falls back to cpu-clock automatically when the
+cycles event is unavailable, and it refuses outright with "PMU Hardware doesn't
+support sampling/overflow-interrupts" when the event cannot sample. We saw
+neither message, which means the event opened successfully and simply never
+overflowed.
+
+The explanation that fits: on this kernel the guest's counters are not passed
+through, they are emulated - a guest PMU access exits to the host, which backs
+it with a host perf event. Those host events compete with everything else
+running on the shared server, and when they lose the contention the guest is
+not told: it believes the counter is scheduled while no hardware is behind it.
+That is the same effect we hit in the earlier assignment, where asking perf
+stat for seven events at once returned exactly zero for some of them rather
+than a scaled estimate. A Haswell-EP core has four general-purpose counters,
+fewer with the host's NMI watchdog enabled, and this server carries many
+students' VMs at once.
+
+What we did about it. Sampling uses the software event cpu-clock, which is
+driven by an hrtimer in the guest kernel and needs no PMU at all. The result is
+a time-based CPU profile rather than a cycle profile - it shows where on-CPU
+time goes, which is what we want here, and for this single-threaded CPU-bound
+workload the two agree in shape. Call graphs use --call-graph dwarf, because
+Ubuntu's CPython 3.10 is compiled without frame pointers, so plain -g yields
+one-deep stacks; DWARF unwinding copies a slice of the user stack per sample,
+so we widen the default 8 KB window, which CPython's deep interpreter frames
+overflow. script_pyflate.sh probes the events and records which one it used in
+results/pyflate/perf_events_probe.txt and perf_<tag>.event.
+
+One honest limitation of perf here: Python 3.10 has no perf trampoline (that
+arrived in 3.12), so even a perfect unwind shows the interpreter's C frames,
+not the Python functions. The perf profile tells us how the time splits between
+the interpreter loop, the allocator and libc; for attribution to our own Python
+functions we use py-spy, which reads the interpreter's frame objects directly
+and is unaffected by any of the above. Both flame graphs are in results/, and
+the numbers quoted in section 2 come from cProfile, which is exact.
 
 
 3. Optimizations
