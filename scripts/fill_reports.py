@@ -125,6 +125,14 @@ def replace_41(text, new_block):
     m = re.search(r"^4\.1 .*?(?=^4\.2 )", text, re.S | re.M)
     if not m:
         return text, False
+    # Guard against swallowing a later subsection: the 4.1 block is the measured
+    # numbers and nothing else, so it must not contain another 4.x heading. When
+    # the sections are momentarily out of order this match runs away, and it
+    # once deleted the cProfile subsection of report_mdp.txt.
+    if re.search(r"^4\.[2-9] ", m.group(0), re.M):
+        raise SystemExit("fill_reports: the 4.1 block would swallow "
+                         + re.search(r"^4\.[2-9] .*", m.group(0), re.M).group(0)
+                         + " - fix the section order first")
     # keep everything after the block - dropping text[m.end():] here truncated
     # the report at section 4.2 and cost 251 lines the first time this ran
     return text[:m.start()] + new_block + "\n\n" + text[m.end():], True

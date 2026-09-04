@@ -153,7 +153,21 @@ Correctness. scripts/local_check.py runs both versions:
       results/mdp/flame_mdp_opt_focus.svg
       results/mdp/flame_mdp_opt_pyspy.svg
 
-4.2 Reproducibility
+4.2 After the optimization (cProfile, optimized)
+                                       self     cum
+  Battle.evaluate (the sweep)          37.4%   96.1%
+  Fraction.__new__                      7.7%   10.0%
+  _applyActionSide1                     5.9%   30.9%
+  Fraction._add                         5.6%   13.5%
+  builtins.max                          3.5%
+  applyHPChange / namedtuple._replace   5.4%
+    The sweep is now the honest cost of the algorithm - a few million
+    multiply-adds and maxes in the interpreter. The next third is building
+    the successor graph with exact Fractions (each state is built once, so
+    memoization does not help there), and namedtuple._replace for the hp
+    updates.
+
+4.3 Reproducibility
     An independent rerun of commit 195dcd8 in the same guest
     (results/reproducibility/, compared with scripts/compare_runs.py) gives
     3.804x against the shipped 3.820x, a difference of
