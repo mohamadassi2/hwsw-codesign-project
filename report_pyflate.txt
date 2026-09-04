@@ -372,8 +372,9 @@ passes in every run.
     same make sim for each; hw/tb/MUTATIONS.md records the outcome: all six
     are caught (148,271 errors for the X decoder, a timeout failure for the
     stalled one, 241,318 errors for the relaxed comparison, 148,271 for the
-    off-by-one, and errors from the first symbol for the reversed encoder and
-    the short shift).
+    off-by-one; the reversed encoder and the short shift each desynchronize
+    the decoder partway through the block, after 35,694 and 136,558 symbols,
+    and it stalls, which the watchdog reports as a failure).
 
 5.5 Hardware/software interface (docs/hw_sw_interface.md has the full map)
     Memory-mapped registers: CTRL (run / reset / last), STATUS (busy, error,
