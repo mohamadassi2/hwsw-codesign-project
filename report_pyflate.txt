@@ -369,9 +369,9 @@ passes in every run.
     into the RTL one at a time - the symbol output driven to X, sym_valid held
     low, the hit comparison relaxed to <=, the base adder off by one, the
     priority encoder reversed, the barrel shift one bit short - and runs the
-    same make sim for each; hw/tb/MUTATIONS.md records the outcome, every one
-    caught (148,271 errors for the X decoder, a timeout failure for the
-    stalled one, 241,318 errors for the relaxed comparison).
+    same make sim for each; hw/tb/MUTATIONS.md records the outcome of each
+    (148,271 errors for the X decoder, a timeout failure for the stalled one,
+    241,318 errors for the relaxed comparison, 148,271 for the off-by-one).
 
 5.5 Hardware/software interface (docs/hw_sw_interface.md has the full map)
     Memory-mapped registers: CTRL (run / reset / last), STATUS (busy, error,
