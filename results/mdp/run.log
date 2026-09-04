@@ -1,0 +1,85 @@
+
+=== 13:50:23  environment ===
+5.15.0-1106-kvm
+1
+model name	: Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz
+network: online
+perf version 5.15.209
+Python 3.10.12
+PMI/NMI before:
+NMI:          0   Non-maskable interrupts
+PMI:          0   Performance monitoring interrupts
+PMI/NMI after a cycles record:
+NMI:          0   Non-maskable interrupts
+PMI:          0   Performance monitoring interrupts
+samples in that cycles record: 0
+0
+dmesg PMU line: [    0.348316] Performance Events: Haswell events, full-width counters, Intel PMU driver.
+--- sampling events available in this guest:
+./script_mdp.sh: line 94: [: 0
+0: integer expression expected
+    cycles: no samples
+./script_mdp.sh: line 94: [: 0
+0: integer expression expected
+    cpu-clock: no samples
+./script_mdp.sh: line 94: [: 0
+0: integer expression expected
+    task-clock: no samples
+sampling event '-e cpu-clock -F 499 --call-graph dwarf,32768' collected nothing, trying the next
+sampling event '-e cpu-clock -F 997 --call-graph dwarf,16384' collected nothing, trying the next
+sampling event '-e cpu-clock -F 997 --call-graph fp' collected nothing, trying the next
+sampling event '-e cpu-clock -F 997' collected nothing, trying the next
+sampling event '-F 999 -g' collected nothing, trying the next
+no sampling event works in this environment; flame graphs will be from py-spy only
+
+=== 13:51:05  baseline through the pyperformance framework itself ===
+### mdp ###
+Mean +- std dev: 5.01 sec +- 0.04 sec
+
+
+=== 13:53:54  baseline, same runner on the vendored copy (what we diff against) ===
+.......
+mdp: Mean +- std dev: 4.99 sec +- 0.02 sec
+
+=== 13:56:15  perf record -F 999 -g on the baseline (guide's form, python3-dbg) ===
+perf record (base_dbg): skipped, no working event
+
+=== 13:56:15  perf record on the benchmark worker directly (cleaner attribution) ===
+perf record (base): skipped, no working event
+perf samples (base): ?
+flame graph: no stacks for results/mdp/flame_mdp_base_perf.svg
+
+=== 13:56:15  py-spy (Python-level frames) on the baseline ===
+flame graph: results/mdp/flame_mdp_base_pyspy.svg (363 stacks)
+
+=== 13:56:36  optimized version, same pyperf runner ===
+.......
+mdp: Mean +- std dev: 1.31 sec +- 0.01 sec
+
+=== 13:57:14  profile the optimized version the same way ===
+perf record (opt): skipped, no working event
+perf samples (opt): ?
+flame graph: no stacks for results/mdp/flame_mdp_opt_perf.svg
+py-spy failed on the optimized run (see trace.log)
+flame graph: results/mdp/flame_mdp_opt_pyspy.svg (241 stacks)
+
+=== 13:57:20  before/after (pyperf compare_to) ===
++-----------+----------+------------------------+
+| Benchmark | mdp_base | mdp_opt                |
++===========+==========+========================+
+| mdp       | 4.99 sec | 1.31 sec: 3.80x faster |
++-----------+----------+------------------------+
+
+=== 13:57:20  hardware counters, baseline vs optimized (perf stat -r 3) ===
+  base:           20362.28 msec task-clock                #    1.005 CPUs utilized            ( +-  0.46% )
+  base:        48395707435      cycles                    #    2.391 GHz                      ( +-  0.46% )
+  base:       118536344707      instructions              #    2.46  insn per cycle           ( +-  0.09% )
+  base:        24951795918      branches                  #    1.233 G/sec                    ( +-  0.11% )
+  base:          133397697      branch-misses             #    0.54% of all branches          ( +-  0.79% )
+  opt:            5401.34 msec task-clock                #    0.998 CPUs utilized            ( +-  0.40% )
+  opt:        12824957001      cycles                    #    2.374 GHz                      ( +-  0.41% )
+  opt:        31477112513      instructions              #    2.45  insn per cycle           ( +-  0.16% )
+  opt:         5967369095      branches                  #    1.105 G/sec                    ( +-  0.27% )
+  opt:           39526927      branch-misses             #    0.66% of all branches          ( +-  0.33% )
+
+=== 13:58:37  done -> results/mdp ===

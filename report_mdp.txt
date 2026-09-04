@@ -73,7 +73,12 @@ generator expressions are re-created each time. The Fraction cost comes from
 getCritDist being called 3,659 times with only THREE distinct argument tuples,
 recomputing the same exact distributions over and over.
 
-Hardware counters in the VM (results/mdp/perfstat_base.txt): TODO-VM.
+Hardware counters in the VM (results/mdp/perfstat_base.txt, perf stat -r 3
+over four loops of the worker): the baseline retires 118,536,344,707
+instructions in 48,395,707,435 cycles, an IPC of 2.45, with 24,951,795,918
+branches. The IPC is healthy and the branch-miss rate is 0.54%, so this is not
+a stalled or badly predicted workload - it is simply executing far more
+instructions than the problem needs, which is what section 3 removes.
 
 
 3. Optimizations
@@ -116,10 +121,35 @@ Correctness. scripts/local_check.py runs both versions:
 
 4. Performance comparison
 ----------------------------------------------------------------------------------
-4.1 Course VM (the numbers that count; results/mdp/)
-    TODO-VM  pyperformance run --bench mdp (baseline)
-    TODO-VM  pyperf baseline vs optimized, compare_to table
-    TODO-VM  perf stat -r 3 counters for both
+4.1 Course VM (the numbers this report quotes)
+    Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
+    -cpu host -accel kvm. Measured by script_mdp.sh; raw files in results/mdp/.
+
+      pyperformance run --bench mdp     5.008 +- 0.039 s  (n=20)
+      pyperf, baseline (vendored copy)  4.993 +- 0.021 s  (n=18)
+      pyperf, optimized                 1.315 +- 0.008 s  (n=18)
+      speedup  3.80x   (73.7% less time; the assignment asks for 7%)
+
+    pyperf compare_to:
+      +-----------+----------+------------------------+
+      | Benchmark | mdp_base | mdp_opt                |
+      +===========+==========+========================+
+      | mdp       | 4.99 sec | 1.31 sec: 3.80x faster |
+      +-----------+----------+------------------------+
+
+    perf stat (worker run):
+    counter                       baseline           optimized    ratio
+    task-clock                   20,362.28            5,401.34     3.77
+    cycles                  48,395,707,435      12,824,957,001     3.77
+    instructions           118,536,344,707      31,477,112,513     3.77
+    branches                24,951,795,918       5,967,369,095     4.18
+    branch-misses              133,397,697          39,526,927     3.37
+    IPC (baseline): 2.449
+    IPC (optimized): 2.454
+
+    Flame graphs:
+      results/mdp/flame_mdp_base_pyspy.svg
+      results/mdp/flame_mdp_opt_pyspy.svg
 
 4.2 Development machine (orientation only; Apple silicon, Python 3.9, min of 5)
         baseline   1,473 ms per evaluate()
@@ -166,6 +196,7 @@ is not a datapath problem.
 The benchmark's cost was not the value iteration itself but the way it was
 indexed: dictionary lookups keyed by nested tuples inside the hottest loop,
 plus exact-arithmetic distributions recomputed thousands of times. Indexing
-the graph once and memoizing the distributions gives 3.9x (TODO-VM: VM ratio)
-with a result identical to the original to the last bit, which is the kind of
+the graph once and memoizing the distributions gives 3.80x in the course VM
+(4.99 s to 1.31 s, 73.7% less time), and a result identical to the original to
+the last bit, which is the kind of
 change we would be comfortable shipping to the benchmark suite itself.

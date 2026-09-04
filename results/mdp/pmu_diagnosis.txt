@@ -1,0 +1,9 @@
+PMI/NMI before:
+NMI:          0   Non-maskable interrupts
+PMI:          0   Performance monitoring interrupts
+PMI/NMI after a cycles record:
+NMI:          0   Non-maskable interrupts
+PMI:          0   Performance monitoring interrupts
+samples in that cycles record: 0
+0
+dmesg PMU line: [    0.348316] Performance Events: Haswell events, full-width counters, Intel PMU driver.

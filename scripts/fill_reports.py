@@ -68,8 +68,9 @@ def counter_table(b):
         a, c = ps["base"].get(k), ps["opt"].get(k)
         if a is None and c is None:
             continue
-        fa = f"{a:20,.2f}" if a is not None else " " * 20
-        fc = f"{c:20,.2f}" if c is not None else " " * 20
+        fmt1 = (lambda x: f"{x:20,.2f}") if k == "task-clock" else (lambda x: f"{x:20,.0f}")
+        fa = fmt1(a) if a is not None else " " * 20
+        fc = fmt1(c) if c is not None else " " * 20
         r = f"{a/c:9.2f}" if (a and c) else " " * 9
         lines.append(f"    {k:18s}{fa}{fc}{r}")
     for v, tag in (("base", "baseline"), ("opt", "optimized")):
@@ -124,7 +125,9 @@ def replace_41(text, new_block):
     m = re.search(r"^4\.1 .*?(?=^4\.2 )", text, re.S | re.M)
     if not m:
         return text, False
-    return text[:m.start()] + new_block + "\n\n", True
+    # keep everything after the block - dropping text[m.end():] here truncated
+    # the report at section 4.2 and cost 251 lines the first time this ran
+    return text[:m.start()] + new_block + "\n\n" + text[m.end():], True
 
 
 def main():
