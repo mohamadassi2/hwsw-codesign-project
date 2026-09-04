@@ -20,11 +20,11 @@ module tb_huffman;
     logic signed [MAXBITS+1:0] tbl_base = 0;
     logic [8:0]         tbl_idx = 0;
     logic [SYMW-1:0]    tbl_sym = 0;
-    logic [INW-1:0]     in_data = 0;
-    logic               in_valid = 0, in_ready, in_last = 0;
-    logic               run = 0, sym_valid, err;
+    logic [INW-1:0]     in_data;              // driven by assigns below
+    logic               in_valid, in_ready, in_last;
+    logic               run, sym_valid, err;
     logic               run_en = 0;
-    logic [2:0]         tsel = 0;
+    logic [2:0]         tsel;
     logic [SYMW-1:0]    sym;
 
     huffman_accel_top #(.MAXBITS(MAXBITS), .NSYM(NSYM), .SYMW(SYMW), .NTAB(NTAB), .INW(INW)) dut (
@@ -51,20 +51,20 @@ module tb_huffman;
     int first_cycle = -1, last_cycle = -1;
 
     // input stream: present word widx while any remain
-    always @* begin
-        in_valid = (widx < nwords) && run;
-        in_data  = words[widx];
-        in_last  = (widx == nwords - 1);
-    end
+    // Continuous assignments rather than an always @* block: a combinational
+    // process that reads a word of a large array with a variable index puts the
+    // whole array on its sensitivity list, which Icarus Verilog 11 (the course
+    // VM's simulator) cannot handle - vvp aborts with an internal assertion.
+    assign in_valid = (widx < nwords) && run;
+    assign in_data  = words[widx];
+    assign in_last  = (widx == nwords - 1);
     always @(posedge clk) if (in_valid && in_ready) widx <= widx + 1;
 
     // selector for the symbol about to be decoded
     int cur_tsel;
-    always @* begin
-        cur_tsel = (ndec < nsym) ? exp_tsel[ndec] : 0;
-        tsel     = cur_tsel[2:0];
-        run      = run_en && (ndec < nsym);
-    end
+    assign cur_tsel = (ndec < nsym) ? exp_tsel[ndec] : 0;   // same reason as above
+    assign tsel     = cur_tsel[2:0];
+    assign run      = run_en && (ndec < nsym);
 
     // count consumed lengths and check them
     always @(posedge clk) begin
