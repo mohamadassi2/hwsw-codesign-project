@@ -60,3 +60,62 @@ Reports
     assignment lists, in plain language, with the development-machine numbers
     marked as such and slots for the VM numbers."
   - "Write the README and this prompt log."
+
+Measuring in the course VM
+  - "Run both scripts inside the course QEMU/KVM guest on the assigned server
+    and bring results/ back. Do not use anything measured on the laptop in
+    the reports."
+  - "The guest cannot reach the network - apt and pip fail. Find out why."
+    (The answer was the host's systemd-resolved stub that QEMU's user-mode
+    NAT forwards guest DNS to; the scripts now write the campus resolvers
+    into the guest's resolv.conf.)
+  - "perf record collects no samples in the guest. Do not guess: find the
+    mechanism from the kernel and QEMU sources and say exactly what the
+    evidence supports." (First explanation offered - 'a guest has no
+    sampling PMU' - was wrong and was withdrawn; the scripts now record
+    /proc/interrupts PMI counts before and after a record so the report can
+    state what was measured.)
+  - "The scripts' results/ directory is committed. Run the final tree from a
+    clean directory in the guest, the way a grader would, and fix whatever
+    breaks." (pyperf refuses to overwrite its output file; the scripts now
+    clear results/<benchmark> on entry.)
+
+Checking the optimizations
+  - "Try to break the optimized pyflate: any input on which it differs from
+    the original." (Found: the eight-byte refill exposed a bit-order bug in
+    the copy constructor that broke every gzip stream, zero-padding at EOF
+    that could loop forever, and a stale bit buffer in dropbits that
+    silently corrupted FEXTRA headers. All three fixed and re-fuzzed.)
+  - "Try to break the optimized mdp: prove or disprove that the value
+    stream is bit-identical." (Verified over every individual state update;
+    three hardening changes made, none affecting results.)
+
+Checking the hardware
+  - "Mutation-test the testbench: introduce specific bugs into the RTL and
+    record which ones the test catches." (It passed on a decoder emitting X;
+    comparisons are now !==, X is checked explicitly, a timeout is a
+    failure, and make sim exits non-zero on failure.)
+  - "Review bitreader.sv and huffman_decoder.sv for underflow, stale-state
+    and livelock conditions." (Counter underflow after flush, in_ready
+    computed from the pre-consume level, an unguarded memory read, and a
+    non-halting error state were fixed.)
+
+Keeping the numbers honest
+  - "Write a script that fills the reports' VM section from results/ rather
+    than by hand, and a second one that recomputes every derived figure in
+    the reports and fails if any disagrees."
+  - "Do the same for the slides."
+
+Presentation
+  - "Build the deck from the outline, following the assignment's flow, no
+    code dump, with the measured VM numbers and the flame graphs." Then:
+    "make it look better" - twice.
+
+What we did with all of this
+  Every change suggested by the assistant was read, and the ones that
+  changed behaviour were run against the original before being kept: the
+  benchmark outputs are compared byte for byte, the mdp values bit for bit,
+  and the RTL against a golden trace of the real block. The explanations in
+  the reports are ours; where the assistant's first explanation was wrong
+  (the perf sampling mechanism) the report says what the evidence shows and
+  no more.
