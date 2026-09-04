@@ -316,10 +316,34 @@ passes in every run.
     tables, streams the bytes and checks each output. Result (Icarus Verilog,
     `make sim` in hw/):
         148,271 / 148,271 symbols correct, 0 errors
-        148,275 cycles  ->  1.000 symbols per cycle
+        148,272 cycles  ->  1.000 symbols per cycle
         531,571 bits consumed, 3.59 bits per symbol on average
     The decoder therefore reproduces the software's decode of the whole
-    benchmark block, symbol for symbol.
+    benchmark block, symbol for symbol. There are no stall cycles in that
+    figure - 148,271 decodes plus one pipeline-drain cycle - because the bit
+    reader accepts a refill in the same cycle the decoder consumes, so the
+    buffer never runs dry even at the longest codes.
+
+    What the cycle count does not include: programming the six tables costs a
+    further ~1,000 write cycles per bzip2 block, which the host does once
+    before streaming the block; and the selector list, which says
+    which of the six tables applies to each group of 50 symbols, is supplied
+    by the host on the tsel input rather than sequenced in hardware. A
+    production version would put a mod-50 counter and a small selector FIFO
+    inside the accelerator so the host writes the list once per block instead
+    of tracking it per symbol; we left it out to keep the datapath the subject
+    of the design, and section 5.7 counts the cost.
+
+    Two properties of the testbench are worth stating, because a self-checking
+    testbench that cannot fail is worth nothing. It compares with !== and flags
+    any X, so a decoder that emits undefined values - what an unprogrammed
+    table bank produces - is caught rather than silently passing (with ==, a
+    comparison against X evaluates to X, which `if` treats as false). And the
+    watchdog counts as a failure and exits non-zero, so a decoder that stalls
+    fails the build instead of ending quietly. Both were verified by mutation:
+    forcing the symbol output to X gives 148,271 errors, and holding sym_valid
+    low gives a timeout failure; before these changes each of those mutations
+    passed.
 
 5.5 Hardware/software interface (docs/hw_sw_interface.md has the full map)
     Memory-mapped registers: CTRL (run / reset / last), STATUS (busy, error,
@@ -339,11 +363,11 @@ passes in every run.
 5.6 Expected performance (with the assumptions spelled out)
     Take the optimized run on the development machine, 160 ms, of which the
     Huffman-and-bit-extraction part is ~62% = ~99 ms (section 4.3). In the
-    accelerator that work is 148,275 cycles:
+    accelerator that work is 148,272 cycles:
         at 200 MHz   0.74 ms
         at 400 MHz   0.37 ms
     Add data movement: 66 KB in and 148,271 x 2 bytes out over PCIe or an AXI
-    DMA is well under 0.1 ms; ~1.7k table writes over MMIO is ~0.1-0.5 ms.
+    DMA is well under 0.1 ms; ~1,000 table-write cycles over MMIO is well under 0.1 ms.
     Call the accelerated part ~1.3 ms in total. The run becomes
         160 - 99 + 1.3  =  ~62 ms     ->  ~2.6x over the optimized software,
                                           ~5.7x over the shipped benchmark.

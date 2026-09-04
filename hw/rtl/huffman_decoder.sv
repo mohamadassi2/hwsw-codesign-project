@@ -52,7 +52,7 @@ module huffman_decoder #(
     output logic                 len_valid,
     output logic [SYMW-1:0]      sym,         // symbol (one cycle later)
     output logic                 sym_valid,
-    output logic                 err          // no code length matched
+    output logic                 err          // sticky: no code length matched
 );
     // ---- per-length rows: limit[L], base[L] --------------------------------
     logic [CW-1:0]        limit_r [NTAB][MAXBITS+1];
@@ -97,19 +97,28 @@ module huffman_decoder #(
     assign idx_s = base_r[tsel][len_c] + $signed({1'b0, code[len_c]});
     assign idx   = idx_s[IDXW-1:0];
 
-    logic fire;
-    assign fire      = enable && peek_valid;
+    // A decode error is sticky and halts the engine. Without that the failing
+    // symbol consumes no bits, so the same bits are presented again the next
+    // cycle and the decoder livelocks on a corrupt stream.
+    logic err_q, fire;
+    assign fire      = enable && peek_valid && !err_q;
     assign len       = fire && found ? len_c : 5'd0;
     assign len_valid = fire && found;
 
     // ---- stage 2: symbol SRAM read ------------------------------------------
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sym <= '0; sym_valid <= 1'b0; err <= 1'b0;
+            sym <= '0; sym_valid <= 1'b0; err_q <= 1'b0;
         end else begin
-            sym       <= symtab[tsel][idx];
+            // Read only on a real decode: idx is X while no length matched
+            // (row 0 of base_r is never programmed), and latching that would
+            // put X on a top-level output for no reason.
+            if (fire && found)
+                sym <= symtab[tsel][idx];
             sym_valid <= fire && found;
-            err       <= fire && !found;
+            if (fire && !found)
+                err_q <= 1'b1;
         end
     end
+    assign err = err_q;
 endmodule

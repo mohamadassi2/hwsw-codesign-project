@@ -157,7 +157,7 @@ def main():
         opt_ms = opt_s * 1e3
         frac = 62
         part = opt_ms * frac / 100
-        accel = 148275 / 200e6 * 1e3 + 0.6      # decode at 200 MHz + DMA/MMIO
+        accel = 148272 / 200e6 * 1e3 + 0.6      # decode at 200 MHz + DMA/MMIO
         newtot = opt_ms - part + accel
         p = os.path.join(ROOT, "report_pyflate.txt")
         t = open(p).read()

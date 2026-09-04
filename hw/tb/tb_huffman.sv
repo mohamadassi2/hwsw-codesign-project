@@ -71,7 +71,13 @@ module tb_huffman;
         cycles <= cycles + 1;
         if (dut.len_valid) begin
             if (first_cycle < 0) first_cycle = cycles;
-            if (dut.len != exp_len[ndec]) begin
+            // !== so an X compares as a difference; with != an all-X decoder
+            // makes every check evaluate to x, which `if` treats as false and
+            // the whole run passes with zero errors.
+            if (^dut.len === 1'bx) begin
+                errors++;
+                if (errors < 10) $display("X on len at symbol %0d", ndec);
+            end else if (dut.len !== exp_len[ndec]) begin
                 errors++;
                 if (errors < 10) $display("LEN MISMATCH at symbol %0d: got %0d expected %0d (tsel %0d)",
                                           ndec, dut.len, exp_len[ndec], tsel);
@@ -79,7 +85,10 @@ module tb_huffman;
             ndec <= ndec + 1;
         end
         if (sym_valid) begin
-            if (sym != exp_sym[nchk]) begin
+            if (^sym === 1'bx) begin
+                errors++;
+                if (errors < 10) $display("X on sym at symbol %0d (an unprogrammed table bank looks like this)", nchk);
+            end else if (sym !== exp_sym[nchk]) begin
                 errors++;
                 if (errors < 10) $display("SYM MISMATCH at symbol %0d: got %0d expected %0d",
                                           nchk, sym, exp_sym[nchk]);
@@ -156,7 +165,11 @@ module tb_huffman;
                  real'(nchk) / real'(last_cycle - first_cycle + 1), errors);
         $display("total bits consumed: %0d  (avg %.2f bits/symbol)", nbytes*8 - skip_bits > 0 ? sum_len() : 0,
                  real'(sum_len()) / real'(nchk));
-        if (errors == 0) $display("PASS"); else $display("FAIL");
+        if (errors == 0) $display("PASS");
+        else begin
+            $display("FAIL (%0d errors)", errors);
+            $fatal(1);          // non-zero exit, so `make sim` actually fails
+        end
         $finish;
     end
 
@@ -169,6 +182,10 @@ module tb_huffman;
     // watchdog
     initial begin
         #200_000_000;   // 200 ms sim time = 20M cycles
-        $display("TIMEOUT: decoded %0d/%0d", nchk, nsym); $finish;
+        // A hang is a failure. Without this the run ends quietly with exit 0,
+        // so a decoder that stalls (or an X on sym_valid) looks like success.
+        $display("TIMEOUT: decoded %0d/%0d symbols", nchk, nsym);
+        $display("FAIL (timeout)");
+        $fatal(1);
     end
 endmodule

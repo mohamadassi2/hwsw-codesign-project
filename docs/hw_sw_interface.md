@@ -96,6 +96,6 @@ and gets the same bytes. This follows lecture 5's first rule for accelerators
 | table row | 21 + 22 bit | `limit[L]` unsigned, `base[L]` signed |
 
 Sustained throughput is one symbol per clock; on the benchmark's block that is
-148,275 cycles for 148,271 symbols (measured in `hw/tb`). The bit buffer holds
+148,272 cycles for 148,271 symbols (measured in `hw/tb`). The bit buffer holds
 64 bits and refills 32 per cycle, and the average code is 3.6 bits (max 15 in
 this file, 20 by the format), so the reader never starves the decoder.

@@ -83,7 +83,7 @@ make vectors     # needs python3 with pyperf importable; writes tb/vectors/
 make sim         # Icarus Verilog (iverilog -g2012)
 ```
 
-Expected: `decoded 148271 symbols in 148275 cycles (1.000 symbols/cycle), 0 errors` / `PASS`.
+Expected: `decoded 148271 symbols in 148272 cycles (1.000 symbols/cycle), 0 errors` / `PASS`.
 Synthesis figures in `docs/synthesis_yosys.txt` were produced with
 `yosys` (`read_verilog -sv …; synth; abc; stat; ltp`).
 

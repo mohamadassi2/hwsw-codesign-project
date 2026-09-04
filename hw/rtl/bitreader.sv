@@ -29,16 +29,27 @@ module bitreader #(
     output logic [$clog2(BUFW+1)-1:0] level // bits currently buffered
 );
     logic [BUFW-1:0]            buf_q, buf_d;
-    logic [$clog2(BUFW+1)-1:0]  cnt_q, cnt_d;
+    logic [$clog2(BUFW+1)-1:0]  cnt_q, cnt_d, cnt_after;
     logic                       eof_q;
 
-    // Accept a refill when there is room for a whole word.
-    assign in_ready = (cnt_q + INW <= BUFW);
+    // Level after this cycle's consume. Saturating, because peek_valid also
+    // holds after flush with as little as one bit left while the decoder may
+    // still ask to consume up to MAXBITS; an unguarded subtraction wraps the
+    // counter and the reader then reports a full buffer of zeros forever.
+    assign cnt_after = (cnt_q > consume) ? (cnt_q - consume) : '0;
+
+    // Accept a refill when there is room for a whole word AFTER the consume.
+    // Testing cnt_q instead would refuse a refill in the very cycle that makes
+    // room, which costs throughput once codes get long (measured: 0.84
+    // symbols/cycle at 19-bit codes, 1.000 with this form). There is no
+    // combinational loop: consume comes from the decoder, which depends on
+    // peek and peek_valid, and both are functions of the registers only.
+    assign in_ready = (cnt_after + INW <= BUFW);
 
     always_comb begin
         // 1. drop the bits the decoder consumed this cycle
         buf_d = buf_q << consume;
-        cnt_d = cnt_q - consume;
+        cnt_d = cnt_after;
         // 2. append a new word right after the remaining valid bits
         if (in_valid && in_ready) begin
             buf_d = buf_d | ({{(BUFW-INW){1'b0}}, in_data} << (BUFW - INW - cnt_d));

@@ -69,12 +69,12 @@ for b in ("pyflate", "mdp"):
           f"{txt.count('TODO-VM')} placeholders remain")
 
 # ---------------------------------------------------------------- derived: accelerator
-SYMBOLS, CYCLES = 148271, 148275
+SYMBOLS, CYCLES = 148271, 148272
 txt = report_text("pyflate")
 check("hw: symbols/cycle claim", abs(SYMBOLS / CYCLES - 1.0) < 0.001,
       f"{SYMBOLS/CYCLES:.4f}")
 check("hw: report states both symbol and cycle counts",
-      "148,271" in txt and "148,275" in txt)
+      "148,271" in txt and "148,272" in txt)
 for f, mhz in (("0.74", 200), ("0.37", 400)):
     got = CYCLES / (mhz * 1e6) * 1e3
     check(f"hw: {mhz} MHz decode time", abs(got - float(f)) < 0.01, f"{got:.3f} ms vs {f}")

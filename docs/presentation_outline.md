@@ -34,7 +34,7 @@ Accelerator (about 7 min)
 11. Interface: what moves, what stays; register map in one slide; the one
     function that changes in the software; users' code unchanged.
 12. Verification: golden vectors from the real block, testbench result:
-    148,271/148,271, 0 errors, 148,275 cycles, 1.000 symbol/cycle.
+    148,271/148,271, 0 errors, 148,272 cycles, 1.000 symbol/cycle.
 13. Cost: yosys figures, 2,646 cells (74 flops) + 19.4 kbit of tables;
     65-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
     52k-cell version as the "why SRAM" argument.
