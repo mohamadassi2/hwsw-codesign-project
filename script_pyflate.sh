@@ -25,7 +25,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 # --- network inside the course VM --------------------------------------------
 # QEMU's user-mode NAT forwards the guest's DNS queries to the host's resolver.
-# When the host runs systemd-resolved (Ubuntu 24.04, as on the naranja servers)
+# When the host runs systemd-resolved (Ubuntu 24.04, as on the course VM hosts)
 # that resolver is the 127.0.0.53 stub, which the NAT cannot reach: names fail
 # in the guest while plain TCP works, so apt and pip silently die.  Point the
 # guest at the real upstream servers (Technion's) instead; harmless elsewhere.
