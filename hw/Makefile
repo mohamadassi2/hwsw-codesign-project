@@ -9,7 +9,9 @@ TB    = tb/tb_huffman.sv
 
 .PHONY: sim vectors clean
 sim: build/tb tb/vectors/expected.txt
-	$(VVP) build/tb
+	@$(VVP) build/tb > build/sim.log 2>&1; rc=$$?; cat build/sim.log; \
+	if [ $$rc -ne 0 ]; then echo "make sim: simulator exited $$rc"; exit $$rc; fi; \
+	grep -q '^PASS' build/sim.log || { echo "make sim: FAILED - no PASS line (see build/sim.log)"; exit 1; }
 build/tb: $(RTL) $(TB)
 	@mkdir -p build
 	$(IVL) -o $@ $(RTL) $(TB)

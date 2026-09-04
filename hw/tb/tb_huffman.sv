@@ -51,23 +51,23 @@ module tb_huffman;
     int first_cycle = -1, last_cycle = -1;
 
     // input stream: present word widx while any remain
-    always_comb begin
+    always @* begin
         in_valid = (widx < nwords) && run;
         in_data  = words[widx];
         in_last  = (widx == nwords - 1);
     end
-    always_ff @(posedge clk) if (in_valid && in_ready) widx <= widx + 1;
+    always @(posedge clk) if (in_valid && in_ready) widx <= widx + 1;
 
     // selector for the symbol about to be decoded
     int cur_tsel;
-    always_comb begin
+    always @* begin
         cur_tsel = (ndec < nsym) ? exp_tsel[ndec] : 0;
         tsel     = cur_tsel[2:0];
         run      = run_en && (ndec < nsym);
     end
 
     // count consumed lengths and check them
-    always_ff @(posedge clk) begin
+    always @(posedge clk) begin
         cycles <= cycles + 1;
         if (dut.len_valid) begin
             if (first_cycle < 0) first_cycle = cycles;
@@ -104,7 +104,10 @@ module tb_huffman;
 
     // ---- main -----------------------------------------------------------------
     int fd, code, t, l, lim, bas, idx, s, i, w, bpos, b;
-    string line, key;
+    // Icarus Verilog 11 (the course VM's version) accepts only a packed vector as
+    // $fgets's target; a SystemVerilog `string` is rejected at run time. The
+    // vector files' lines are all far shorter than 256 characters.
+    reg [8*256-1:0] line;
     initial begin
         // meta
         fd = $fopen("tb/vectors/meta.txt", "r");
