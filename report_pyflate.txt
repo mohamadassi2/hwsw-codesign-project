@@ -148,6 +148,12 @@ capture would have shown the interpreter's C frames rather than the Python
 functions we needed to attribute time to. The per-function percentages quoted
 below come from cProfile, which is exact.
 
+    Two flame graphs are written per build. flame_<b>_<tag>_pyspy.svg is the
+    whole process as py-spy recorded it; flame_<b>_<tag>_focus.svg re-roots the
+    same samples at bench_pyflake with scripts/focus_folded.py, dropping the ten
+    frames of pyperf runner above it and the ~1% of samples that never reach the
+    benchmark (interpreter start-up and imports). The focused one is what the
+    figures in this report and the slides show.
 
 3. Optimizations
 ----------------------------------------------------------------------------------
