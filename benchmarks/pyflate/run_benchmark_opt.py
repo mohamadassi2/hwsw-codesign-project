@@ -39,6 +39,10 @@ class BitfieldBase(object):
         if isinstance(x, BitfieldBase):
             self.f = x.f
             self.data = x.data
+            # Both call sites construct straight after a byte-aligned
+            # readbits(16), and _more() only ever adds whole bytes, so x.bits
+            # is a multiple of 8 here. The rewind below assumes that.
+            assert not (x.bits & 7), "copy-construct from a non-byte-aligned reader"
             # Do NOT inherit x's bit buffer. Bitfield holds bits LSB-first and
             # RBitfield MSB-first, so a buffer handed from one to the other
             # would be read in the wrong order. The original got away with it
@@ -89,6 +93,14 @@ class BitfieldBase(object):
         while n >= self.bits and n > 7:
             n -= self.bits
             self.bits = 0
+            # The buffer must be cleared with the count, not just emptied of
+            # meaning: _more() ORs new bytes in at self.bits, so leftover bits
+            # here would be mixed into the next bytes of the stream. The
+            # original never hit this because it refilled one byte at a time
+            # and so always entered with an empty buffer; we refill eight.
+            self.bitfield = 0
+            if not (n >> 3):
+                break          # nothing whole left to skip; _read(0) would raise
             n -= len(self._read(n >> 3)) << 3
         if n:
             self.readbits(n)
