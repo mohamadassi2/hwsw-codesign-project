@@ -1,5 +1,10 @@
 # Presentation outline (20-25 min + 5-10 min questions)
 
+The deck built from this outline is docs/presentation.html (arrow keys or
+scroll; Cmd-P prints one slide per page). Every "[VM]" below is now a measured
+number in results/ and on the slides; scripts/check_deck_numbers.py recomputes
+them.
+
 Structure follows the project flow, as the brief recommends: analysis ->
 optimization -> hardware. Slides are numbered; "say" is the talk track.
 Numbers marked [VM] come from results/ after the guest runs.

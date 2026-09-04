@@ -92,3 +92,7 @@ Synthesis figures in `docs/synthesis_yosys.txt` were produced with
 The history is meant to be read: baseline vendored → pyflate optimization →
 mdp optimization → scripts → RTL + testbench → docs/synthesis. Each commit
 message states what was measured and why the change was made.
+
+To re-verify everything from the shipped files in one command:
+
+    scripts/check_all.sh
