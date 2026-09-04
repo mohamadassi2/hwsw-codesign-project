@@ -68,6 +68,33 @@ for b in ("pyflate", "mdp"):
     check(f"{b}: no TODO-VM left", "TODO-VM" not in txt,
           f"{txt.count('TODO-VM')} placeholders remain")
 
+# ---------------------------------------------------------------- prose that quotes the run
+# The 4.1 blocks are generated; these sentences are hand-written and must agree with them.
+_pf = report_text("pyflate"); _md = report_text("mdp")
+_b = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_base.json"))
+_o = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_opt.json"))
+if _b and _o:
+    check("pyflate conclusion quotes the measured speedup", f"gives {_b/_o:.2f}x in the" in _pf, f"{_b/_o:.2f}x")
+    check("pyflate conclusion quotes the measured percentage", f"{100*(1-_o/_b):.1f}% less time" in _pf)
+    ps_b = perfstat_counts = None
+    import re as _re
+    def _ps(p):
+        r = {}
+        for line in open(p):
+            m = _re.match(r"\s*([\d,\.]+)\s+(?:msec\s+)?([a-z-]+)", line)
+            if m: r[m.group(2)] = float(m.group(1).replace(",", ""))
+        return r
+    pb = _ps(os.path.join(ROOT, "results", "pyflate", "perfstat_base.txt"))
+    if pb:
+        check("section 2 quotes the measured baseline cycles", f"{pb['cycles']/1e9:.1f} billion cycles" in _pf, f"{pb['cycles']/1e9:.1f}")
+        check("section 2 quotes the measured baseline instructions", f"{pb['instructions']/1e9:.1f} billion instructions" in _pf, f"{pb['instructions']/1e9:.1f}")
+        check("section 2 quotes the measured baseline IPC", f"IPC {pb['instructions']/pb['cycles']:.2f}" in _pf, f"{pb['instructions']/pb['cycles']:.2f}")
+_mb = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_base.json"))
+_mo = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_opt.json"))
+if _mb and _mo:
+    check("mdp conclusion quotes the measured speedup", f"gives {_mb/_mo:.2f}x in the course VM" in _md, f"{_mb/_mo:.2f}x")
+    check("mdp conclusion quotes the measured percentage", f"{100*(1-_mo/_mb):.1f}% less time" in _md)
+
 # ---------------------------------------------------------------- derived: accelerator
 SYMBOLS, CYCLES = 148271, 148272
 txt = report_text("pyflate")

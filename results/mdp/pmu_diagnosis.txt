@@ -6,4 +6,4 @@ NMI:          0   Non-maskable interrupts
 PMI:          0   Performance monitoring interrupts
 samples in that cycles record: 0
 0
-dmesg PMU line: [    0.348316] Performance Events: Haswell events, full-width counters, Intel PMU driver.
+dmesg PMU line: [    0.365323] Performance Events: Haswell events, full-width counters, Intel PMU driver.

@@ -125,26 +125,26 @@ Correctness. scripts/local_check.py runs both versions:
     Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
     -cpu host -accel kvm. Measured by script_mdp.sh; raw files in results/mdp/.
 
-      pyperformance run --bench mdp     5.008 +- 0.039 s  (n=20)
-      pyperf, baseline (vendored copy)  4.993 +- 0.021 s  (n=18)
-      pyperf, optimized                 1.315 +- 0.008 s  (n=18)
-      speedup  3.80x   (73.7% less time; the assignment asks for 7%)
+      pyperformance run --bench mdp     4.979 +- 0.018 s  (n=20)
+      pyperf, baseline (vendored copy)  4.986 +- 0.032 s  (n=18)
+      pyperf, optimized                 1.305 +- 0.006 s  (n=18)
+      speedup  3.82x   (73.8% less time; the assignment asks for 7%)
 
     pyperf compare_to:
       +-----------+----------+------------------------+
       | Benchmark | mdp_base | mdp_opt                |
       +===========+==========+========================+
-      | mdp       | 4.99 sec | 1.31 sec: 3.80x faster |
+      | mdp       | 4.99 sec | 1.31 sec: 3.82x faster |
       +-----------+----------+------------------------+
 
     perf stat (worker run):
     counter                       baseline           optimized    ratio
-    task-clock                   20,362.28            5,401.34     3.77
-    cycles                  48,395,707,435      12,824,957,001     3.77
-    instructions           118,536,344,707      31,477,112,513     3.77
-    branches                24,951,795,918       5,967,369,095     4.18
-    branch-misses              133,397,697          39,526,927     3.37
-    IPC (baseline): 2.449
+    task-clock                   19,987.56            5,384.01     3.71
+    cycles                  47,530,388,408      12,773,933,522     3.72
+    instructions           118,398,887,823      31,346,557,805     3.78
+    branches                24,923,650,707       5,922,726,906     4.21
+    branch-misses              129,373,810          40,560,497     3.19
+    IPC (baseline): 2.491
     IPC (optimized): 2.454
 
     Flame graphs:
@@ -196,7 +196,7 @@ is not a datapath problem.
 The benchmark's cost was not the value iteration itself but the way it was
 indexed: dictionary lookups keyed by nested tuples inside the hottest loop,
 plus exact-arithmetic distributions recomputed thousands of times. Indexing
-the graph once and memoizing the distributions gives 3.80x in the course VM
-(4.99 s to 1.31 s, 73.7% less time), and a result identical to the original to
+the graph once and memoizing the distributions gives 3.82x in the course VM
+(4.99 s to 1.31 s, 73.8% less time), and a result identical to the original to
 the last bit, which is the kind of
 change we would be comfortable shipping to the benchmark suite itself.
