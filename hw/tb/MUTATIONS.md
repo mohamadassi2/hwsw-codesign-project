@@ -12,14 +12,15 @@ Reproduce with `cd hw && tb/mutate.sh` (about 25 minutes on a laptop).
 | sym_valid stuck low | **KILLED** | 2 | `TIMEOUT: decoded 0/148271 symbols FAIL (timeout)` |
 | hit compare < to <= | **KILLED** | 2 | `decoded 148271 symbols in 148272 cycles (1.000 symbols/cycle), 241318 errors FAIL (241318 errors)` |
 | base adder +1 | **KILLED** | 2 | `decoded 148271 symbols in 148272 cycles (1.000 symbols/cycle), 148271 errors FAIL (148271 errors)` |
+| priority encoder direction reversed | **KILLED** | 2 | `TIMEOUT: decoded 35694/148271 symbols FAIL (timeout)` |
+| barrel shift one bit short | **KILLED** | 2 | `TIMEOUT: decoded 136558/148271 symbols FAIL (timeout)` |
 
-**4 of 4 mutations killed.**
+**6 of 6 mutations killed.**
 
 Before the testbench was hardened, the first two rows PASSED: a decoder that
 emitted nothing but X was invisible because `sym != expected` evaluates to X
 when `sym` is X, and `if (X)` is false; and a stalled decoder simply hit the
 watchdog, which printed a message and exited 0. The comparisons are now `!==`,
 X on `sym` or `len` is counted as an error, a timeout is a failure, and
-`make sim` exits non-zero on failure. The two logic mutations (relaxed compare,
-off-by-one base) were caught before and after; they are here to show the test
-still checks the datapath, not just the plumbing.
+`make sim` exits non-zero on failure. The remaining rows are logic bugs in the
+datapath; they show the test checks the decode itself, not just the plumbing.
