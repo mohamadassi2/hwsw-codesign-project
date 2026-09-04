@@ -40,8 +40,8 @@ Accelerator (about 7 min)
     function that changes in the software; users' code unchanged.
 12. Verification: golden vectors from the real block, testbench result:
     148,271/148,271, 0 errors, 148,272 cycles, 1.000 symbol/cycle.
-13. Cost: yosys figures, 2,646 cells (74 flops) + 19.4 kbit of tables;
-    65-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
+13. Cost: yosys figures, 2,768 cells (74 flops) + 19.4 kbit of tables;
+    67-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
     52k-cell version as the "why SRAM" argument.
 14. Expected gain: Amdahl with the numbers. ~1,600 CPU cycles per symbol vs
     1; accelerated part ~1.3 ms; whole run ~2.6x over optimized, ~5.7x over
@@ -66,4 +66,4 @@ mdp (about 4 min)
     - why not accelerate BWT: one dependent memory access per byte;
     - what happens on a corrupt stream: err, no length matched;
     - how the selector switch is handled: TSEL register or selector SRAM;
-    - clock and pipeline depth: 65 levels, can split the compare tree.
+    - clock and pipeline depth: 67 levels, can split the compare tree.

@@ -417,15 +417,15 @@ passes in every run.
 5.7 Performance / area / power trade-offs
     Area (docs/synthesis_yosys.txt, Yosys 0.68, generic 2-input gates, the
     tables kept as memories):
-        2,646 cells: 74 flip-flops, ~2,570 gates (668 AND, 619 NAND, 449 MUX,
-        420 ORNOT, 130 NOR, ...), plus three memories totalling ~19.4 kbit
+        2,768 cells: 74 flip-flops, 3 memories, ~2,691 gates (767 AND, 635 NAND, 453 MUX, 390 ORNOT, 118 NOR, 93 ANDNOT, 85 OR, 56 XNOR, 30 XOR, 62 NOT), plus three memories totalling ~19.4 kbit
         (limit 2.6 kbit, base 2.8 kbit, symbols 13.9 kbit).
     That is a very small block - the logic is a 64-bit barrel shifter, twenty
     21-bit comparators, a 20-to-5 priority encoder and one 22-bit adder. If
     the tables are built from flip-flops instead of SRAM the design grows to
-    ~52k cells, almost all of it table storage and read muxes, which is why
-    the SRAM version is the one to build.
-    Frequency: the longest combinational path is 65 gate levels
+    52,952 cells (the second run in docs/synthesis_yosys.txt), nineteen times
+    the area, almost all of it table storage and read muxes, which is why the
+    SRAM version is the one to build.
+    Frequency: the longest combinational path is 67 gate levels
     (bit buffer -> compare -> priority encode -> barrel shift). On an FPGA
     that is roughly 15-20 LUT levels, ~200 MHz; on a 28 nm ASIC ~400 MHz or
     more. The compare tree can be cut in two pipeline stages for ~50 extra

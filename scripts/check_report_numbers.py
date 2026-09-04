@@ -146,10 +146,11 @@ else:
 syn = os.path.join(ROOT, "docs", "synthesis_yosys.txt")
 if os.path.exists(syn):
     s = open(syn).read()
-    txt_n = nums(txt)          # commas stripped, so "2,646 cells" matches "2646"
-    for tok in ("2646", "19.4", "65"):
-        check(f"synthesis figure {tok} is in the report", tok in txt_n,
-              "quoted in docs/synthesis_yosys.txt but not in report_pyflate.txt")
+    txt_n = nums(txt)
+    _cells = re.findall(r"^(\d+) cells$", s, re.M); _d = re.search(r"length=(\d+)", s); _ff = re.search(r"^(\d+) flip-flops", s, re.M)
+    for label, tok in (("cells", _cells[0] if _cells else None), ("flattened cells", _cells[1] if len(_cells) > 1 else None),
+                       ("depth", _d.group(1) if _d else None), ("flip-flops", _ff.group(1) if _ff else None), ("kbit", "19.4")):
+        check(f"synthesis {label} ({tok}) quoted in the report", tok is not None and tok in txt_n, "from docs/synthesis_yosys.txt")
 
 # ---------------------------------------------------------------- report
 print(f"PASS {len(OK)}   FAIL {len(FAIL)}\n")

@@ -99,12 +99,13 @@ def main():
     want("symbols/clock", SYM / CYC, "{:.3f}")      # 1.000
     want("bits/symbol", BITS / SYM, "{:.2f}")
     syn = open(f"{ROOT}/docs/synthesis_yosys.txt").read()
-    cells = int(re.search(r"(\d+) cells", syn).group(1))
-    want("yosys cells", cells, "{:,}")
+    allcells = [int(x) for x in re.findall(r"^(\d+) cells$", syn, re.M)]
+    want("yosys cells", allcells[0], "{:,}")
+    want("flip-flops", int(re.search(r"^(\d+) flip-flops", syn, re.M).group(1)), "{:d}")
     levels = int(re.search(r"length=(\d+)", syn).group(1))
     want("gate levels", levels, "{:d}")
     want("table bits (kbit)", 19.4, "{:.1f}")
-    want("flattened variant cells", 51592, "{:,}")
+    want("flattened variant cells", allcells[1], "{:,}")
     decode_ms = CYC / 200e6 * 1e3
     want("decode at 200 MHz (ms)", decode_ms, "{:.2f}")
 
