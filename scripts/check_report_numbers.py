@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""Check every derived number in the reports against the measured data.
+
+Two kinds of check:
+
+  measured   a figure quoted in a report must appear in results/ (the JSON the
+             pyperf runs wrote, or the perf stat files)
+  derived    a figure a report computes from other figures must actually
+             recompute: speedups, percentages, the Amdahl estimate, the
+             accelerator's cycle counts
+
+Run it after filling the reports:  python3 scripts/check_report_numbers.py
+Exit status is non-zero if anything fails, so it can gate a commit.
+"""
+import json, os, re, statistics, sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FAIL = []
+OK = []
+
+
+def check(name, cond, detail=""):
+    (OK if cond else FAIL).append(f"{name}{('  ' + detail) if detail else ''}")
+
+
+def mean_of(path):
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        d = json.load(f)
+    vals = []
+    for b in d.get("benchmarks", []):
+        for run in b.get("runs", []):
+            vals.extend(run.get("values", []))
+    return statistics.mean(vals) if vals else None
+
+
+def report_text(b):
+    p = os.path.join(ROOT, f"report_{b}.txt")
+    return open(p).read() if os.path.exists(p) else ""
+
+
+def nums(text):
+    """Every number in the text, normalized (commas stripped)."""
+    return set(m.group(0).replace(",", "") for m in re.finditer(r"\d[\d,]*(?:\.\d+)?", text))
+
+
+# ---------------------------------------------------------------- measured
+for b in ("pyflate", "mdp"):
+    d = os.path.join(ROOT, "results", b)
+    base, opt = mean_of(f"{d}/{b}_base.json"), mean_of(f"{d}/{b}_opt.json")
+    txt = report_text(b)
+    if base is None or opt is None:
+        check(f"{b}: results present", False, "no results/*.json yet - run script_%s.sh" % b)
+        continue
+    sp = base / opt
+    pct = 100.0 * (1 - opt / base)
+    check(f"{b}: speedup > 1", sp > 1, f"{sp:.2f}x")
+    check(f"{b}: clears the 7% bar", pct >= 7, f"{pct:.1f}% faster")
+    # the report must quote the speedup it measured, to 2 decimals or 1
+    quoted = nums(txt)
+    want = {f"{sp:.2f}", f"{sp:.1f}"}
+    check(f"{b}: report quotes the measured speedup", bool(want & quoted),
+          f"measured {sp:.2f}x; report has none of {sorted(want)}")
+    wantpct = {f"{pct:.1f}", f"{pct:.0f}"}
+    check(f"{b}: report quotes the measured percentage", bool(wantpct & quoted),
+          f"measured {pct:.1f}%")
+    check(f"{b}: no TODO-VM left", "TODO-VM" not in txt,
+          f"{txt.count('TODO-VM')} placeholders remain")
+
+# ---------------------------------------------------------------- derived: accelerator
+SYMBOLS, CYCLES = 148271, 148275
+txt = report_text("pyflate")
+check("hw: symbols/cycle claim", abs(SYMBOLS / CYCLES - 1.0) < 0.001,
+      f"{SYMBOLS/CYCLES:.4f}")
+check("hw: report states both symbol and cycle counts",
+      "148,271" in txt and "148,275" in txt)
+for f, mhz in (("0.74", 200), ("0.37", 400)):
+    got = CYCLES / (mhz * 1e6) * 1e3
+    check(f"hw: {mhz} MHz decode time", abs(got - float(f)) < 0.01, f"{got:.3f} ms vs {f}")
+BITS = 531571
+check("hw: average bits per symbol", abs(BITS / SYMBOLS - 3.59) < 0.01,
+      f"{BITS/SYMBOLS:.3f}")
+
+# ---------------------------------------------------------------- derived: Amdahl
+m = re.search(r"Take the optimized run [^,]*, ([\d.]+) ms, of which the\s+"
+              r"Huffman-and-bit-extraction part is ~(\d+)% = ~([\d.]+) ms", txt)
+if m:
+    total, frac, part = float(m.group(1)), int(m.group(2)), float(m.group(3))
+    check("amdahl: the stated fraction matches the stated milliseconds",
+          abs(total * frac / 100 - part) < max(2.0, 0.03 * part),
+          f"{total} ms x {frac}% = {total*frac/100:.1f} ms, report says {part}")
+    m2 = re.search(r"([\d.]+) - ([\d.]+) \+ ([\d.]+)\s+=\s+~?([\d.]+) ms", txt)
+    if m2:
+        a, bb, c, res = (float(x) for x in m2.groups())
+        check("amdahl: the subtraction is right", abs((a - bb + c) - res) < 1.5,
+              f"{a} - {bb} + {c} = {a-bb+c:.1f}, report says {res}")
+        m3 = re.search(r"~([\d.]+)x over the optimized software", txt)
+        if m3:
+            check("amdahl: speedup over optimized software",
+                  abs(a / res - float(m3.group(1))) < 0.2,
+                  f"{a}/{res} = {a/res:.2f}x, report says {m3.group(1)}x")
+else:
+    check("amdahl: paragraph is present and parseable", False,
+          "could not find the estimate paragraph in report_pyflate.txt")
+
+# ---------------------------------------------------------------- synthesis
+syn = os.path.join(ROOT, "docs", "synthesis_yosys.txt")
+if os.path.exists(syn):
+    s = open(syn).read()
+    txt_n = nums(txt)          # commas stripped, so "2,646 cells" matches "2646"
+    for tok in ("2646", "19.4", "65"):
+        check(f"synthesis figure {tok} is in the report", tok in txt_n,
+              "quoted in docs/synthesis_yosys.txt but not in report_pyflate.txt")
+
+# ---------------------------------------------------------------- report
+print(f"PASS {len(OK)}   FAIL {len(FAIL)}\n")
+for line in OK:
+    print("  pass  " + line)
+if FAIL:
+    print()
+    for line in FAIL:
+        print("  FAIL  " + line)
+sys.exit(1 if FAIL else 0)
