@@ -342,6 +342,14 @@ passes in every run.
         148,271 / 148,271 symbols correct, 0 errors
         148,272 cycles  ->  1.000 symbols per cycle
         531,571 bits consumed, 3.59 bits per symbol on average
+    The same testbench also passes inside the course VM, with the Icarus
+    Verilog 11.0 that Ubuntu 22.04 packages (results/rtl_sim_guest.log:
+    148,271 symbols, 148,272 cycles, 0 errors). Getting it to run there took
+    three changes to the testbench and none to the RTL - that simulator
+    rejects a string as $fgets's target, and aborts internally on an always @*
+    block that reads a large array with a variable index and on a ?: over int
+    variables in a continuous assignment - so the stimulus is written as plain
+    Verilog-2001 processes with explicit sensitivity lists.
     The decoder therefore reproduces the software's decode of the whole
     benchmark block, symbol for symbol. There are no stall cycles in that
     figure - 148,271 decodes plus one pipeline-drain cycle - because the bit

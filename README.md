@@ -39,7 +39,8 @@ hw/Makefile                          `make sim`, `make vectors`
 docs/hw_sw_interface.md              register map, data flow, the one software change
 docs/huffman_accel_block_diagram.svg block diagram
 docs/synthesis_yosys.txt             generic synthesis figures (cells, flops, memories, longest path)
-results/                             flame graphs, perf reports, pyperf JSON and comparison tables
+results/                             flame graphs, perf reports, pyperf JSON and comparison tables,
+                                     and rtl_sim_guest.log: the accelerator testbench run inside the course VM
 ```
 
 ## Reproducing the measurements (course VM)

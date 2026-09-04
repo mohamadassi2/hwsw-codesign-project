@@ -25,7 +25,7 @@ X on `sym` or `len` is counted as an error, a timeout is a failure, and
 `make sim` exits non-zero on failure. The remaining rows are logic bugs in the
 datapath; they show the test checks the decode itself, not just the plumbing.
 
-Re-checked after the testbench was made to run on Icarus Verilog 11 (packed
-line buffer for $fgets, plain always blocks): the control still passes and
-the first two mutations are still caught with the same outcomes (148,271
-errors; timeout). The RTL was not touched by that change.
+Re-run in full on the shipped testbench after it was reworked to run on Icarus
+Verilog 11 (packed line buffer for $fgets, plain always blocks, explicit
+sensitivity lists for the stimulus): control passes, all six mutations are
+still killed with the same outcomes. The RTL was not touched by those changes.

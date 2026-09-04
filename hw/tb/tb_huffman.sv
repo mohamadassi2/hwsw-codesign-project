@@ -136,7 +136,7 @@ module tb_huffman;
         $fclose(fd);
         if (i != nsym) begin $display("expected.txt has %0d lines, meta says %0d", i, nsym); nsym = i; end
         // compressed bytes -> 32-bit words, starting at bit `skip_bits`
-        $readmemh("tb/vectors/stream.hex", bytes);
+        $readmemh("tb/vectors/stream.hex", bytes, 0, nbytes - 1);   // exactly the bytes the file holds
         nwords = ((nbytes * 8 - skip_bits) + 31) / 32;
         for (w = 0; w < nwords; w++) words[w] = 32'd0;
         for (i = skip_bits; i < nbytes * 8; i++) begin

@@ -206,7 +206,8 @@ programs the tables, streams the bytes and checks each output.</p>
 <pre>148,271 / 148,271 symbols correct
         <b>0 errors</b>
   148,272 cycles  &rarr;  1.000 symbol/clock
-  531,571 bits    &rarr;  3.59 bits/symbol</pre></div>
+  531,571 bits    &rarr;  3.59 bits/symbol</pre>
+<p class="lede">Same result inside the course VM, with its packaged Icarus Verilog 11.0 (results/rtl_sim_guest.log).</p></div>
 <div style="display:flex;flex-direction:column;gap:12px">
 <p><strong>The testbench used to pass on a broken decoder.</strong> One emitting nothing but
 <code>X</code> reported zero errors, because <code>!=</code> against an undefined value is itself

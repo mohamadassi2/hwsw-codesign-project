@@ -1,0 +1,10 @@
+iverilog -g2012 -o build/tb rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv tb/tb_huffman.sv
+../venv/bin/python gen_vectors.py
+blocks covered: 1; tables: 6; symbols: 148271; stream bytes: 66455; first symbol at bit 8844 (byte 1105 +4); code lengths used: 2..15; table rows: 120, symbol entries: 882
+WARNING: tb/tb_huffman.sv:139: $readmemh(tb/vectors/stream.hex): Not enough words in the file for the requested range [0:79999].
+tables programmed; 148271 symbols, 16614 input words (skip 4 bits)
+----------------------------------------------------------------
+decoded 148271 symbols in 148272 cycles (1.000 symbols/cycle), 0 errors
+total bits consumed: 531571  (avg 3.59 bits/symbol)
+PASS
+RTL_MAKE_EXIT=0
