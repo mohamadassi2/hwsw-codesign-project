@@ -75,6 +75,7 @@ module huffman_decoder #(
     logic [MAXBITS:1] hit;
     logic [CW-1:0]    code [MAXBITS+1];
     always_comb begin
+        code[0] = '0;                                   // index used only when nothing matched
         for (int L = 1; L <= MAXBITS; L++) begin
             code[L] = CW'(peek >> (MAXBITS - L));         // top L bits
             hit[L]  = (code[L] < limit_r[tsel][L]);

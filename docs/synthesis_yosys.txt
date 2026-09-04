@@ -1,0 +1,26 @@
+# Generic synthesis of huffman_accel_top with Yosys 0.68 (tables kept as memories)
+# yosys: read_verilog -sv; hierarchy; proc; flatten; opt; memory -nomap; techmap; abc -g <2-input gates + MUX>; stat; ltp
+
+=== huffman_accel_top ===
+     2646 cells
+       92   $_ANDNOT_
+      668   $_AND_
+       74   $_DFF_PN0_
+      449   $_MUX_
+      619   $_NAND_
+      130   $_NOR_
+       35   $_NOT_
+      420   $_ORNOT_
+       57   $_OR_
+       51   $_XNOR_
+       46   $_XOR_
+        3   $mem_v2
+Longest topological path in huffman_accel_top (length=65):
+
+# Table storage (analytical, from the RTL parameters NTAB=6, MAXBITS=20, NSYM=258):
+#   limit_r  6 x 21 x 21 bit = 2,646 bit
+#   base_r   6 x 21 x 22 bit = 2,772 bit
+#   symtab   6 x 258 x 9 bit = 13,932 bit
+#   total  ~19.4 kbit  (~2.4 KB) of SRAM
+
+# For comparison, the same design with the tables flattened into flip-flops (first synth run):

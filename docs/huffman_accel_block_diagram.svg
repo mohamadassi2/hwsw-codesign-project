@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 640" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#222"/></marker>
+    <marker id="b" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#0a5"/></marker>
+  </defs>
+  <rect width="1180" height="640" fill="#fff"/>
+  <text x="590" y="28" text-anchor="middle" font-size="18" font-weight="bold">Canonical-Huffman decode accelerator for pyflate (bzip2 path)</text>
+  <text x="590" y="48" text-anchor="middle" fill="#555">one symbol per clock  ·  tables programmed by software once per block  ·  MTF / BWT / RLE stay in software</text>
+
+  <!-- HOST side -->
+  <rect x="20" y="90" width="230" height="470" rx="8" fill="#f3f6fb" stroke="#8aa"/>
+  <text x="135" y="112" text-anchor="middle" font-weight="bold">Host CPU  —  pyflate (Python)</text>
+  <rect x="38" y="128" width="194" height="70" rx="5" fill="#fff" stroke="#556"/>
+  <text x="135" y="150" text-anchor="middle">decode_huffman_block()</text>
+  <text x="135" y="168" text-anchor="middle" fill="#444">header · selectors · code lengths</text>
+  <text x="135" y="186" text-anchor="middle" fill="#444">→ limit[L], base[L], syms[]</text>
+  <rect x="38" y="215" width="194" height="54" rx="5" fill="#fff" stroke="#556"/>
+  <text x="135" y="237" text-anchor="middle">MMIO registers</text>
+  <text x="135" y="255" text-anchor="middle" fill="#444">CTRL · STATUS · TSEL · TBL_*</text>
+  <rect x="38" y="286" width="194" height="54" rx="5" fill="#fff" stroke="#556"/>
+  <text x="135" y="308" text-anchor="middle">DMA engine</text>
+  <text x="135" y="326" text-anchor="middle" fill="#444">IN: compressed bytes · OUT: symbols</text>
+  <rect x="38" y="358" width="194" height="88" rx="5" fill="#fff" stroke="#556"/>
+  <text x="135" y="380" text-anchor="middle">after decode (unchanged code)</text>
+  <text x="135" y="398" text-anchor="middle" fill="#444">move-to-front · RUNA/RUNB</text>
+  <text x="135" y="416" text-anchor="middle" fill="#444">inverse BWT (pointer chase)</text>
+  <text x="135" y="434" text-anchor="middle" fill="#444">final RLE → output bytes</text>
+  <text x="135" y="480" text-anchor="middle" fill="#666" font-size="12">PCIe / AXI bus</text>
+  <line x1="250" y1="130" x2="250" y2="540" stroke="#8aa" stroke-dasharray="4 3"/>
+
+  <!-- ACCELERATOR box -->
+  <rect x="290" y="90" width="870" height="470" rx="8" fill="#fbfaf3" stroke="#a98"/>
+  <text x="725" y="112" text-anchor="middle" font-weight="bold">huffman_accel_top  (hw/rtl)</text>
+
+  <!-- table banks -->
+  <rect x="310" y="130" width="330" height="96" rx="5" fill="#fff" stroke="#a64" stroke-width="1.5"/>
+  <text x="475" y="150" text-anchor="middle" font-weight="bold">Table banks ×6  (bzip2 selectors)</text>
+  <text x="475" y="170" text-anchor="middle">limit[L] = first[L]+count[L]   (21 b × 20 rows)</text>
+  <text x="475" y="188" text-anchor="middle">base[L]  = index[L]−first[L]   (22 b × 20 rows)</text>
+  <text x="475" y="206" text-anchor="middle">symbol SRAM  258 × 9 b</text>
+  <text x="475" y="222" text-anchor="middle" fill="#666" font-size="11">≈ 0.6 kB rows + 1.7 kB symbols per bank</text>
+
+  <!-- tsel -->
+  <rect x="670" y="130" width="200" height="60" rx="5" fill="#fff" stroke="#556"/>
+  <text x="770" y="152" text-anchor="middle">TSEL register  /  selector</text>
+  <text x="770" y="170" text-anchor="middle">counter (advance every 50 syms)</text>
+  <text x="770" y="184" text-anchor="middle" fill="#666" font-size="11">tsel[2:0]</text>
+
+  <!-- pipeline row -->
+  <!-- bit reader -->
+  <rect x="310" y="270" width="190" height="120" rx="5" fill="#e8f1ff" stroke="#358" stroke-width="1.5"/>
+  <text x="405" y="292" text-anchor="middle" font-weight="bold">bitreader</text>
+  <text x="405" y="312" text-anchor="middle">64-bit buffer, MSB first</text>
+  <text x="405" y="330" text-anchor="middle">refill 32 b / cycle</text>
+  <text x="405" y="348" text-anchor="middle">barrel shift by len</text>
+  <text x="405" y="366" text-anchor="middle">zero-pad after flush</text>
+  <text x="405" y="384" text-anchor="middle" fill="#666" font-size="11">peek[19:0]  ·  peek_valid</text>
+
+  <!-- compare -->
+  <rect x="540" y="270" width="180" height="120" rx="5" fill="#e8f1ff" stroke="#358" stroke-width="1.5"/>
+  <text x="630" y="292" text-anchor="middle" font-weight="bold">20 parallel compares</text>
+  <text x="630" y="314" text-anchor="middle">code_L = peek ≫ (20−L)</text>
+  <text x="630" y="332" text-anchor="middle">hit_L = code_L &lt; limit[L]</text>
+  <text x="630" y="352" text-anchor="middle">L = 1 … 20, all at once</text>
+  <text x="630" y="380" text-anchor="middle" fill="#666" font-size="11">hit[20:1]</text>
+
+  <!-- priority -->
+  <rect x="760" y="270" width="150" height="120" rx="5" fill="#e8f1ff" stroke="#358" stroke-width="1.5"/>
+  <text x="835" y="292" text-anchor="middle" font-weight="bold">priority encoder</text>
+  <text x="835" y="314" text-anchor="middle">shortest L with hit</text>
+  <text x="835" y="334" text-anchor="middle">→ len[4:0]</text>
+  <text x="835" y="354" text-anchor="middle">→ found / err</text>
+  <text x="835" y="380" text-anchor="middle" fill="#666" font-size="11">combinational</text>
+
+  <!-- index + sram -->
+  <rect x="950" y="270" width="190" height="120" rx="5" fill="#e8f1ff" stroke="#358" stroke-width="1.5"/>
+  <text x="1045" y="292" text-anchor="middle" font-weight="bold">idx = base[L] + code_L</text>
+  <text x="1045" y="314" text-anchor="middle">22-bit adder</text>
+  <text x="1045" y="336" text-anchor="middle">symbol SRAM read</text>
+  <text x="1045" y="354" text-anchor="middle">(registered, 1 cycle)</text>
+  <text x="1045" y="380" text-anchor="middle" fill="#666" font-size="11">sym[8:0]  ·  sym_valid</text>
+
+  <!-- arrows in pipeline -->
+  <line x1="500" y1="330" x2="538" y2="330" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="720" y1="330" x2="758" y2="330" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="910" y1="330" x2="948" y2="330" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+  <!-- len feedback -->
+  <path d="M835,390 L835,420 L405,420 L405,392" fill="none" stroke="#0a5" stroke-width="1.5" marker-end="url(#b)"/>
+  <text x="620" y="436" text-anchor="middle" fill="#0a5" font-size="12">consume = len  (same cycle → next peek next cycle)</text>
+  <!-- tables to compare / sram -->
+  <line x1="630" y1="226" x2="630" y2="268" stroke="#a64" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="655" y="250" fill="#a64" font-size="11">limit[tsel][1..20]</text>
+  <path d="M640,178 L1045,178 L1045,268" fill="none" stroke="#a64" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="900" y="212" fill="#a64" font-size="11">base[tsel][L], symtab[tsel][idx]</text>
+  <!-- tsel -->
+  <line x1="770" y1="190" x2="770" y2="268" stroke="#556" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#a)"/>
+
+  <!-- host <-> accel arrows -->
+  <path d="M232,158 L290,158 L290,150 L308,150" fill="none" stroke="#a64" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="262" y="146" fill="#a64" font-size="11">tables</text>
+  <path d="M232,242 L280,242 L280,160 L770,160 L770,128" fill="none" stroke="#556" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#a)"/>
+  <path d="M232,300 L270,300 L270,330 L308,330" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="262" y="292" fill="#222" font-size="11">bytes</text>
+  <!-- symbols out -->
+  <path d="M1045,390 L1045,470 L300,470 L300,402 L232,402" fill="none" stroke="#222" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="680" y="488" text-anchor="middle" font-size="12">symbol stream (uint16) → DMA → host buffer, 148,271 symbols for the benchmark's block</text>
+
+  <!-- footer numbers -->
+  <rect x="310" y="505" width="830" height="42" rx="5" fill="#fff" stroke="#bbb"/>
+  <text x="725" y="522" text-anchor="middle" fill="#333">Measured in simulation (hw/tb, Icarus Verilog): 148,271 / 148,271 symbols correct · 148,275 cycles · 1.00 symbol/cycle · 3.6 bits/symbol average</text>
+  <text x="725" y="540" text-anchor="middle" fill="#333">Critical path per cycle: peek → 21-bit compare → 20:5 priority encode → barrel shift.   Symbol path adds one registered SRAM read.</text>
+  <text x="590" y="600" text-anchor="middle" fill="#666" font-size="12">Blue = decode pipeline (huffman_decoder.sv + bitreader.sv) · Brown = per-block tables written by software · Grey = control</text>
+</svg>
