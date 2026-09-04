@@ -35,10 +35,10 @@
   <!-- table banks -->
   <rect x="310" y="130" width="330" height="96" rx="5" fill="#fff" stroke="#a64" stroke-width="1.5"/>
   <text x="475" y="150" text-anchor="middle" font-weight="bold">Table banks ×6  (bzip2 selectors)</text>
-  <text x="475" y="170" text-anchor="middle">limit[L] = first[L]+count[L]   (21 b × 20 rows)</text>
-  <text x="475" y="188" text-anchor="middle">base[L]  = index[L]−first[L]   (22 b × 20 rows)</text>
+  <text x="475" y="170" text-anchor="middle">limit[L] = first[L]+count[L]   (21 b × 21 rows)</text>
+  <text x="475" y="188" text-anchor="middle">base[L]  = index[L]−first[L]   (22 b × 21 rows)</text>
   <text x="475" y="206" text-anchor="middle">symbol SRAM  258 × 9 b</text>
-  <text x="475" y="222" text-anchor="middle" fill="#666" font-size="11">≈ 0.6 kB rows + 1.7 kB symbols per bank</text>
+  <text x="475" y="222" text-anchor="middle" fill="#666" font-size="11">≈ 0.6 kB rows + 1.7 kB symbols across the six banks</text>
 
   <!-- tsel -->
   <rect x="670" y="130" width="200" height="60" rx="5" fill="#fff" stroke="#556"/>
@@ -107,7 +107,7 @@
 
   <!-- footer numbers -->
   <rect x="310" y="505" width="830" height="42" rx="5" fill="#fff" stroke="#bbb"/>
-  <text x="725" y="522" text-anchor="middle" fill="#333">Measured in simulation (hw/tb, Icarus Verilog): 148,271 / 148,271 symbols correct · 148,275 cycles · 1.00 symbol/cycle · 3.6 bits/symbol average</text>
+  <text x="725" y="522" text-anchor="middle" fill="#333">Measured in simulation (hw/tb, Icarus Verilog): 148,271 / 148,271 symbols correct · 148,272 cycles · 1.00 symbol/cycle · 3.6 bits/symbol average</text>
   <text x="725" y="540" text-anchor="middle" fill="#333">Critical path per cycle: peek → 21-bit compare → 20:5 priority encode → barrel shift.   Symbol path adds one registered SRAM read.</text>
   <text x="590" y="600" text-anchor="middle" fill="#666" font-size="12">Blue = decode pipeline (huffman_decoder.sv + bitreader.sv) · Brown = per-block tables written by software · Grey = control</text>
 </svg>

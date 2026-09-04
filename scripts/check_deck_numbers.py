@@ -125,6 +125,12 @@ def main():
                           ("output bytes", "399,360")):
         (oks if needle.replace(",", "") in present or needle in txt else fails).append(label)
 
+    # ---- the block diagram is a graded deliverable; gate its figures too -------
+    dia = open(os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg"), encoding="utf-8").read()
+    for label, needle in (("diagram: symbols", f"{SYM:,}"), ("diagram: cycles", f"{CYC:,}"),
+                          ("diagram: symbols/cycle", "1.00")):
+        (oks if needle in dia else fails).append(f"{label} ({needle})")
+
     # ---- README headline table must match too ---------------------------------
     rd = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()
     for label, val, fmt in (("README pyflate speedup", pb / po, "{:.2f}"),
