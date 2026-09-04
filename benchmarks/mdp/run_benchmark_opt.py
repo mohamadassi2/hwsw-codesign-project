@@ -41,13 +41,16 @@ def getDamages(L, A, D, B, stab, te):
     return [(x * z) // 255 for z in range(217, 256)]
 
 
-def getCritDist(L, p, A1, A2, D1, D2, B, stab, te, _cache={}):
+_CRITDIST_CACHE = {}
+
+
+def getCritDist(L, p, A1, A2, D1, D2, B, stab, te):
     # The same (level, crit-probability, stats, power) tuple is requested
     # thousands of times per evaluation; the Fraction arithmetic below is the
     # expensive part, so memoize the finished distribution.  Arithmetic is
     # unchanged (still exact Fractions), only repeated.
     key = (L, p, A1, A2, D1, D2, B, stab, te)
-    hit = _cache.get(key)
+    hit = _CRITDIST_CACHE.get(key)
     if hit is not None:
         return hit
     p = min(p, Fraction(1))
@@ -59,7 +62,10 @@ def getCritDist(L, p, A1, A2, D1, D2, B, stab, te, _cache={}):
         mult /= len(vals)
         for x in vals:
             dist[x] += mult
-    _cache[key] = dist
+    # store a plain dict: the callers only iterate .items(), and a defaultdict
+    # would silently grow if any future caller read a missing key
+    dist = dict(dist)
+    _CRITDIST_CACHE[key] = dist
     return dist
 
 
@@ -266,12 +272,17 @@ class Battle(object):
         vmax = [1.0] * n              # defaultdict(lambda: 1.0) default
         fz = [False] * n
         for sp, v in dmin.items():
-            vmin[index[sp]] = v
+            if sp in index:
+                vmin[index[sp]] = v
         for sp, v in dmax.items():
-            vmax[index[sp]] = v
+            if sp in index:
+                vmax[index[sp]] = v
         for sp in frozen:
             if sp in index:
                 fz[index[sp]] = True
+        # succ_i/succ_p/choice are only filled for stateps, so the sweep walks
+        # `order` (= the stateps indices) and never range(n); any state that
+        # entered `index` merely as a successor has a value but no row.
         order = [index[sp] for sp in stateps]
         i0 = index[initial_statep]
 
