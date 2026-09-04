@@ -18,6 +18,7 @@ but ideally the problem would be found...
 
 import hashlib
 import os
+import re
 import struct
 
 import pyperf
@@ -25,25 +26,37 @@ import pyperf
 
 int2byte = struct.Struct(">B").pack
 
+# Precomputed bit masks: the original called _mask() (a method call + shift + sub)
+# 650k times per decode; a list index is one bytecode.
+MASKS = [(1 << i) - 1 for i in range(129)]
+# bzip2's final RLE stage: a run of 4 identical bytes followed by a repeat count.
+_RLE4 = re.compile(rb'(.)\1\1\1(.)', re.S)
+
 
 class BitfieldBase(object):
 
     def __init__(self, x):
         if isinstance(x, BitfieldBase):
             self.f = x.f
+            self.data = x.data
+            self.pos = x.pos
             self.bits = x.bits
             self.bitfield = x.bitfield
-            self.count = x.bitfield
+            self.count = x.count
         else:
             self.f = x
+            # One read() for the whole stream instead of one f.read(1) per byte
+            # (the original issued ~67k tiny reads through the io stack).
+            self.data = x.read()
+            self.pos = 0
             self.bits = 0
             self.bitfield = 0x0
             self.count = 0
 
     def _read(self, n):
-        s = self.f.read(n)
-        if not s:
-            raise "Length Error"
+        pos = self.pos
+        s = self.data[pos:pos + n]
+        self.pos = pos + len(s)
         self.count += len(s)
         return s
 
@@ -52,7 +65,7 @@ class BitfieldBase(object):
             self._more()
 
     def _mask(self, n):
-        return (1 << n) - 1
+        return MASKS[n]
 
     def toskip(self):
         return self.bits & 0x7
@@ -64,7 +77,7 @@ class BitfieldBase(object):
         while n >= self.bits and n > 7:
             n -= self.bits
             self.bits = 0
-            n -= len(self.f._read(n >> 3)) << 3
+            n -= len(self._read(n >> 3)) << 3
         if n:
             self.readbits(n)
         # No return value
@@ -83,19 +96,22 @@ class BitfieldBase(object):
 class Bitfield(BitfieldBase):
 
     def _more(self):
-        c = self._read(1)
-        self.bitfield += ord(c) << self.bits
-        self.bits += 8
+        c = self._read(8)
+        if not c:                      # past the end: pad with zero bits
+            self.bits += 8
+            return
+        self.bitfield |= int.from_bytes(c, 'little') << self.bits
+        self.bits += len(c) << 3
 
     def snoopbits(self, n=8):
         if n > self.bits:
             self.needbits(n)
-        return self.bitfield & self._mask(n)
+        return self.bitfield & MASKS[n]
 
     def readbits(self, n=8):
         if n > self.bits:
             self.needbits(n)
-        r = self.bitfield & self._mask(n)
+        r = self.bitfield & MASKS[n]
         self.bits -= n
         self.bitfield >>= n
         return r
@@ -104,22 +120,27 @@ class Bitfield(BitfieldBase):
 class RBitfield(BitfieldBase):
 
     def _more(self):
-        c = self._read(1)
-        self.bitfield <<= 8
-        self.bitfield += ord(c)
-        self.bits += 8
+        c = self._read(8)
+        if not c:                      # past the end: pad with zero bits
+            self.bitfield <<= 8
+            self.bits += 8
+            return
+        nb = len(c) << 3
+        self.bitfield = (self.bitfield << nb) | int.from_bytes(c, 'big')
+        self.bits += nb
 
     def snoopbits(self, n=8):
         if n > self.bits:
             self.needbits(n)
-        return (self.bitfield >> (self.bits - n)) & self._mask(n)
+        return (self.bitfield >> (self.bits - n)) & MASKS[n]
 
     def readbits(self, n=8):
         if n > self.bits:
             self.needbits(n)
-        r = (self.bitfield >> (self.bits - n)) & self._mask(n)
-        self.bits -= n
-        self.bitfield &= ~(self._mask(n) << self.bits)
+        bits = self.bits - n
+        r = (self.bitfield >> bits) & MASKS[n]
+        self.bits = bits
+        self.bitfield &= MASKS[bits]
         return r
 
 
@@ -214,6 +235,35 @@ class HuffmanTable(object):
                 self.min_bits = x.bits
             if x.bits > self.max_bits:
                 self.max_bits = x.bits
+        self._build_canonical()
+
+    def _build_canonical(self):
+        """Canonical-Huffman decode tables (same idea as zlib's puff.c).
+
+        self.table is sorted by (bits, code) and populate_huffman_symbols()
+        hands out codes in exactly that order, so for every length L the
+        codes are the consecutive range [first[L], first[L]+count[L]).  That
+        lets a symbol be decoded by peeking max_bits once and testing one
+        comparison per code length, instead of the original's linear walk
+        over the whole table with a method call per entry.
+        """
+        mb = self.max_bits
+        count = [0] * (mb + 2)
+        for x in self.table:
+            count[x.bits] += 1
+        first = 0
+        index = 0
+        limit = [0] * (mb + 2)     # first[L] + count[L]
+        base = [0] * (mb + 2)      # index[L] - first[L]
+        for L in range(1, mb + 1):
+            limit[L] = first + count[L]
+            base[L] = index - first
+            index += count[L]
+            first = (first + count[L]) << 1
+        self._limit = limit
+        self._base = base
+        self._syms = [x.code for x in self.table]
+        self._ready = True
 
     def _find_symbol(self, bits, symbol, table):
         for h in table:
@@ -222,15 +272,18 @@ class HuffmanTable(object):
         return -1
 
     def find_next_symbol(self, field, reversed=True):
-        cached_length = -1
-        cached = None
-        for x in self.table:
-            if cached_length != x.bits:
-                cached = field.snoopbits(x.bits)
-                cached_length = x.bits
-            if (reversed and x.reverse_symbol == cached) or (not reversed and x.symbol == cached):
-                field.readbits(x.bits)
-                return x.code
+        mb = self.max_bits
+        v = field.snoopbits(mb)
+        if reversed:
+            # gzip stores codes bit-reversed in an LSB-first stream
+            v = reverse_bits(v, mb)
+        limit = self._limit
+        base = self._base
+        for L in range(self.min_bits, mb + 1):
+            code = v >> (mb - L)
+            if code < limit[L]:
+                field.readbits(L)
+                return self._syms[base[L] + code]
         raise Exception("unfound symbol, even after end of table @%r"
                         % field.tell())
 
@@ -286,7 +339,7 @@ def extra_length_bits(n):
 
 
 def move_to_front(l, c):
-    l[:] = l[c:c + 1] + l[0:c] + l[c + 1:]
+    l.insert(0, l.pop(c))
 
 
 def bwt_transform(L):
@@ -298,8 +351,9 @@ def bwt_transform(L):
 
     pointers = [-1] * len(L)
     for i, symbol in enumerate(L):
-        pointers[base[symbol]] = i
-        base[symbol] += 1
+        j = base[symbol]
+        pointers[j] = i
+        base[symbol] = j + 1
     return pointers
 
 
@@ -326,9 +380,11 @@ def bwt_reverse(L, end):
         # out where the off-by-one-ism is yet---that actually produced
         # the cyclic loop.
 
+        out = bytearray(len(L))
         for i in range(len(L)):
             end = T[end]
-            out.append(L[end])
+            out[i] = L[end]
+        return bytes(out)
 
     return bytes(out)
 
@@ -413,17 +469,22 @@ def decode_huffman_block(b, out):
     # Main Huffman loop
     repeat = repeat_power = 0
     buffer = []
-    t = None
+    append = buffer.append
+    fav_pop = favourites.pop
+    fav_insert = favourites.insert
+    eob = symbols_in_use - 1
+    nsel = len(selectors_list)
+    find = None
     while True:
         decoded -= 1
         if decoded <= 0:
             decoded = 50  # Huffman table re-evaluate/switch length
-            if selector_pointer <= len(selectors_list):
-                t = tables[selectors_list[selector_pointer]]
+            if selector_pointer <= nsel:
+                find = tables[selectors_list[selector_pointer]].find_next_symbol
                 selector_pointer += 1
 
-        r = t.find_next_symbol(b, False)
-        if 0 <= r <= 1:
+        r = find(b, False)
+        if r <= 1:
             if repeat == 0:
                 repeat_power = 1
             repeat += repeat_power << r
@@ -433,26 +494,20 @@ def decode_huffman_block(b, out):
             # Remember kids: If there is only one repeated
             # real symbol, it is encoded with *zero* Huffman
             # bits and not output... so buffer[-1] doesn't work.
-            buffer.append(favourites[0] * repeat)
+            append(favourites[0] * repeat)
             repeat = 0
-        if r == symbols_in_use - 1:
+        if r == eob:
             break
         else:
-            o = favourites[r - 1]
-            move_to_front(favourites, r - 1)
-            buffer.append(o)
-            pass
+            o = fav_pop(r - 1)      # move-to-front, inlined
+            fav_insert(0, o)
+            append(o)
 
-    nt = nearly_there = bwt_reverse(b"".join(buffer), pointer)
-    i = 0
-    # Pointless/irritating run-length encoding step
-    while i < len(nearly_there):
-        if i < len(nearly_there) - 4 and nt[i] == nt[i + 1] == nt[i + 2] == nt[i + 3]:
-            out.append(nearly_there[i:i + 1] * (ord(nearly_there[i + 4:i + 5]) + 4))
-            i += 5
-        else:
-            out.append(nearly_there[i:i + 1])
-            i += 1
+    nearly_there = bwt_reverse(b"".join(buffer), pointer)
+    # Pointless/irritating run-length encoding step: a run of four equal bytes
+    # is followed by a count byte.  The regex walks left to right exactly like
+    # the original byte loop, but in C.
+    out.append(_RLE4.sub(lambda m: m.group(1) * (m.group(2)[0] + 4), nearly_there))
 
 # Sixteen bits of magic have been removed by the time we start decoding
 
