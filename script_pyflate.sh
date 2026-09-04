@@ -13,6 +13,9 @@ cd "$(dirname "$0")"
 B=pyflate
 OUT=results/$B; mkdir -p "$OUT"
 log(){ printf '\n=== %s  %s ===\n' "$(date +%T)" "$*"; }
+# Every command is traced into $OUT/trace.log, and a failing command names itself.
+exec 19>"$OUT/trace.log"; export BASH_XTRACEFD=19; set -x
+trap 'rc=$?; echo "FAILED at line $LINENO (exit $rc): $BASH_COMMAND" >&2; echo "FAILED at line $LINENO (exit $rc): $BASH_COMMAND" >&19' ERR
 
 # ---------------------------------------------------------------- 0. environment
 log "environment"
@@ -79,6 +82,24 @@ PY=venv/bin/python
 BASE=benchmarks/$B/run_benchmark.py         # byte-identical to upstream pyperformance
 OPT=benchmarks/$B/run_benchmark_opt.py
 
+# flame FOLDED SVG TITLE [flamegraph.pl options...]: render, but do not abort the run on empty data
+flame(){
+  local folded=$1 svg=$2 title=$3; shift 3
+  if [ -s "$folded" ] && perl FlameGraph/flamegraph.pl --title "$title" "$@" "$folded" > "$svg" 2>/dev/null; then
+    echo "flame graph: $svg ($(wc -l < "$folded") stacks)"
+  else
+    echo "flame graph: no stacks for $svg" ; rm -f "$svg"
+  fi
+}
+# perf_flame TAG TITLE: perf report + folded stacks + flame graph for $OUT/perf_TAG.data
+perf_flame(){
+  local tag=$1 title=$2
+  perf report -i "$OUT/perf_$tag.data" --stdio --no-children --sort dso,symbol 2>/dev/null > "$OUT/perf_top_$tag.txt" || true
+  perf script -i "$OUT/perf_$tag.data" 2>/dev/null | perl FlameGraph/stackcollapse-perf.pl > "$OUT/perf_$tag.folded" || true
+  echo "perf samples ($tag): $(grep -m1 -oE 'Samples: [0-9KMG.]+' "$OUT/perf_top_$tag.txt" 2>/dev/null || echo '?')"
+  flame "$OUT/perf_$tag.folded" "$OUT/flame_${B}_${tag}_perf.svg" "$title"
+}
+
 # ---------------------------------------------------------------- 1. baseline
 log "baseline through the pyperformance framework itself"
 $PY -m pyperformance run $PPVENV --bench $B -o "$OUT/${B}_pyperformance_baseline.json" 2>&1 | tail -3
@@ -96,13 +117,11 @@ log "perf record on the benchmark worker directly (cleaner attribution)"
 # (a --worker run prints its JSON to stdout, which we discard here; pyperf rejects -o in worker mode)
 perf record -q -F 999 -g -o "$OUT/perf_base.data" -- \
     $PY "$BASE" --worker --loops 4 -n 3 -w 1 >/dev/null
-perf report -i "$OUT/perf_base.data" --stdio --no-children --sort dso,symbol > "$OUT/perf_top_base.txt" 2>/dev/null
-perf script -i "$OUT/perf_base.data" 2>/dev/null | FlameGraph/stackcollapse-perf.pl > "$OUT/perf_base.folded"
-FlameGraph/flamegraph.pl --title "$B baseline: perf -F999 -g (KVM guest)" "$OUT/perf_base.folded" > "$OUT/flame_${B}_base_perf.svg"
+perf_flame base "$B baseline: perf -F999 -g (KVM guest)"
 log "py-spy (Python-level frames) on the baseline"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_base.folded" -- \
-    $PY "$BASE" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1
-FlameGraph/flamegraph.pl --title "$B baseline: Python frames (py-spy)" --colors python "$OUT/pyspy_base.folded" > "$OUT/flame_${B}_base_pyspy.svg"
+    $PY "$BASE" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1 || echo "py-spy failed on the baseline (see trace.log)"
+flame "$OUT/pyspy_base.folded" "$OUT/flame_${B}_base_pyspy.svg" "$B baseline: Python frames (py-spy)" --colors python
 
 # ---------------------------------------------------------------- 3. optimized
 log "optimized version, same pyperf runner"
@@ -110,12 +129,10 @@ $PY "$OPT" -o "$OUT/${B}_opt.json" 2>&1 | tail -2
 log "profile the optimized version the same way"
 perf record -q -F 999 -g -o "$OUT/perf_opt.data" -- \
     $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null
-perf report -i "$OUT/perf_opt.data" --stdio --no-children --sort dso,symbol > "$OUT/perf_top_opt.txt" 2>/dev/null
-perf script -i "$OUT/perf_opt.data" 2>/dev/null | FlameGraph/stackcollapse-perf.pl > "$OUT/perf_opt.folded"
-FlameGraph/flamegraph.pl --title "$B optimized: perf -F999 -g (KVM guest)" "$OUT/perf_opt.folded" > "$OUT/flame_${B}_opt_perf.svg"
+perf_flame opt "$B optimized: perf -F999 -g (KVM guest)"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_opt.folded" -- \
-    $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1
-FlameGraph/flamegraph.pl --title "$B optimized: Python frames (py-spy)" --colors python "$OUT/pyspy_opt.folded" > "$OUT/flame_${B}_opt_pyspy.svg"
+    $PY "$OPT" --worker --loops 4 -n 3 -w 1 >/dev/null 2>&1 || echo "py-spy failed on the optimized run (see trace.log)"
+flame "$OUT/pyspy_opt.folded" "$OUT/flame_${B}_opt_pyspy.svg" "$B optimized: Python frames (py-spy)" --colors python
 
 # ---------------------------------------------------------------- 4. compare + hardware counters
 log "before/after (pyperf compare_to)"
