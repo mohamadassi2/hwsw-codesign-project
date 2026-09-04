@@ -5,7 +5,7 @@ Mohamad Assi (212343594), Ido Sefi (208008698).
 
 Two benchmarks from the pyperformance suite, **pyflate** and **mdp**, profiled
 with `perf`/flame graphs, optimized in pure Python with byte-identical output,
-and — for pyflate — a hardware accelerator for the canonical-Huffman symbol
+and: for pyflate: a hardware accelerator for the canonical-Huffman symbol
 decoder, written in SystemVerilog and verified against the benchmark's real
 compressed block.
 
@@ -50,7 +50,7 @@ git clone <this repo> && cd <repo>
 
 Each script installs its own venv (pyperf, pyperformance, py-spy) and
 FlameGraph, sets the two `perf` sysctls the guest needs
-(`kptr_restrict=0`, `perf_event_paranoid=-1` — without them `perf report`
+(`kptr_restrict=0`, `perf_event_paranoid=-1`: without them `perf report`
 shows no kernel symbols and empty call graphs), then runs:
 
 1. the baseline through `pyperformance run --bench <b>` itself,
