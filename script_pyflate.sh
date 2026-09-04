@@ -115,25 +115,44 @@ flame(){
 # cpu-clock is a software event driven by an hrtimer and always works. Python
 # is built without frame pointers, so plain -g gives one-deep stacks; DWARF
 # unwinding gives the real call graph. Try the best option first and fall back.
-perf_rec(){
-  local tag=$1; shift; [ "$1" = "--" ] && shift
-  local data="$OUT/perf_$tag.data" n=0 opt
+# Which sampling event actually collects anything here? Probe ONCE against a
+# trivial command rather than re-running the benchmark for every candidate:
+# unwinding a full DWARF capture takes minutes on a single-vCPU guest, and
+# doing that five times is what made an earlier run take an hour.
+PERF_OPT=""
+perf_probe(){
+  local opt probe="$OUT/.probe.data"
   for opt in "-e cpu-clock -F 499 --call-graph dwarf,32768" \
              "-e cpu-clock -F 997 --call-graph dwarf,16384" \
              "-e cpu-clock -F 997 --call-graph fp" \
              "-e cpu-clock -F 997" \
              "-F 999 -g"; do
-    # shellcheck disable=SC2086  # opt is a deliberate word-split option list
-    perf record -q $opt -o "$data" -- "$@" >/dev/null 2>&1 || true
-    n=$(perf script -i "$data" 2>/dev/null | grep -c . || true)
-    if [ "${n:-0}" -gt 0 ]; then
-      echo "perf record ($tag): '$opt' -> $n script lines"
-      echo "$opt" > "$OUT/perf_${tag}.event"
-      return 0
+    # shellcheck disable=SC2086
+    perf record -q $opt -o "$probe" -- "$PY" -c 'x=0
+for i in range(3000000): x+=i' >/dev/null 2>&1 || true
+    if [ -s "$probe" ] && perf script -i "$probe" 2>/dev/null | head -1 | grep -q .; then
+      PERF_OPT="$opt"; echo "sampling event: $opt"; rm -f "$probe"; return 0
     fi
-    echo "perf record ($tag): '$opt' produced no samples, trying the next option"
+    echo "sampling event '$opt' collected nothing, trying the next"
   done
-  echo "perf record ($tag): no sampling event worked in this environment"
+  echo "no sampling event works in this environment; flame graphs will be from py-spy only"
+  rm -f "$probe"; return 0
+}
+perf_probe
+echo "${PERF_OPT:-none}" > "$OUT/perf_event_chosen.txt"
+
+perf_rec(){
+  local tag=$1; shift; [ "$1" = "--" ] && shift
+  local data="$OUT/perf_$tag.data"
+  [ -n "$PERF_OPT" ] || { echo "perf record ($tag): skipped, no working event"; return 0; }
+  # shellcheck disable=SC2086
+  perf record -q $PERF_OPT -o "$data" -- "$@" >/dev/null 2>&1 || true
+  if [ -s "$data" ] && perf script -i "$data" 2>/dev/null | head -1 | grep -q .; then
+    echo "perf record ($tag): captured with '$PERF_OPT'"
+    echo "$PERF_OPT" > "$OUT/perf_${tag}.event"
+  else
+    echo "perf record ($tag): no samples despite the probe succeeding"
+  fi
   return 0
 }
 # perf_flame TAG TITLE: perf report + folded stacks + flame graph for $OUT/perf_TAG.data
