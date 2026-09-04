@@ -15,6 +15,7 @@ OUT=results/$B; mkdir -p "$OUT"
 log(){ printf '\n=== %s  %s ===\n' "$(date +%T)" "$*"; }
 # Every command is traced into $OUT/trace.log, and a failing command names itself.
 exec 19>"$OUT/trace.log"; export BASH_XTRACEFD=19; set -x
+# shellcheck disable=SC2154  # rc is assigned inside the trap itself
 trap 'rc=$?; echo "FAILED at line $LINENO (exit $rc): $BASH_COMMAND" >&2; echo "FAILED at line $LINENO (exit $rc): $BASH_COMMAND" >&19' ERR
 
 # ---------------------------------------------------------------- 0. environment
