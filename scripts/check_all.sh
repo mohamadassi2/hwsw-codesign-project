@@ -12,6 +12,13 @@ cd "$(dirname "$0")/.."
 if [ -z "${PY:-}" ]; then
   if [ -x venv/bin/python ]; then PY=venv/bin/python; else PY=python3; fi
 fi
+# The reports quote the committed run in results/. If the scripts have been rerun
+# here, results/ now holds a different run and the report checker will report the
+# (small) differences - regenerate the report blocks or restore the committed set.
+if [ -d .git ] && [ -n "$(git status --porcelain -- results/ 2>/dev/null)" ]; then
+  echo "note: results/ differs from the committed run; the reports quote the committed numbers."
+  echo "      after a rerun: python3 scripts/fill_reports.py   (or: git checkout -- results/)"
+fi
 echo "== 1/3 optimizations vs originals"; $PY scripts/local_check.py all "${REPS:-3}"
 echo "== 2/3 report numbers";            $PY scripts/check_report_numbers.py | head -1
 echo "== 3/3 slide numbers";             $PY scripts/check_deck_numbers.py   | head -1

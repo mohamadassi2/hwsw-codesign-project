@@ -1,10 +1,7 @@
-An earlier, independent run of the same scripts in the same course VM
-(Ubuntu 22.04 guest, one vCPU, Xeon E5-2630 v3), kept so the shipped
-measurements in results/<benchmark>/ can be checked against a second run:
+An independent rerun of commit 195dcd8 of this repository, made by
+extracting it into an empty directory in the course VM (Ubuntu 22.04 guest,
+one vCPU, Xeon E5-2630 v3) and running script_pyflate.sh and script_mdp.sh
+exactly as a grader would. Kept so the shipped measurements in
+results/<benchmark>/ can be checked against a second run:
 
     python3 scripts/compare_runs.py results results/reproducibility
-
-The shipped set is the later run, made from a clean directory by the scripts
-in this repository; this set was made from the same scripts before the
-directory-clearing line was added to them (comment and clearing differences
-only - the measurement commands are identical).

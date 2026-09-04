@@ -96,7 +96,9 @@ The history is meant to be read: baseline vendored → pyflate optimization →
 mdp optimization → scripts → RTL + testbench → docs/synthesis. Each commit
 message states what was measured and why the change was made.
 
-To re-verify everything from the shipped files in one command:
+To re-verify everything from the shipped files in one command (the reports quote the
+committed run in `results/`; after rerunning the scripts, regenerate the report blocks
+with `scripts/fill_reports.py` before checking, or restore the committed set):
 
     scripts/check_all.sh
 

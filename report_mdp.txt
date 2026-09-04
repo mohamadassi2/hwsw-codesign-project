@@ -173,10 +173,10 @@ Correctness. scripts/local_check.py runs both versions:
 
 
 4.3 Reproducibility
-    An earlier, independent run in the same guest (results/reproducibility/,
-    compared with scripts/compare_runs.py) gives 3.798x against the
-    shipped 3.820x, a difference of 0.57%;
-    the optimized time differs by 0.72%.
+    An independent rerun of commit 195dcd8 in the same guest
+    (results/reproducibility/, compared with scripts/compare_runs.py) gives
+    3.804x against the shipped 3.820x, a difference of
+    0.42%; the optimized time differs by 0.17%.
 
 5. Hardware acceleration proposal
 ----------------------------------------------------------------------------------
