@@ -191,7 +191,12 @@ perf_flame base "$B baseline: perf -F999 -g (KVM guest)"
 log "py-spy (Python-level frames) on the baseline"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_base.folded" -- \
     $PY "$BASE" --worker --loops "${PROF_LOOPS:-4}" -n 2 -w 0 >/dev/null 2>&1 || echo "py-spy failed on the baseline (see trace.log)"
-flame "$OUT/pyspy_base.folded" "$OUT/flame_${B}_base_pyspy.svg" "$B baseline: Python frames (py-spy)" --colors python
+flame "$OUT/pyspy_base.folded" "$OUT/flame_${B}_base_pyspy.svg" "$B baseline: Python frames (py-spy)" --colors js
+# py-spy records the whole process stack, so ten frames of pyperf runner sit
+# under the benchmark. The second graph re-roots at the benchmark's own entry
+# point, which is the one worth looking at; the first keeps everything.
+python3 scripts/focus_folded.py bench_pyflake < "$OUT/pyspy_base.folded" > "$OUT/pyspy_base_focus.folded" 2>>"$OUT/focus.log" || true
+flame "$OUT/pyspy_base_focus.folded" "$OUT/flame_${B}_base_focus.svg" "$B baseline: Python frames below bench_pyflake (py-spy)" --colors js
 
 # ---------------------------------------------------------------- 3. optimized
 log "optimized version, same pyperf runner"
@@ -202,7 +207,9 @@ perf_rec opt -- $PY "$OPT" --worker --loops "${PROF_LOOPS:-4}" -n 2 -w 0
 perf_flame opt "$B optimized: perf -F999 -g (KVM guest)"
 venv/bin/py-spy record --rate 500 -f raw -o "$OUT/pyspy_opt.folded" -- \
     $PY "$OPT" --worker --loops "${PROF_LOOPS:-4}" -n 2 -w 0 >/dev/null 2>&1 || echo "py-spy failed on the optimized run (see trace.log)"
-flame "$OUT/pyspy_opt.folded" "$OUT/flame_${B}_opt_pyspy.svg" "$B optimized: Python frames (py-spy)" --colors python
+flame "$OUT/pyspy_opt.folded" "$OUT/flame_${B}_opt_pyspy.svg" "$B optimized: Python frames (py-spy)" --colors js
+python3 scripts/focus_folded.py bench_pyflake < "$OUT/pyspy_opt.folded" > "$OUT/pyspy_opt_focus.folded" 2>>"$OUT/focus.log" || true
+flame "$OUT/pyspy_opt_focus.folded" "$OUT/flame_${B}_opt_focus.svg" "$B optimized: Python frames below bench_pyflake (py-spy)" --colors js
 
 # ---------------------------------------------------------------- 4. compare + hardware counters
 log "before/after (pyperf compare_to)"
