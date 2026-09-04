@@ -39,10 +39,17 @@ class BitfieldBase(object):
         if isinstance(x, BitfieldBase):
             self.f = x.f
             self.data = x.data
-            self.pos = x.pos
-            self.bits = x.bits
-            self.bitfield = x.bitfield
-            self.count = x.count
+            # Do NOT inherit x's bit buffer. Bitfield holds bits LSB-first and
+            # RBitfield MSB-first, so a buffer handed from one to the other
+            # would be read in the wrong order. The original got away with it
+            # only because it refilled one byte at a time, which left the
+            # buffer empty at every byte boundary; we refill eight. Both copy
+            # sites (gzip_main, bzip2_main) construct right after a byte
+            # aligned readbits(16), so rewinding to that boundary is exact.
+            self.pos = x.pos - (x.bits >> 3)
+            self.bits = 0
+            self.bitfield = 0x0
+            self.count = self.pos
         else:
             self.f = x
             # One read() for the whole stream instead of one f.read(1) per byte
@@ -56,6 +63,11 @@ class BitfieldBase(object):
     def _read(self, n):
         pos = self.pos
         s = self.data[pos:pos + n]
+        if not s:
+            # The original raised here too. Without it a truncated stream
+            # decodes zero bits forever: the all-zero canonical code is RUNA,
+            # so the run-length accumulator grows without bound.
+            raise Exception("Length Error")
         self.pos = pos + len(s)
         self.count += len(s)
         return s
@@ -97,9 +109,6 @@ class Bitfield(BitfieldBase):
 
     def _more(self):
         c = self._read(8)
-        if not c:                      # past the end: pad with zero bits
-            self.bits += 8
-            return
         self.bitfield |= int.from_bytes(c, 'little') << self.bits
         self.bits += len(c) << 3
 
@@ -121,10 +130,6 @@ class RBitfield(BitfieldBase):
 
     def _more(self):
         c = self._read(8)
-        if not c:                      # past the end: pad with zero bits
-            self.bitfield <<= 8
-            self.bits += 8
-            return
         nb = len(c) << 3
         self.bitfield = (self.bitfield << nb) | int.from_bytes(c, 'big')
         self.bits += nb
