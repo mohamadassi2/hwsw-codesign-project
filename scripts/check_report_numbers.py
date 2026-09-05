@@ -387,6 +387,20 @@ if os.path.exists(_simlog):
             check("every per-symbol cycle figure in the report is the computed one",
                   not _bad, f"found {_bad}, expected {_want_cps}")
 
+# ---------------------------------------------------------------- cited files
+# A report that points at a file which is not in the tree is worse than one that
+# does not cite anything: the reader goes looking. Check every repository path
+# either report names.
+_missing = []
+for _name, _body in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
+    for _m in re.finditer(r"\b((?:results|docs|scripts|hw|benchmarks)/[A-Za-z0-9_./-]+)", _body):
+        _path = _m.group(1).rstrip(".,);")
+        if "<" in _path or "*" in _path:
+            continue
+        if not os.path.exists(os.path.join(ROOT, _path)):
+            _missing.append(f"{_name} -> {_path}")
+check("every file the reports cite exists", not _missing, "; ".join(sorted(set(_missing))[:4]))
+
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and
 # hw/tb/MUTATIONS.md is where it is recorded. Recount it from that table rather

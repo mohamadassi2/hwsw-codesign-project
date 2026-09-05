@@ -1,0 +1,25 @@
+# perf record of the benchmark under the SYSTEM interpreter, in the course VM.
+# 5,172 samples; 509 carry any interpreter frame; none carry a Python function
+# name, because CPython 3.10 has no perf trampoline (it arrived in 3.12).
+# First 20 lines of `perf script`:
+
+python3   599    44.665519:    1003009 task-clock: 
+	ffffffff8705609a [unknown] ([unknown])
+	ffffffff8708ed07 [unknown] ([unknown])
+	ffffffff8708eff0 [unknown] ([unknown])
+	ffffffff8708f6b5 [unknown] ([unknown])
+	ffffffff8708fbe4 [unknown] ([unknown])
+	ffffffff8708fd26 [unknown] ([unknown])
+	ffffffff86ec435d [unknown] ([unknown])
+	ffffffff8775258b [unknown] ([unknown])
+	ffffffff87800c04 [unknown] ([unknown])
+	ffffffff8736f089 [unknown] ([unknown])
+	ffffffff870fc6a7 [unknown] ([unknown])
+	ffffffff87102edc [unknown] ([unknown])
+	ffffffff870ebd23 [unknown] ([unknown])
+	ffffffff870ec210 [unknown] ([unknown])
+	ffffffff86e035dd [unknown] ([unknown])
+	ffffffff8775004e [unknown] ([unknown])
+	ffffffff87800124 [unknown] ([unknown])
+	    7faf285cca5c __open64_nocancel+0x4c (/usr/lib/x86_64-linux-gnu/libc.so.6)
+	    7faf284ea0e0 _nl_find_locale+0x100 (/usr/lib/x86_64-linux-gnu/libc.so.6)
