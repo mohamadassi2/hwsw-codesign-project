@@ -115,9 +115,8 @@ That constraint is what makes the speedups meaningful rather than a change of pr
 <div style="display:flex;flex-direction:column;gap:12px"><p><span class="tag hw">did not</span></p>
 <ul><li><code>perf record</code> collects nothing for <code>cycles</code>: the PMU is present
 but its overflow interrupt never fires</li>
-<li>Software events <em>do</em> sample &mdash; 3,845 for <code>task-clock</code> &mdash; but only under the
-system interpreter. Under the venv interpreter, which is what our capture ran, <strong>zero</strong>.
-We bisected the command to find that</li>
+<li>Software events <em>do</em> sample &mdash; but only under the system interpreter, not the venv one
+our capture used: <span class="num">3,845</span> samples against <span class="num">0</span></li>
 
 <li>But <code>PMI</code> in <code>/proc/interrupts</code> stays at <span class="num">0</span> across a
 record &mdash; the overflow interrupt never fires, and sampling rides on it</li>
@@ -146,11 +145,8 @@ size &mdash; which has nothing to do with how much information a symbol carries.
 <p class="lede">But these are <strong>canonical</strong> Huffman codes: within one length the codes are
 consecutive integers, so an entire length collapses to two numbers.</p>
 <div style="margin-top:clamp(6px,1.4vh,18px)"><svg class="strip" viewBox="0 0 861 104" preserveAspectRatio="none" role="img" aria-label="first 41 bits of the block split into six Huffman codes"><rect x="0" y="28" width="167" height="34" class="cell0"/><text x="10.5" y="51" class="bit">1</text><text x="31.5" y="51" class="bit">1</text><text x="52.5" y="51" class="bit">1</text><text x="73.5" y="51" class="bit">0</text><text x="94.5" y="51" class="bit">1</text><text x="115.5" y="51" class="bit">1</text><text x="136.5" y="51" class="bit">0</text><text x="157.5" y="51" class="bit">0</text><text x="84.0" y="18" class="len">8</text><text x="84.0" y="82" class="sym">11</text><rect x="168" y="28" width="41" height="34" class="cell1"/><text x="178.5" y="51" class="bit">0</text><text x="199.5" y="51" class="bit">0</text><text x="189.0" y="18" class="len">2</text><text x="189.0" y="82" class="sym">0</text><rect x="210" y="28" width="272" height="34" class="cell0"/><text x="220.5" y="51" class="bit">1</text><text x="241.5" y="51" class="bit">1</text><text x="262.5" y="51" class="bit">1</text><text x="283.5" y="51" class="bit">1</text><text x="304.5" y="51" class="bit">1</text><text x="325.5" y="51" class="bit">1</text><text x="346.5" y="51" class="bit">1</text><text x="367.5" y="51" class="bit">1</text><text x="388.5" y="51" class="bit">1</text><text x="409.5" y="51" class="bit">0</text><text x="430.5" y="51" class="bit">0</text><text x="451.5" y="51" class="bit">0</text><text x="472.5" y="51" class="bit">0</text><text x="346.5" y="18" class="len">13</text><text x="346.5" y="82" class="sym">145</text><rect x="483" y="28" width="293" height="34" class="cell1"/><text x="493.5" y="51" class="bit">1</text><text x="514.5" y="51" class="bit">1</text><text x="535.5" y="51" class="bit">1</text><text x="556.5" y="51" class="bit">1</text><text x="577.5" y="51" class="bit">1</text><text x="598.5" y="51" class="bit">1</text><text x="619.5" y="51" class="bit">1</text><text x="640.5" y="51" class="bit">1</text><text x="661.5" y="51" class="bit">1</text><text x="682.5" y="51" class="bit">0</text><text x="703.5" y="51" class="bit">1</text><text x="724.5" y="51" class="bit">0</text><text x="745.5" y="51" class="bit">1</text><text x="766.5" y="51" class="bit">1</text><text x="630.0" y="18" class="len">14</text><text x="630.0" y="82" class="sym">124</text><rect x="777" y="28" width="41" height="34" class="cell0"/><text x="787.5" y="51" class="bit">0</text><text x="808.5" y="51" class="bit">1</text><text x="798.0" y="18" class="len">2</text><text x="798.0" y="82" class="sym">1</text><rect x="819" y="28" width="41" height="34" class="cell1"/><text x="829.5" y="51" class="bit">0</text><text x="850.5" y="51" class="bit">0</text><text x="840.0" y="18" class="len">2</text><text x="840.0" y="82" class="sym">0</text><text x="1" y="104" class="cap">41 bits of the real block</text><text x="860" y="104" class="cap" text-anchor="end">148,271 symbols follow</text></svg></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>07/23</span></div></section><section class="s sw"><div class="top"><span class="kick on">pyflate &middot; the fix</span><span class="kick">08</span></div><div class="body"><h2>One compare per length, not one per entry</h2>
-<p class="lede">Canonical codes of one length are <em>consecutive integers</em>. So a whole length
-needs only two numbers: <code><b>limit[L]</b></code>, one past the last code of length L, and
-<code><b>base[L]</b></code>, where that length&rsquo;s symbols start in the table. If the top L bits
-fall below <code>limit[L]</code>, the code ends here and the symbol is at
-<code>base[L] + code</code>.</p>
+<p class="lede">Canonical codes of one length are <em>consecutive integers</em>, so a whole length
+needs two numbers: <code><b>limit[L]</b></code> and <code><b>base[L]</b></code>.</p>
 <pre>v = peek(MAXBITS)               # read the window once
 for L in 1..maxlen:             # at most 15 iterations
     code = v >> (MAXBITS - L)
@@ -167,12 +163,10 @@ for L in 1..maxlen:             # at most 15 iterations
 <li>the output, byte for byte</li>
 <li>still pure Python &mdash; no C extension, no <code>bz2</code> module</li></ul></div></div>
 <p class="lede" style="margin-top:clamp(10px,1.8vh,20px)"><strong>Which of these earned it?</strong>
-We measured rather than assumed &mdash; each change reverted in turn, md5-checked, timed in the VM.
-Leave one out and the run costs <span class="num">+83.0 ms</span> without the canonical decoder,
-<span class="num">+155.8 ms</span> without move-to-front, <span class="num">+156.6 ms</span> without
-the RLE regex. The change we called algorithmic is the smallest of the three. What justifies the
-hardware is not what the algorithm earned &mdash; it is the half of the run that is still
-per-symbol interpreter work after all five.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>08/23</span></div></section><section class="s sw"><div class="top"><span class="kick on">pyflate &middot; result</span><span class="kick">09</span></div><div class="body"><h2>2.37&times; faster &mdash; and the counters say why</h2>
+Each reverted in turn, md5-checked, timed in the VM: <span class="num">+83.0 ms</span> without the
+canonical decoder, <span class="num">+155.8 ms</span> without move-to-front,
+<span class="num">+156.6 ms</span> without the RLE regex. The algorithmic change is the smallest.
+What justifies the hardware is the half of the run that is still interpreter work after all five.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>08/23</span></div></section><section class="s sw"><div class="top"><span class="kick on">pyflate &middot; result</span><span class="kick">09</span></div><div class="body"><h2>2.37&times; faster &mdash; and the counters say why</h2>
 <div class="grid g23">
 <table>
 <tr><th></th><th class="n">baseline</th><th class="n">optimized</th><th class="n">base / opt</th></tr>
@@ -216,29 +210,23 @@ fifty symbols &mdash; is supplied by the host on <code>TSEL</code> rather than s
 <p class="lede">A production version puts a mod-50 counter and a small FIFO inside the block. We kept
 the datapath as the subject and say so, rather than implying otherwise.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>13/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; verification</span><span class="kick">14</span></div><div class="body"><h2>Checked against the real block &mdash; and the test can fail</h2>
 <div class="grid g2">
-<div><p><code>gen_vectors.py</code> instruments the Python decoder and dumps the six real tables, the
-actual bit stream and every decoded <span class="num">(table, symbol, length)</span>. The testbench
-programs the tables, streams the bytes and checks each output.</p>
+<div><p><code>gen_vectors.py</code> dumps the six real tables, the bit stream and every decoded
+<span class="num">(table, symbol, length)</span> from the Python decoder; the testbench replays them.</p>
 <pre>148,271 / 148,271 symbols correct
         <b>0 errors</b>
   148,272 cycles  &rarr;  1.000 symbol/clock
   531,571 bits    &rarr;  3.59 bits/symbol</pre>
-<p class="lede">Same result inside the course VM, with its packaged Icarus Verilog 11.0 (results/rtl_sim_guest.log).</p></div>
+<p class="lede">Same inside the course VM, on its packaged Icarus 11.0.</p></div>
 <div style="display:flex;flex-direction:column;gap:12px">
-<p><strong>The testbench used to pass on a broken decoder.</strong> One emitting nothing but
-<code>X</code> reported zero errors, because <code>!=</code> against an undefined value is itself
-undefined and <code>if</code> treats that as false. An unprogrammed table bank was invisible.</p>
+<p><strong>It used to pass on a decoder emitting nothing but <code>X</code></strong>, because
+<code>!=</code> against an undefined value is itself undefined.</p>
 <p class="lede">It now compares with <code>!==</code>, flags <code>X</code>, fails the build on a
 timeout, and asserts the one-symbol-per-cycle rate instead of printing it.</p>
-<p>Mutation testing is what found all of that. Eighteen bugs injected one at a time &mdash;
-and against the benchmark block alone, <strong>eight passed unnoticed</strong>: deleting the
-end-of-input handling, tying flush low, ignoring output backpressure, building comparators only
-for the code lengths this input happens to use. Not a weakness of the design &mdash; a weakness of
-one well-formed stimulus.</p>
-<p>So the stimulus grew: four directed streams (every code length 1&ndash;20, a stream ending on a
-code boundary, an unmatchable code, a corrupt table, a stream one bit short) plus a run with both
-handshakes throttled. Now <span class="num">17 of 18</span> are caught. The one survivor is an
-unreachable guard &mdash; reported, not removed.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>14/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; cost</span><span class="kick">15</span></div><div class="body"><h2>What it costs in silicon</h2>
+<p>Mutation testing found that. Eighteen bugs injected one at a time &mdash; and against the
+benchmark block alone, <strong>eight passed unnoticed</strong>: end-of-input, flush, backpressure,
+the code lengths this input never uses. A weakness of one well-formed stimulus, not of the design.</p>
+<p>So the stimulus grew &mdash; five directed streams plus a throttled run &mdash; and now
+<span class="num">17 of 18</span> are caught. The survivor is an unreachable guard: reported, not removed.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>14/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; cost</span><span class="kick">15</span></div><div class="body"><h2>What it costs in silicon</h2>
 <div class="grid g3">
 <div class="stat alt"><div class="k">logic</div><div class="v">18,774</div><div class="s2">cells, 5,441 of them flip-flops (yosys)</div></div>
 <div class="stat alt"><div class="k">symbol table</div><div class="v">13.9<span style="font-size:.42em"> kbit</span></div><div class="s2">1.7 KB of SRAM; limit/base are registers</div></div>
@@ -249,8 +237,8 @@ those, and it is counted above as the register file it is. The symbol table has 
 and stays SRAM: flattening it into logic too costs <span class="num">49,833</span> cells.
 A direct flat lookup is worse still: the longest code is 20 bits, so a comparator-free table
 would need <span class="num">2<sup>20</sup></span> entries of 14 bits per bank.</p>
-<p class="lede">The frequency figures are inferred from the topological path length, not from static
-timing analysis: we have no cell library and no place-and-route, and the report says so.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>15/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; expected gain</span><span class="kick">16</span></div><div class="body"><h2>What it would buy, with the assumptions on the slide</h2>
+<p class="lede">Frequency is inferred from topological path length, not static timing &mdash; no cell
+library, no place-and-route.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>15/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; expected gain</span><span class="kick">16</span></div><div class="body"><h2>What it would buy, with the assumptions on the slide</h2>
 <pre>optimized run in the VM                    477 ms
   find_next_symbol, cumulative 51.1%      ~244 ms
   the same work at 200 MHz                  0.74 ms   (148,272 cycles)
@@ -308,10 +296,10 @@ of being Python: a call, a bounds check, a bit-buffer update per symbol.</li>
 tree and a shift. About 3,900 CPU cycles per symbol become one clock.</li>
 <li><strong>Not for what is memory-bound.</strong> The inverse BWT is one dependent access per byte;
 an accelerator would wait on memory exactly as the CPU does.</li>
-<li><strong>Measure in the environment you claim.</strong> Every number here is from the course VM,
-and what did not work there is in the report too.</li></ul>
+<li><strong>Measure in the environment you claim.</strong> Every number here is from the course VM
+&mdash; including what did not work there.</li></ul>
 <p class="lede">The repository holds both reports, both scripts, the RTL and its testbench, the
-synthesis log and every raw measurement, with a README that reproduces all of it.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>22/23</span></div></section><section class="s "><div class="top"><span class="kick on">Questions</span><span class="kick">23</span></div><div class="body"><h2>What we expect to be asked</h2>
+synthesis log and every raw measurement, with a README that reproduces all of it.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>22/23</span></div></section><section class="s "><div class="top"><span class="kick on">Questions &middot; backup, not narrated</span><span class="kick">23</span></div><div class="body"><h2>What we expect to be asked</h2>
 <div class="grid g2">
 <ul><li><em>Why not just call the <code>bz2</code> module?</em> That replaces the benchmark instead of
 optimizing it. The brief asks us to improve the code under test.</li>
