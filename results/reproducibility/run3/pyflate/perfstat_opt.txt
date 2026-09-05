@@ -1,0 +1,13 @@
+# started on Sat Sep  5 18:18:01 2026
+
+
+ Performance counter stats for 'venv/bin/python benchmarks/pyflate/run_benchmark_opt.py --worker --loops 4 -n 1 -w 0' (3 runs):
+
+           2068.81 msec task-clock                #    1.002 CPUs utilized            ( +-  0.39% )
+        4918193779      cycles                    #    2.387 GHz                      ( +-  0.39% )
+       12788426866      instructions              #    2.61  insn per cycle           ( +-  0.09% )
+        2428545958      branches                  #    1.179 G/sec                    ( +-  0.09% )
+          11026448      branch-misses             #    0.45% of all branches          ( +-  1.59% )
+
+           2.06524 +- 0.00816 seconds time elapsed  ( +-  0.40% )
+

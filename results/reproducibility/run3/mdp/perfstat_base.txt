@@ -1,0 +1,13 @@
+# started on Sat Sep  5 18:26:11 2026
+
+
+ Performance counter stats for 'venv/bin/python benchmarks/mdp/run_benchmark.py --worker --loops 4 -n 1 -w 0' (3 runs):
+
+          20128.15 msec task-clock                #    1.002 CPUs utilized            ( +-  0.17% )
+       47866511098      cycles                    #    2.385 GHz                      ( +-  0.17% )
+      118333536455      instructions              #    2.48  insn per cycle           ( +-  0.03% )
+       24888150806      branches                  #    1.240 G/sec                    ( +-  0.03% )
+         130292819      branch-misses             #    0.52% of all branches          ( +-  0.15% )
+
+           20.0923 +- 0.0316 seconds time elapsed  ( +-  0.16% )
+

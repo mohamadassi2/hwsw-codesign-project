@@ -147,7 +147,32 @@ if _b and _o and _rb and _ro:
             return ""
         j = re.search(r"\n\n\n|\n\d\. ", text[i + len(head):])
         return text[i:i + len(head) + (j.start() if j else 2000)]
-    _rep = _flat(_section(_pf, "4.3 Reproducibility"))
+    _rep = _flat(_sect(_pf, "4.3 Reproducibility", 3200))
+    # A third run is now kept; its ratios must be quoted too, and the spread the
+    # section claims must be the spread the three runs actually show.
+    _r3p = os.path.join(ROOT, "results", "reproducibility", "run3", "pyflate")
+    _r3m = os.path.join(ROOT, "results", "reproducibility", "run3", "mdp")
+    if os.path.isdir(_r3p):
+        _3b = mean_of(os.path.join(_r3p, "pyflate_base.json"))
+        _3o = mean_of(os.path.join(_r3p, "pyflate_opt.json"))
+        _3mb = mean_of(os.path.join(_r3m, "mdp_base.json"))
+        _3mo = mean_of(os.path.join(_r3m, "mdp_opt.json"))
+        if _3b and _3o:
+            check("reproducibility: the third run's pyflate ratio is quoted",
+                  f"{_3b/_3o:.3f}x" in _rep, f"{_3b/_3o:.3f}x")
+            _ps = [_b/_o, _rb/_ro, _3b/_3o]
+            _spread = (max(_ps) - min(_ps)) / min(_ps) * 100
+            check(f"reproducibility: the stated pyflate spread matches the three runs ({_spread:.1f}%)",
+                  f"{_spread:.1f}%" in _rep, f"expected {_spread:.1f}%")
+        # the mdp reruns are read again here rather than relying on names the
+        # file happens to define further down
+        _m2b = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_base.json"))
+        _m2o = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_opt.json"))
+        if _3mb and _3mo and _m2b and _m2o and _mb and _mo:
+            _ms = [_mb/_mo, _m2b/_m2o, _3mb/_3mo]
+            _mspread = (max(_ms) - min(_ms)) / min(_ms) * 100
+            check(f"reproducibility: the stated mdp spread matches the three runs ({_mspread:.1f}%)",
+                  f"{_mspread:.1f}%" in _rep, f"expected {_mspread:.1f}%")
     check("reproducibility: pyflate shipped speedup quoted",
           f"{_b/_o:.3f}x" in _rep, f"{_b/_o:.3f}x, in section 4.3")
     check("reproducibility: pyflate rerun speedup quoted",
@@ -318,9 +343,14 @@ if _pb and _po:
     check("the conclusion uses the same optimized time", _round in _concl,
           f"expected {_round} ms")
     # No stale value of the same shape may survive anywhere in the report.
+    # Section 4.3 deliberately quotes the other runs' times, so exclude it: the
+    # guard is for a shipped figure left behind elsewhere, not for the table
+    # that exists to compare runs.
+    _outside_43 = txt.replace(_sect(txt, "4.3 Reproducibility", 3200), "")
     for _stale in ("473.0", "473"):
         if _stale != _exact and _stale != _round:
-            check(f"no stale optimized time '{_stale}' remains", _count(txt, _stale) == 0,
+            check(f"no stale optimized time '{_stale}' outside section 4.3",
+                  _count(_outside_43, _stale) == 0,
                   f"the measured value is {_round} ms")
     # The overlap bound in 5.6 is arithmetic on the same two numbers.
     _mov = re.search(r"the bound becomes (\d+) - (\d+) = (\d+)\s*\n?\s*ms", txt)

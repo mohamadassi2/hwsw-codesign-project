@@ -372,28 +372,37 @@ inside bench_pyflake() also passes in every run.
 
 
 4.3 Reproducibility
-    results/reproducibility/ holds an independent rerun of commit 195dcd8
-    of this repository: the tree was extracted into an empty directory in the
-    same guest and the scripts run exactly as a grader would. Comparing it
-    with the shipped set (scripts/compare_runs.py results
-    results/reproducibility): the speedup is 2.365x shipped against
-    2.385x in the other run, a difference of 0.84%, and the largest
-    wall-clock difference across both benchmarks is 0.87%. The ratio we report
-    is stable to well inside 1% between runs, which is smaller than the
-    run-to-run spread pyperf prints.
+    Three independent runs of these scripts in the same guest are kept, each
+    made by extracting the tree into an empty directory and running them the
+    way a grader would. The shipped set is one of them; the other two are under
+    results/reproducibility/ (the second run) and results/reproducibility/run3/
+    (a full end-to-end run of the submission as it now stands).
 
-    A third run of the same scripts is deliberately not included. It reported
-    mdp at 2.33 s against 1.30 s while executing the same 31.4 billion
-    instructions: the shared host was busy
-    and "CPUs utilized" had fallen from 1.00 to 0.58, so the wall clock
-    measured the host's load rather than this code. Both scripts now read that
-    figure from perf, print a warning below 0.95 and record the value in
-    results/<benchmark>/contention.txt, so a contended run is visible in the
-    evidence rather than only in the wall clock;
-    results/<benchmark>/contention.txt records it for the runs that are
-    shipped (0.994 to 1.003 across the four). It is the one measurement error that would
-    have been invisible in the numbers themselves.
+        run          pyflate            mdp
+        shipped      2.365x (477.2 ms)  3.834x (1.303 s)
+        second       2.385x (473.0 ms)  3.820x (1.305 s)
+        third        2.316x (483.9 ms)  3.822x (1.308 s)
 
+    So mdp's ratio is stable to 0.4% across the three, and pyflate's spreads by
+    3.0% - 2.32x to 2.39x. That is larger than we first claimed from two runs,
+    and it is the honest figure: pyperf's own standard deviation on the
+    optimized pyflate run is about 0.9%, so a 3% spread across separate boots
+    of the guest is a few sigma, not noise we can wave away. Nothing in the
+    argument turns on the third decimal - the claim is a factor of about 2.4 on
+    pyflate and about 3.8 on mdp, and all three runs support both - but a
+    report that says "stable to well inside 1%" on two runs and is then handed
+    a third at 3% has learned something about how many runs it takes.
+    scripts/compare_runs.py compares any two of them.
+
+    A fourth run is deliberately excluded, and the reason is the point of the
+    contention check. It reported mdp at 2.33 s against 1.30 s while executing
+    the same 31.4 billion instructions: the shared host was busy and "CPUs
+    utilized" had fallen from 1.00 to 0.58, so the wall clock measured the
+    host's load rather than this code. Both scripts now read that figure from
+    perf, print a warning below 0.95 and record it in
+    results/<benchmark>/contention.txt - 0.994 to 1.003 across the runs that
+    are shipped. It is the one measurement error that would have been invisible
+    in the numbers themselves.
 
 5. Hardware acceleration proposal
 ----------------------------------------------------------------------------------

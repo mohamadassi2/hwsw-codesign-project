@@ -12,12 +12,38 @@ cd "$(dirname "$0")/.."
 if [ -z "${PY:-}" ]; then
   if [ -x venv/bin/python ]; then PY=venv/bin/python; else PY=python3; fi
 fi
-# The reports quote the committed run in results/. If the scripts have been rerun
-# here, results/ now holds a different run and the report checker will report the
-# (small) differences - regenerate the report blocks or restore the committed set.
-if [ -d .git ] && [ -n "$(git status --porcelain -- results/ 2>/dev/null)" ]; then
-  echo "note: results/ differs from the committed run; the reports quote the committed numbers."
-  echo "      after a rerun: python3 scripts/fill_reports.py   (or: git checkout -- results/)"
+# The reports quote one particular run, fingerprinted in results/RUN_ID.txt. If
+# the benchmark scripts have been rerun here, results/ holds a different run and
+# the checkers below will report every figure that moved. That is the checkers
+# working, not the submission being broken, so say so before they run.
+#
+# This used to be a `git status` test, which is silent when the tree came from an
+# archive rather than a clone - exactly the case where the warning is needed.
+if [ -f results/RUN_ID.txt ]; then
+  have=$("$PY" - <<'FP'
+import hashlib
+fs = ["results/pyflate/pyflate_base.json","results/pyflate/pyflate_opt.json",
+      "results/mdp/mdp_base.json","results/mdp/mdp_opt.json",
+      "results/pyflate/perfstat_base.txt","results/pyflate/perfstat_opt.txt",
+      "results/mdp/perfstat_base.txt","results/mdp/perfstat_opt.txt"]
+h = hashlib.md5()
+try:
+    for f in fs:
+        h.update(hashlib.md5(open(f,"rb").read()).hexdigest().encode())
+    print(h.hexdigest())
+except OSError:
+    print("missing")
+FP
+)
+  want=$(grep -v '^#' results/RUN_ID.txt | tr -d '[:space:]')
+  if [ "$have" != "$want" ]; then
+    echo "note: results/ is not the run the reports quote (fingerprint differs)."
+    echo "      The benchmarks have been rerun here, so the figures below will"
+    echo "      disagree with the documents by however much the two runs differ."
+    echo "      To check the submission as shipped:  git checkout -- results/"
+    echo "      To adopt this run:                   python3 scripts/fill_reports.py"
+    echo "                                           then update the slides to match."
+  fi
 fi
 echo "== 1/3 optimizations vs originals"; $PY scripts/local_check.py all "${REPS:-3}"
 echo "== 2/3 report numbers";            $PY scripts/check_report_numbers.py | head -1

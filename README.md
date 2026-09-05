@@ -71,8 +71,14 @@ cd hwsw-project          # the submitted archive, unpacked
 ```
 
 Each script clears `results/<benchmark>/` before it starts, so running one
-replaces the evidence committed here. `git checkout -- results/` restores the
-shipped set.
+replaces the evidence committed here. That also means the reports and slides,
+which quote the committed run, will no longer agree with `results/` - and
+`scripts/check_all.sh` will say so and list every figure that moved. That is the
+checkers working, not a broken submission: they compare the documents against
+whatever is in `results/` now. `results/RUN_ID.txt` fingerprints the run the
+documents quote, and `check_all.sh` warns before it starts if they differ.
+
+To check the submission as shipped: `git checkout -- results/`.
 
 Each script installs its own venv (pyperf, pyperformance, py-spy) and
 FlameGraph, sets the two `perf` sysctls the guest needs

@@ -1,0 +1,5 @@
+# Fingerprint of the measurement files the reports and slides quote.
+# scripts/check_all.sh recomputes it; if it differs, the benchmarks have been
+# rerun here and the documents still quote the committed run. That is not a
+# failure - it is the checkers doing their job - but it explains the output.
+a9b536d550156ea37f41ddeff424c4e8
