@@ -3,7 +3,8 @@
 Derived from benchmarks/mdp/run_benchmark.py, which is vendored unmodified from
 pyperformance (MIT); this file is therefore a derivative work under the same
 terms. See THIRD-PARTY.md. The changes are described in report_mdp.txt
-section 3; the value stream is bit-identical to the original.
+section 3; the value stream is bit-identical to the original on the course
+VM's CPython 3.10 (see the note on CPython 3.12's sum() in _solve).
 """
 import collections
 from collections import defaultdict
@@ -248,10 +249,25 @@ class Battle(object):
         # Here each state gets a small int; the sweep below then only touches
         # flat lists.  Sweep order, in-place (Gauss-Seidel) update, freezing
         # rule and floating-point operation order are all kept identical, so
-        # the result is bit-for-bit the same as the original.
+        # the result is bit-for-bit the same as the original on the course VM's
+        # CPython 3.10.  One caveat, on newer interpreters only: the original
+        # accumulates with sum(), and CPython 3.12 (gh-100425) changed sum() to
+        # use compensated summation for floats, while the loop below keeps a
+        # plain running total.  On 3.12+ the ORIGINAL therefore moves by about
+        # an ulp and the two differ in the last bit; both stay far inside the
+        # benchmark's own 1e-6 gate.  Using sum() here instead would restore
+        # exact equality everywhere at a cost of roughly a fifth of the
+        # speedup, which is not a trade worth making for a project whose
+        # numbers all come from one interpreter.
         index = {}
         for sp in stateps:
             index[sp] = len(index)
+        # Rows below are appended per stateps entry, so row i is the right row
+        # only if index[stateps[i]] == i, i.e. stateps has no duplicates. It
+        # does not (4,823 states, 4,823 unique), but the rewrite is silently
+        # wrong if that ever changes, so state it.
+        if len(index) != len(stateps):
+            raise AssertionError("stateps contains duplicates; the int index would be wrong")
         succ_i = []      # successor indices per state
         succ_p = []      # successor probabilities per state (None for choice nodes)
         choice = []

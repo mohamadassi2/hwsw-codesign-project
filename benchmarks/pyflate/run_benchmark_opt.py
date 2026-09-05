@@ -1,5 +1,15 @@
 #!/usr/bin/env python
-"""
+"""Our optimized version of pyperformance's bm_pyflate benchmark.
+
+Derived from benchmarks/pyflate/run_benchmark.py, which is vendored unmodified
+from pyperformance (MIT) and is itself Paul Sladen's pyflate; this file is
+therefore a derivative work of both, under the terms below. See THIRD-PARTY.md.
+The changes are described in report_pyflate.txt section 3; the decompressed
+output is byte-identical to the original, which the benchmark's own md5 check
+verifies on every run.
+
+Original header follows.
+
 Copyright 2006--2007-01-21 Paul Sladen
 http://www.paul.sladen.org/projects/compression/
 
@@ -42,7 +52,10 @@ class BitfieldBase(object):
             # Both call sites construct straight after a byte-aligned
             # readbits(16), and _more() only ever adds whole bytes, so x.bits
             # is a multiple of 8 here. The rewind below assumes that.
-            assert not (x.bits & 7), "copy-construct from a non-byte-aligned reader"
+            if x.bits & 7:
+                # Not an assert: under python -O an assert disappears, and the
+                # rewind below would then silently round down to the wrong byte.
+                raise ValueError("copy-construct from a non-byte-aligned reader")
             # Do NOT inherit x's bit buffer. Bitfield holds bits LSB-first and
             # RBitfield MSB-first, so a buffer handed from one to the other
             # would be read in the wrong order. The original got away with it
@@ -56,9 +69,17 @@ class BitfieldBase(object):
             self.count = self.pos
         else:
             self.f = x
-            # One read() for the whole stream instead of one f.read(1) per byte
-            # (the original issued ~67k tiny reads through the io stack).
-            self.data = x.read()
+            # One big read instead of one f.read(1) per byte (the original
+            # issued ~67k tiny reads through the io stack). Loop until EOF:
+            # a single read() only returns everything for a buffered regular
+            # file, and a short read would silently truncate the stream.
+            chunks = []
+            while True:
+                c = x.read(1 << 20)
+                if not c:
+                    break
+                chunks.append(c)
+            self.data = b"".join(chunks) if chunks else b""
             self.pos = 0
             self.bits = 0
             self.bitfield = 0x0
@@ -290,6 +311,14 @@ class HuffmanTable(object):
 
     def find_next_symbol(self, field, reversed=True):
         mb = self.max_bits
+        if mb < 0:
+            # An all-zero code-length table leaves max_bits at -1. The original
+            # walked an empty self.table and fell through to this raise; here
+            # snoopbits(-1) would index MASKS from the end and reverse_bits
+            # would shift by a negative amount, so check first and fail the
+            # same way. DEFLATE really does emit empty distance trees.
+            raise Exception("unfound symbol, even after end of table @%r"
+                            % field.tell())
         v = field.snoopbits(mb)
         if reversed:
             # gzip stores codes bit-reversed in an LSB-first stream
