@@ -162,14 +162,20 @@ for L in 1..maxlen:             # at most 15 iterations
 <div><p><strong>Unchanged</strong></p><ul>
 <li>every public function and its signature</li>
 <li>the output, byte for byte</li>
-<li>still pure Python &mdash; no C extension, no <code>bz2</code> module</li></ul></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>08/23</span></div></section><section class="s sw"><div class="top"><span class="kick on">pyflate &middot; result</span><span class="kick">09</span></div><div class="body"><h2>2.37&times; faster &mdash; and the counters say why</h2>
+<li>still pure Python &mdash; no C extension, no <code>bz2</code> module</li></ul></div></div>
+<p class="lede" style="margin-top:clamp(10px,1.8vh,20px)"><strong>Which of these earned it?</strong>
+We measured rather than assumed &mdash; each change reverted in turn, md5-checked, timed in the VM.
+The canonical decoder is worth <span class="num">1.18&times;</span> of the <span class="num">2.34&times;</span>;
+move-to-front <span class="num">1.01&times;</span>. Most of the gain is the bit reader and the local
+names &mdash; per-byte interpreter overhead, not the algorithm. The algorithm is still what the
+hardware argument rests on.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>08/23</span></div></section><section class="s sw"><div class="top"><span class="kick on">pyflate &middot; result</span><span class="kick">09</span></div><div class="body"><h2>2.37&times; faster &mdash; and the counters say why</h2>
 <div class="grid g23">
 <table>
-<tr><th></th><th class="n">baseline</th><th class="n">optimized</th><th class="n">ratio</th></tr>
-<tr class="hi"><td>wall clock</td><td class="n">1.129 s</td><td class="n">473.0 ms</td><td class="n">2.37</td></tr>
-<tr><td>instructions</td><td class="n">28.77 B</td><td class="n">12.79 B</td><td class="n">2.26</td></tr>
-<tr><td>cycles</td><td class="n">10.98 B</td><td class="n">4.91 B</td><td class="n">2.31</td></tr>
-<tr><td>IPC</td><td class="n">2.62</td><td class="n">2.61</td><td class="n">0.98</td></tr>
+<tr><th></th><th class="n">baseline</th><th class="n">optimized</th><th class="n">base / opt</th></tr>
+<tr class="hi"><td>wall clock</td><td class="n">1.129 s</td><td class="n">477.2 ms</td><td class="n">2.37</td></tr>
+<tr><td>instructions</td><td class="n">28.77 B</td><td class="n">12.79 B</td><td class="n">2.25</td></tr>
+<tr><td>cycles</td><td class="n">10.98 B</td><td class="n">4.91 B</td><td class="n">2.24</td></tr>
+<tr><td>IPC</td><td class="n">2.62</td><td class="n">2.61</td><td class="n">1.00</td></tr>
 <tr><td>branch miss</td><td class="n">0.34%</td><td class="n">0.43%</td><td class="n">&mdash;</td></tr></table>
 <div style="display:flex;flex-direction:column;gap:clamp(12px,2vh,22px)">
 <div class="stat"><div class="k">less time</div><div class="v">57.7%</div><div class="s2">the brief asks for 7%</div></div>
@@ -280,11 +286,11 @@ Verified by logging all <span class="num">389,711</span> individual state update
 comparing them as bit patterns.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>20/23</span></div></section><section class="s sw"><div class="top"><span class="kick on">mdp &middot; result</span><span class="kick">21</span></div><div class="body"><h2>3.83&times; faster, same answer to the last bit</h2>
 <div class="grid g23">
 <table>
-<tr><th></th><th class="n">baseline</th><th class="n">optimized</th><th class="n">ratio</th></tr>
+<tr><th></th><th class="n">baseline</th><th class="n">optimized</th><th class="n">base / opt</th></tr>
 <tr class="hi"><td>wall clock</td><td class="n">4.997 s</td><td class="n">1.303 s</td><td class="n">3.83</td></tr>
-<tr><td>instructions</td><td class="n">118.3 B</td><td class="n">31.4 B</td><td class="n">3.78</td></tr>
-<tr><td>cycles</td><td class="n">47.93 B</td><td class="n">12.75 B</td><td class="n">3.72</td></tr>
-<tr><td>IPC</td><td class="n">2.47</td><td class="n">2.46</td><td class="n">1.02</td></tr></table>
+<tr><td>instructions</td><td class="n">118.3 B</td><td class="n">31.4 B</td><td class="n">3.77</td></tr>
+<tr><td>cycles</td><td class="n">47.93 B</td><td class="n">12.75 B</td><td class="n">3.76</td></tr>
+<tr><td>IPC</td><td class="n">2.47</td><td class="n">2.46</td><td class="n">1.00</td></tr></table>
 <div style="display:flex;flex-direction:column;gap:clamp(12px,2vh,22px)">
 <div class="stat"><div class="k">less time</div><div class="v">73.9%</div><div class="s2">n = 18 runs each</div></div>
 <p>The same story as pyflate: IPC flat, instruction count down 3.8&times;. The machine was fine.</p>

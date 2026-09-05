@@ -131,6 +131,44 @@ def main():
     want("Amdahl: vs optimized", opt_ms / new, "{:.1f}")
     want("Amdahl: vs shipped", pb * 1e3 / new, "{:.1f}")
 
+    # ---- the ablation figures on the slides come from the artifact ---------------
+    abl = os.path.join(ROOT, "results", "pyflate", "ablation.txt")
+    if os.path.exists(abl):
+        a = open(abl, encoding="utf-8").read()
+        for label, rx in (("3.1 contribution", r"3\.1\s+worth\s+[\d.]+ ms, i\.e\. ([\d.]+)x"),
+                          ("3.3 contribution", r"3\.3\s+worth\s+[\d.]+ ms, i\.e\. ([\d.]+)x"),
+                          ("overall ablation ratio", r"i\.e\. [\d.]+x of the overall ([\d.]+)x")):
+            m = re.search(rx, a)
+            (oks if m and m.group(1) in txt else fails).append(
+                f"slides quote the measured {label} ({m.group(1) if m else '?'})")
+
+    # ---- every ratio column must equal the two cells beside it -------------------
+    # The comparison tables carry their own arithmetic, and a stale ratio slipped
+    # through for a while because the checks above only ask whether a number
+    # appears somewhere on the slides, not whether the row is self-consistent.
+    raw_deck = open(DECK, encoding="utf-8").read()
+    UNIT = {"s": 1.0, "ms": 1e-3, "B": 1.0, "%": 1.0, "": 1.0}
+    def cell(t):
+        m = re.match(r"^\s*([\d,.]+)\s*(s|ms|B|%)?\s*$", t)
+        if not m:
+            return None
+        return float(m.group(1).replace(",", "")) * UNIT[m.group(2) or ""]
+    rows = re.findall(
+        r"<tr[^>]*>\s*<td>([^<]*)</td>\s*<td class=\"n\">([^<]*)</td>\s*"
+        r"<td class=\"n\">([^<]*)</td>\s*<td class=\"n\">([^<]*)</td>\s*</tr>", raw_deck)
+    checked = 0
+    for label, a, b, r in rows:
+        va, vb, vr = cell(a), cell(b), cell(r)
+        if va is None or vb is None or vr is None or not vb:
+            continue
+        want_r = va / vb
+        checked += 1
+        ok = abs(want_r - vr) <= 0.011          # the slides print two decimals
+        (oks if ok else fails).append(
+            f"table row '{label.strip()}': {a.strip()} / {b.strip()} = {want_r:.2f}"
+            + ("" if ok else f", but the slide says {r.strip()}"))
+    (oks if checked >= 6 else fails).append(f"ratio columns checked ({checked} rows)")
+
     # ---- claims that come from elsewhere in the repo -----------------------------
     for label, needle in (("4,823 states", "4,823"), ("3,659 getCritDist calls", "3,659"),
                           ("389,711 state updates", "389,711"), ("md5 prefix", "afa004a6"),
