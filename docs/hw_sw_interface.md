@@ -24,7 +24,7 @@ The interface is therefore: *tables in, bytes in, symbols out*.
 | Offset | Name | R/W | Meaning |
 |---|---|---|---|
 | 0x00 | `CTRL` | RW | bit0 `RUN` decode enabled (drives `run`); bit2 `LAST` the current DMA buffer is the end of the stream (drives `in_last`, and may be held as a level after the final beat) |
-| 0x04 | `STATUS` | R | bit0 `BUSY` (`run & ~done & ~err & ~underrun`); bit1 `ERR` (no code length matched, or the table index left the symbol table); bit2 `DONE` (input flushed and the buffer empty); bit3 `UNDERRUN` (the stream ended part-way through a code); bits[15:8] bit-buffer level |
+| 0x04 | `STATUS` | R | bit0 `BUSY` (`run & ~done & ~err & ~underrun`); bit1 `ERR` (no code length matched, or the table index left the symbol table); bit2 `DONE` (input flushed, buffer empty, and no symbol still waiting to be taken - see the note below); bit3 `UNDERRUN` (the stream ended part-way through a code); bits[15:8] bit-buffer level |
 | 0x08 | `TSEL` | RW | active table 0..5 (software writes it every 50 symbols, mirroring the bzip2 selector list) |
 | 0x0C | `TBL_ADDR` | W | `{bank[2:0], kind, index[8:0]}`: kind 0: length row `index`=L (1..20); kind 1: symbol entry |
 | 0x10 | `TBL_DATA` | W | kind 0: `{base[21:0], limit[20:0]}` packed over two writes; kind 1: 9-bit symbol. A write to `TBL_DATA` pulses `tbl_we`. |
@@ -34,6 +34,23 @@ The interface is therefore: *tables in, bytes in, symbols out*.
 
 There is deliberately no soft-reset bit: the block is reset by `rst_n` with the
 rest of the design. `RUN` low is enough to hold it.
+
+**`DONE` is not the end-of-block signal, and a host must not wait for it.** It
+means the input stream was flushed and every buffered bit consumed. A bzip2
+block is byte-padded, so after the last real symbol there are still up to seven
+pad bits in the buffer and `DONE` never rises - in the benchmark run the reader
+finishes with 45 bits left. The hardware cannot tell padding from data; only the
+decoder's caller knows the block ended, because it recognises the EOB symbol.
+So the host stops on EOB (or on the symbol count it already tracks for `TSEL`),
+and reads `DONE` only to distinguish "input exhausted" from "still running".
+`ERR` and `UNDERRUN` are the two conditions worth polling for.
+
+`LAST` may be presented either with the final beat or held as a level; the
+accelerator flushes on the handshake of the final beat either way. It must not
+be raised before that beat is offered: an earlier version of the RTL also
+flushed on `LAST & ~in_valid`, which a producer bubble then turned into a
+premature end of stream. `make sim_last_level` drives the level form with
+bubbles to keep that fixed.
 
 The symbol port is a valid/ready stream. `sym_valid` may be asserted while the
 DMA is not ready; the symbol is then held unchanged until it is taken, and the
