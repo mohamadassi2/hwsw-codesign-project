@@ -189,13 +189,12 @@ Correctness. scripts/local_check.py runs both versions:
 4.3 Reproducibility
     An independent second run in the same guest (results/reproducibility/,
     compared with scripts/compare_runs.py) gives 3.820x against the shipped
-    3.834x, a difference of 0.37%; the optimized time differs by 0.14%.
+    3.834x, a difference of 0.36%; the optimized time differs by 0.14%.
 
-    A third run, made while the shared host was busy, is excluded and the
-    reason is worth stating: it put mdp at 2.33 s against 1.30 s while
-    executing the same 31.5 billion instructions, because "CPUs utilized" had
-    fallen from 1.00 to 0.58. Instruction and cycle counts were unaffected; only
-    the wall clock moved. script_mdp.sh now records that figure for every run
+    A third run, made while the shared host was busy, is excluded: it put mdp at 2.33 s against 1.30 s while
+    executing the same 31.4 billion instructions, because "CPUs utilized" had
+    fallen from 1.00 to 0.58: the wall clock moved and the instruction count did
+    not. script_mdp.sh now records that figure for every run
     in results/mdp/contention.txt and warns below 0.95, so the reader can see
     the guest had the core rather than take it on trust.
 
@@ -221,11 +220,13 @@ is not a datapath problem.
 
 6. Conclusion
 ----------------------------------------------------------------------------------
-The benchmark's cost was not the value iteration itself but the way it was
-indexed: dictionary lookups keyed by nested tuples inside the hottest loop, plus
-exact-arithmetic distributions recomputed thousands of times. Indexing the graph
-once and memoizing the distributions gives 3.83x in the course VM (5.00 s to 1.30
-s, 73.9% less time), and a result identical to the original to the last bit on the
-VM's interpreter, which
-is the kind of change we would be comfortable shipping to the benchmark suite
-itself.
+The benchmark's cost was not the value iteration as an algorithm but how it was
+indexed and accumulated: dictionary lookups keyed by nested tuples inside the
+hottest loop, plus exact-arithmetic distributions recomputed thousands of times.
+Indexing the graph once and memoizing the distributions gives 3.83x in the course
+VM (5.00 s to 1.30 s, 73.9% less time). On the VM's CPython 3.10 the result is the
+same IEEE-754 double as the original, bit for bit; on CPython 3.12 and later it is
+the original that moves, by about one ulp, because sum() switched to compensated
+summation there - section 3 explains the trade and why we kept the faster form.
+With that qualifier stated, it is the kind of change we would be comfortable
+offering to the benchmark suite itself.

@@ -171,7 +171,7 @@ def main():
 
     # ---- claims that come from elsewhere in the repo -----------------------------
     for label, needle in (("4,823 states", "4,823"), ("3,659 getCritDist calls", "3,659"),
-                          ("389,711 state updates", "389,711"), ("md5 prefix", "afa004a6"),
+                          ("mdp result quoted in full", "0.8987358988699915"), ("md5 prefix", "afa004a6"),
                           ("output bytes", "399,360")):
         (oks if needle.replace(",", "") in present or needle in txt else fails).append(label)
 
@@ -180,6 +180,30 @@ def main():
     base_slide = "15.7% self and 48.2%" in re.sub(r"\s+", " ", txt)
     (oks if base_slide else fails).append("slide 6 quotes the baseline cProfile figures (15.7 / 48.2)")
     (oks if "15.7%" in rep and "48.2%" in rep else fails).append("those figures are the report's section 2 numbers")
+
+    # ---- the shares on the "what remains" slide come from the folded stacks ----
+    # They used to read ~60% / ~30%, which is the double count section 5.6 of the
+    # report retracts, and nothing checked them.
+    fold = os.path.join(ROOT, "results", "pyflate", "pyspy_opt_focus.folded")
+    if os.path.exists(fold):
+        tot = fn = bw = 0
+        for line in open(fold, encoding="utf-8"):
+            stack, _, n = line.rpartition(" ")
+            try:
+                n = int(n)
+            except ValueError:
+                continue
+            tot += n
+            if "find_next_symbol" in stack:
+                fn += n
+            if "bwt_reverse" in stack:
+                bw += n
+        if tot:
+            for label, val in (("Huffman share", fn / tot * 100), ("inverse BWT share", bw / tot * 100)):
+                (oks if f"{val:.0f}%" in txt else fails).append(
+                    f"slide quotes the measured {label} ({val:.0f}%)")
+            (oks if "60%" not in txt and "~30%" not in txt else fails).append(
+                "the retracted 60/30 double count is gone from the slides")
 
     # ---- the block diagram is a graded deliverable; gate its figures too -------
     dia_path = os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg")

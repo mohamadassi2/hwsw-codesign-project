@@ -28,6 +28,11 @@ def check(name, cond, detail=""):
         FAIL.append(f"{name}{('  ' + detail) if detail else ''}")
 
 
+def _flat(t):
+    """collapse whitespace so a line-wrapped sentence matches a one-line expectation"""
+    return re.sub(r"\s+", " ", t)
+
+
 def _sect(text, head, span=2600):
     """the body of one numbered subsection, so a check can be tied to it"""
     i = text.find(head)
@@ -121,15 +126,16 @@ if _mps:
 _mb = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_base.json"))
 _mo = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_opt.json"))
 if _mb and _mo:
-    check("mdp conclusion quotes the measured speedup", f"gives {_mb/_mo:.2f}x in the course VM" in _md, f"{_mb/_mo:.2f}x")
-    check("mdp conclusion quotes the measured percentage", f"{100*(1-_mo/_mb):.1f}% less time" in _md)
+    # Flattened: these sentences are wrapped at 82 columns, so a literal match
+    # breaks whenever a paragraph is re-wrapped rather than when a number is wrong.
+    check("mdp conclusion quotes the measured speedup",
+          f"gives {_mb/_mo:.2f}x in the course VM" in _flat(_md), f"{_mb/_mo:.2f}x")
+    check("mdp conclusion quotes the measured percentage",
+          f"{100*(1-_mo/_mb):.1f}% less time" in _flat(_md))
 
 # ---------------------------------------------------------------- reproducibility section
 _rb = mean_of(os.path.join(ROOT, "results", "reproducibility", "pyflate", "pyflate_base.json"))
 _ro = mean_of(os.path.join(ROOT, "results", "reproducibility", "pyflate", "pyflate_opt.json"))
-def _flat(t):
-    """collapse whitespace so a line-wrapped sentence matches a one-line expectation"""
-    return re.sub(r"\s+", " ", t)
 if _b and _o and _rb and _ro:
     # Both ratios must appear in the reproducibility subsection itself, rather
     # than anywhere in the report: the point is that the section compares the

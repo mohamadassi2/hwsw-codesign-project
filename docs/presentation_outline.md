@@ -28,8 +28,8 @@ pyflate (about 9 min)
    reader (one read, 8-byte refill), MTF pop/insert, regex RLE.
 8. Before / after [VM]: pyperf compare_to table, perf stat counters
    (instructions, IPC). Output byte-identical, md5.
-9. What is left (optimized flame graph [VM]): Huffman + bits ~60%, inverse
-   BWT ~30%. Say: the first is bit-serial work, the second is a pointer
+9. What is left (optimized flame graph [VM]): Huffman + bits ~53%, inverse
+   BWT ~25% (py-spy samples; cProfile says 51% and 18%). Say: the first is bit-serial work, the second is a pointer
    chase; only the first is a datapath problem.
 
 Accelerator (about 7 min)
@@ -41,8 +41,8 @@ Accelerator (about 7 min)
 12. Verification: golden vectors from the real block, testbench result:
     148,271/148,271, 0 errors, 148,272 cycles, 1.000 symbol/cycle.
 13. Cost: yosys figures, 18,787 cells (5,441 flops) + 13.9 kbit of symbol SRAM;
-    67-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
-    52k-cell version as the "why SRAM" argument.
+    100-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
+    49,877-cell version as the "why SRAM" argument.
 14. Expected gain: Amdahl with the numbers. ~3,800 CPU cycles per symbol vs
     1; accelerated part ~1.3 ms; whole run ~2.0x over optimized, ~4.7x over
     shipped [VM ratio]. Trade-offs: direct-lookup table vs bit-serial FSM vs
@@ -66,4 +66,4 @@ mdp (about 4 min)
     - why not accelerate BWT: one dependent memory access per byte;
     - what happens on a corrupt stream: err, no length matched;
     - how the selector switch is handled: TSEL register or selector SRAM;
-    - clock and pipeline depth: 67 levels, can split the compare tree.
+    - clock and pipeline depth: 100 levels, can split the compare tree.

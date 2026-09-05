@@ -181,9 +181,7 @@ public behaviour are unchanged; the output is byte-identical.
     and any prefix that is not a shorter code is >= first_code[L]) makes the
     single comparison sufficient. This replaces a scan of up to 147 object
     compares, and several snoopbits() calls per symbol, with one peek and a
-    handful of int operations. The win is not that the average scan was long -
-    it is that the scan and its repeated bit peeks disappear entirely, and with
-    them the per-comparison attribute loads.
+    handful of int operations.
 
 3.2 Bit reader
     The input is read once (f.read()) and the buffer is refilled 8 bytes at a
@@ -231,12 +229,15 @@ What we deliberately did not do.
     (3.2) and the local-name and bytearray changes (3.5), which are inside the
     decode loop and cannot be reverted in isolation.
 
-    That is worth saying plainly, because it is the opposite of what we
-    expected when we started: the algorithmic fix is real and it is what makes
-    the hardware argument in section 5, but most of the measured speedup came
-    from removing per-byte interpreter overhead - the one-byte-at-a-time refill
-    through the io stack above all. An earlier draft of this report called 3.1
-    "the main fix" on no evidence; the measurement says otherwise.
+    That is the opposite of what we expected, and it changes what section 5
+    rests on. The case for hardware is not that the algorithm was slow - the
+    ablation says it was not, and on this input the scan is only six entries
+    long. It is that after the algorithm is right, about half the run is still
+    per-symbol interpreter work: a method call, a short loop and two bit-buffer
+    updates. The ablation sharpens that argument rather than weakening it,
+    because the changes that paid best are the ones that removed per-operation
+    interpreter overhead, and that overhead is exactly what a one-symbol-per-clock
+    datapath does not pay.
 
     The same script also explains why the scan is not as expensive as it looks.
     results/pyflate/table_stats.txt instruments the shipped decoder on this
@@ -319,21 +320,21 @@ inside bench_pyflake() also passes in every run.
     same guest and the scripts run exactly as a grader would. Comparing it
     with the shipped set (scripts/compare_runs.py results
     results/reproducibility): the speedup is 2.365x shipped against
-    2.385x in the other run, a difference of 0.85%, and the largest
+    2.385x in the other run, a difference of 0.84%, and the largest
     wall-clock difference across both benchmarks is 0.87%. The ratio we report
     is stable to well inside 1% between runs, which is smaller than the
     run-to-run spread pyperf prints.
 
     A third run of the same scripts is deliberately not included. It reported
-    mdp at 2.33 s against 1.30 s while executing the same 31.5 billion
-    instructions and using only 2.5% more CPU time: the shared host was busy
+    mdp at 2.33 s against 1.30 s while executing the same 31.4 billion
+    instructions: the shared host was busy
     and "CPUs utilized" had fallen from 1.00 to 0.58, so the wall clock
     measured the host's load rather than this code. Both scripts now read that
     figure from perf, print a warning below 0.95 and record the value in
     results/<benchmark>/contention.txt, so a contended run is visible in the
     evidence rather than only in the wall clock;
     results/<benchmark>/contention.txt records it for the runs that are
-    shipped (0.99-1.00 throughout). It is the one measurement error that would
+    shipped (0.994 to 1.003 across the four). It is the one measurement error that would
     have been invisible in the numbers themselves.
 
 
@@ -408,7 +409,7 @@ inside bench_pyflake() also passes in every run.
         531,571 bits consumed, 3.59 bits per symbol on average
     The same block also decodes correctly with the input and output handshakes
     gated pseudo-randomly (`make sim_bp`): all 148,271 symbols, 0 errors, at
-    0.499 symbols per cycle, which is the throttle working rather than a
+    0.500 symbols per cycle, which is the throttle working rather than a
     defect.
     The same testbench also passes inside the course VM, with the Icarus
     Verilog 11.0 that Ubuntu 22.04 packages (results/rtl_sim_guest.log:
@@ -461,13 +462,13 @@ inside bench_pyflake() also passes in every run.
     nothing, never stalls the consumer and never uses the extreme code lengths.
 
     So the stimulus was extended rather than the score explained away.
-    hw/tb/gen_synth_vectors.py builds four small directed streams - every code
+    hw/tb/gen_synth_vectors.py builds five small directed streams - every code
     length 1..20 including the all-ones maximum code; a stream that ends
     exactly on a code boundary; an incomplete code, so that some bit pattern
     matches nothing; a table whose base row points past the symbol table; and
     a stream that ends one bit short of the shortest code - and `make sim_bp`
     reruns the real block with the input and output handshakes gated
-    pseudo-randomly. `make sim_all` runs all six.
+    pseudo-randomly. `make sim_all` runs all eight.
 
     Against that suite 17 of the 18 mutations are caught. The one survivor is
     reported rather than removed: the bit reader's saturating bit-count guard
@@ -532,8 +533,7 @@ inside bench_pyflake() also passes in every run.
 
 5.7 Performance / area / power trade-offs
     Area (docs/synthesis_yosys.txt, generic 2-input gates).
-    Which figure to quote depends on what the tables really are, and they are
-    not all the same thing. limit_r is read at all twenty code lengths in the
+    Which figure to quote depends on what the tables really are. limit_r is read at all twenty code lengths in the
     same cycle - that parallel compare is the design - and base_r is read
     asynchronously. No SRAM macro has twenty read ports, so those two are
     register files and have to be counted as flip-flops. Only the symbol
@@ -558,11 +558,15 @@ inside bench_pyflake() also passes in every run.
     once per block, not per symbol. What has to close at the symbol rate is
     peek -> the parallel compare -> the priority encoder -> the bit-buffer
     shift, which is shorter. We did not run FPGA or ASIC timing, so any
-    frequency here is an estimate and nothing in this report depends on it:
-    the design sustains one symbol per cycle in simulation for all 148,271
-    symbols, and section 5.6 uses 200 MHz, which needs the compare tree split
-    into two pipeline stages (~50 extra flops, one more cycle of latency,
-    throughput unchanged).
+    frequency here is an estimate. Section 5.6 does use it, so it is worth
+    saying how little turns on it: the decode is 148,272 cycles, which is
+    0.74 ms at 200 MHz and 0.37 ms at 400 MHz, against a 477 ms run. Halving
+    the clock moves the projected run by less than a millisecond and leaves
+    the ratio at 2.0x. What the simulation establishes is throughput, not
+    frequency: one symbol per cycle for all 148,271 symbols. The 200 MHz
+    figure assumes the compare tree split into two pipeline stages (~50 extra
+    flops, one more cycle of latency, throughput unchanged), which is not in
+    the RTL as it stands.
     Power: per symbol the accelerator toggles the shifter, 20 comparators and
     three small memory reads; the CPU spends ~3,800 cycles of a 2.4 GHz core
     on the same symbol. Even without a power model, the energy per symbol is
@@ -585,17 +589,21 @@ inside bench_pyflake() also passes in every run.
 
 6. Conclusion
 ----------------------------------------------------------------------------------
-The shipped benchmark spends about half of its time in find_next_symbol and the
-bit reads underneath it: a linear scan of the code table that a canonical Huffman
-decoder replaces with a handful of integer operations, on top of a bit reader and
-a move-to-front that were written for clarity rather than speed. Fixing those in
-pure Python gives 2.37x in the course VM (1.13 s to 477 ms, 57.7% less time), with
-output identical to the original byte for byte. What remains is split between bit-
-serial symbol decoding, which is exactly the kind of work a small datapath does in
-one clock, and a pointer-chasing inverse BWT, which is memory-bound and stays on
-the CPU. The proposed accelerator is ~13k gates plus 5.4k flip-flops of
-table registers and 13.9 kbit of symbol SRAM, decodes the whole benchmark block at one symbol per cycle
-in simulation with zero errors, changes one function in the software, and
-brings the run to roughly 2.0x over our optimized code and ~4.7x over the
-original, with the remaining time now dominated by memory rather than by the
-interpreter.
+The shipped benchmark is slow in the ordinary way a pure-Python decoder is slow: a
+linear scan of the code table for every symbol, a bit reader that refills one byte
+at a time through the io stack, a move-to-front that rebuilds a list, and a final
+run-length pass that walks the output byte by byte. Replacing all four in pure
+Python gives 2.37x in the course VM (1.13 s to 477 ms, 57.7% less time), with
+output identical to the original byte for byte, and the ablation in section 3.6
+says no single one of them dominates.
+
+What is left is different in kind. About half of it is per-symbol bit work -
+find_next_symbol and the bit reads under it - which is what a small datapath does
+in one clock, and about a quarter is a pointer-chasing inverse BWT, which is
+memory-bound and stays on the CPU. The proposed accelerator is ~13k gates plus
+5.4k flip-flops of table registers and 13.9 kbit of symbol SRAM. It decodes the
+whole benchmark block at one symbol per cycle in simulation with zero errors,
+changes one function in the software, and brings the run to roughly 2.0x over our
+optimized code and ~4.7x over the original - at which point the inverse BWT is the
+largest single item left, and the next gain would have to come from somewhere
+other than the decoder.
