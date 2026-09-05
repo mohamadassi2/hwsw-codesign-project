@@ -518,13 +518,13 @@ inside bench_pyflake() also passes in every run.
     cycles at 2.4 GHz, against one cycle in hardware - three orders of
     magnitude on the accelerated part alone. The whole-program gain is bounded
     by Amdahl's law: the inverse BWT and the Python glue around the symbol
-    stream stay where they are, and they are what the remaining 239 ms is.
+    stream stay where they are, and they are what the remaining 241 ms is.
 
     Assumptions, stated so they can be argued with: the host-side loop that
     consumes the symbol buffer (move-to-front, the appends) costs what it costs
     today; DMA and MMIO latencies as above; no overlap between CPU and
     accelerator, so the accelerator's own time is added rather than hidden -
-    with overlap it disappears entirely and the bound becomes 473 - 235 = 238
+    with overlap it disappears entirely and the bound becomes 477 - 237 = 240
     ms. The selector list is assumed already in the accelerator (section 5.5
     explains that it is not, in this version, and what that would cost).
 

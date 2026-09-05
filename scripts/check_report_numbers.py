@@ -28,6 +28,19 @@ def check(name, cond, detail=""):
         FAIL.append(f"{name}{('  ' + detail) if detail else ''}")
 
 
+def _sect(text, head, span=2600):
+    """the body of one numbered subsection, so a check can be tied to it"""
+    i = text.find(head)
+    if i < 0:
+        return ""
+    j = re.search(r"\n\n\n|\n\d+\. [A-Z]", text[i + len(head):])
+    return text[i:i + len(head) + (j.start() if j else span)]
+
+
+def _count(text, needle):
+    return len(re.findall(r"(?<![\d.,])" + re.escape(needle) + r"(?![\d.,])", text))
+
+
 def mean_of(path):
     if not os.path.exists(path):
         return None
@@ -263,12 +276,54 @@ if os.path.exists(_abl):
 _ts = os.path.join(ROOT, "results", "pyflate", "table_stats.txt")
 if os.path.exists(_ts):
     _t = open(_ts, encoding="utf-8").read()
+    _s36 = _sect(txt, "3.6 Which of those five actually earned the speedup")
+    check("section 3.6 exists to carry the table-scan figures", bool(_s36))
     for _label, _rx in (("largest table", r"largest table\s+(\d+) entries"),
                         ("mean compares", r"compared, mean/symbol\s+([\d.]+)"),
                         ("snoopbits total", r"snoopbits\(\) calls, total\s+([\d,]+)")):
         _m = re.search(_rx, _t)
-        check(f"the report quotes the measured {_label} ({_m.group(1) if _m else '?'})",
-              _m is not None and _m.group(1) in txt, "from results/pyflate/table_stats.txt")
+        # Checked inside 3.6, not anywhere in the file: "147" also appears in
+        # section 3.1, so a presence-anywhere test passed even after 3.6 was
+        # changed to say 258. A gate-mutation run in the VM found exactly that.
+        check(f"section 3.6 quotes the measured {_label} ({_m.group(1) if _m else '?'})",
+              _m is not None and _m.group(1) in _s36, "from results/pyflate/table_stats.txt")
+    # And section 3.1's description of the same table must agree with it.
+    _mlt = re.search(r"largest table\s+(\d+) entries", _t)
+    if _mlt:
+        _s31 = _sect(txt, "3.1 Canonical Huffman decode instead of a table scan")
+        check(f"section 3.1 describes the same table size ({_mlt.group(1)})",
+              _mlt.group(1) in _s31, "section 3.1 and results/pyflate/table_stats.txt disagree")
+
+# ---------------------------------------------------------------- quoted times
+# The generated 4.1 block is filled from results/, but the same figures are
+# restated by hand in sections 5.6 and 6. Perturbing one of those restatements
+# was not caught until a gate-mutation run in the VM went looking for it, so
+# check each place the number is written rather than the file as a whole.
+_pb = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_base.json"))
+_po = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_opt.json"))
+if _pb and _po:
+    _exact = f"{_po * 1e3:.1f}"        # 477.2, as printed in the 4.1 table
+    _round = f"{_po * 1e3:.0f}"        # 477,  as used in the prose
+    check("section 4.1 prints the measured optimized time",
+          _exact in _sect(txt, "4.1 Course VM"), f"expected {_exact} ms")
+    check("section 5.6 uses the same optimized time",
+          _round in _sect(txt, "5.6 Expected performance"), f"expected {_round} ms")
+    _concl = txt[txt.rindex("6. Conclusion"):] if "6. Conclusion" in txt else ""
+    check("the conclusion uses the same optimized time", _round in _concl,
+          f"expected {_round} ms")
+    # No stale value of the same shape may survive anywhere in the report.
+    for _stale in ("473.0", "473"):
+        if _stale != _exact and _stale != _round:
+            check(f"no stale optimized time '{_stale}' remains", _count(txt, _stale) == 0,
+                  f"the measured value is {_round} ms")
+    # The overlap bound in 5.6 is arithmetic on the same two numbers.
+    _mov = re.search(r"the bound becomes (\d+) - (\d+) = (\d+)\s*\n?\s*ms", txt)
+    check("the overlap bound in 5.6 subtracts correctly", _mov is not None
+          and int(_mov.group(1)) - int(_mov.group(2)) == int(_mov.group(3)),
+          f"{_mov.groups() if _mov else 'sentence not found'}")
+    if _mov:
+        check("the overlap bound starts from the measured optimized time",
+              _mov.group(1) == _round, f"expected {_round}")
 
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and
