@@ -182,7 +182,7 @@ check("hw: average bits per symbol", abs(BITS / SYMBOLS - 3.59) < 0.01,
 # anywhere else it would mean the corrected share had been lost again.
 _flat_pf = re.sub(r"\s+", " ", _pf)
 check("the corrected share is used, not the double-counted 62%",
-      "49.7%" in _pf and _flat_pf.count("62%") == _flat_pf.count("earlier draft of this report did exactly that and quoted ~62%"),
+      "51.1%" in _pf and _flat_pf.count("62%") == _flat_pf.count("earlier draft of this report did exactly that and quoted ~62%"),
       f"{_flat_pf.count('62%')} mention(s) of 62%, "
       f"{_flat_pf.count('earlier draft of this report did exactly that and quoted ~62%')} in the sentence that records the mistake")
 
@@ -371,11 +371,11 @@ if os.path.exists(_simlog):
         # per-symbol CPU cost: the accelerated share of the optimized run,
         # divided by the symbols, at the guest's 2.4 GHz.
         if _po:
-            _cps = _po * 0.497 / _sym * 2.4e9
+            _cps = _po * 0.511 / _sym * 2.4e9
             _want_cps = f"{round(_cps, -2):,.0f}"
             check(f"the per-symbol CPU cost recomputes ({_want_cps} cycles)",
                   _want_cps in txt,
-                  f"{_po * 1e3:.0f} ms x 49.7% / {_sym:,} at 2.4 GHz")
+                  f"{_po * 1e3:.0f} ms x 51.1% / {_sym:,} at 2.4 GHz")
             # Same reasoning: check every place the report states a per-symbol
             # cycle cost, not merely that the right number occurs once.
             # Only the CPU-cost sentences, not every "cycles per symbol" in the

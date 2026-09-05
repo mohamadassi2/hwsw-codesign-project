@@ -333,14 +333,6 @@ class HuffmanTable(object):
         raise Exception("unfound symbol, even after end of table @%r"
                         % field.tell())
 
-        for bits in range(self.min_bits, self.max_bits + 1):
-            r = self._find_symbol(bits, field.snoopbits(bits), self.table)
-            if 0 <= r:
-                field.readbits(bits)
-                return r
-            elif bits == self.max_bits:
-                raise "unfound symbol, even after max_bits"
-
 
 class OrderedHuffmanTable(HuffmanTable):
 

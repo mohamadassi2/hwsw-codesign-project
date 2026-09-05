@@ -6,16 +6,24 @@ change is worth. Every variant is checked against the benchmark's own md5
 before it is timed, so a row that decoded wrongly could not appear here.
 
   variant                                          min (ms)     median   vs base
-  baseline (as pyperformance ships it)               1111.8     1115.5     1.00x
-  optimized (all of 3.1-3.5)                          475.3      476.3     2.34x
-  optimized, 3.1 reverted to the table scan           561.7      562.9     1.98x
-  optimized, 3.3 reverted to the slice rebuild        478.2      479.2     2.33x
+  baseline (as pyperformance ships it)               1111.5     1117.0     1.00x
+  optimized (all of 3.1-3.5)                          480.8      481.5     2.31x
+  optimized, 3.1 reverted to the table scan           563.9      565.1     1.97x
+  optimized, 3.3 reverted to the slice rebuild        636.7      639.0     1.75x
+  optimized, 3.4 reverted to the per-byte RLE loop      637.4      639.6     1.74x
 
-  contribution of each separable change (full optimized = 475.3 ms):
-    3.1    worth   86.4 ms, i.e. 1.18x of the overall 2.34x
-    3.3    worth    2.9 ms, i.e. 1.01x of the overall 2.34x
+  contribution of each separable change (full optimized = 480.8 ms):
+  These are leave-one-out differences. They do not multiply out to the
+  overall speedup and are not meant to: each says what the run costs with
+  that one change put back, everything else kept.
+  Largest run-to-run spread across variants: 69.9 ms - a contribution
+  smaller than that is not resolved by this measurement.
+    3.1    worth   83.0 ms, i.e. 1.17x of the overall 2.31x
+    3.3    worth  155.8 ms, i.e. 1.32x of the overall 2.31x
+    3.4    worth  156.6 ms, i.e. 1.33x of the overall 2.31x
 
-  3.2 (bit reader) and 3.5 (local names, bytearray) are inside the decode
-  loop and cannot be reverted in isolation; they account for the remainder.
+  3.2 (bit reader) and 3.5 (local names, bytearray) are woven through the
+  decode loop and cannot be reverted on their own, so they are not listed
+  separately; what they are worth is whatever the rows above do not explain.
 
   reps per variant: 5, minimum reported (medians in the table above).

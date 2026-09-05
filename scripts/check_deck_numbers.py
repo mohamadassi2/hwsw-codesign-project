@@ -123,7 +123,7 @@ def main():
     opt_ms = po * 1e3
     # find_next_symbol's cumulative share. Its self share plus the bit-reading
     # helpers it calls would double-count, which an earlier draft did as 62%.
-    part = opt_ms * 0.497
+    part = opt_ms * 0.511
     accel = decode_ms + 0.6
     new = opt_ms - part + accel
     want("Amdahl: accelerated part (ms)", part, "{:.0f}")
@@ -135,12 +135,13 @@ def main():
     abl = os.path.join(ROOT, "results", "pyflate", "ablation.txt")
     if os.path.exists(abl):
         a = open(abl, encoding="utf-8").read()
-        for label, rx in (("3.1 contribution", r"3\.1\s+worth\s+[\d.]+ ms, i\.e\. ([\d.]+)x"),
-                          ("3.3 contribution", r"3\.3\s+worth\s+[\d.]+ ms, i\.e\. ([\d.]+)x"),
-                          ("overall ablation ratio", r"i\.e\. [\d.]+x of the overall ([\d.]+)x")):
-            m = re.search(rx, a)
+        # The slide quotes what each change is worth in milliseconds, which is
+        # what the ablation actually measures; ratios of leave-one-out deltas do
+        # not compose and are not put on the slide.
+        for which in ("3.1", "3.3", "3.4"):
+            m = re.search(which.replace(".", r"\.") + r"\s+worth\s+([\d.]+) ms", a)
             (oks if m and m.group(1) in txt else fails).append(
-                f"slides quote the measured {label} ({m.group(1) if m else '?'})")
+                f"slides quote the measured {which} contribution ({m.group(1) if m else '?'} ms)")
 
     # ---- every ratio column must equal the two cells beside it -------------------
     # The comparison tables carry their own arithmetic, and a stale ratio slipped
@@ -177,9 +178,9 @@ def main():
 
     # ---- the baseline slide must carry the BASELINE cProfile figures ----------
     rep = open(os.path.join(ROOT, "report_pyflate.txt"), encoding="utf-8").read()
-    base_slide = "15.7% self and 48.2%" in re.sub(r"\s+", " ", txt)
+    base_slide = "15.4% self and 49.1%" in re.sub(r"\s+", " ", txt)
     (oks if base_slide else fails).append("slide 6 quotes the baseline cProfile figures (15.7 / 48.2)")
-    (oks if "15.7%" in rep and "48.2%" in rep else fails).append("those figures are the report's section 2 numbers")
+    (oks if "15.4%" in rep and "49.1%" in rep else fails).append("those figures are the report's section 2 numbers")
 
     # ---- the shares on the "what remains" slide come from the folded stacks ----
     # They used to read ~60% / ~30%, which is the double count section 5.6 of the
@@ -233,7 +234,9 @@ def main():
         "no embedded slide image quotes a stale cycle count" + (f" (found {sorted(set(stale))})" if stale else ""))
 
     # ---- per-symbol CPU cost: 235 ms / 148,271 symbols at 2.4 GHz -------------
-    cyc_per_sym = 0.235 / SYM * 2.4e9
+    # Derived, not hardcoded: the accelerated share of the measured optimized
+    # run, spread over the symbols, at the guest's 2.4 GHz.
+    cyc_per_sym = po * 0.511 / SYM * 2.4e9
     for label, path in (("deck", DECK),
                         ("docs/presentation_outline.md", os.path.join(ROOT, "docs", "presentation_outline.md")),
                         ("report_pyflate.txt", os.path.join(ROOT, "report_pyflate.txt"))):

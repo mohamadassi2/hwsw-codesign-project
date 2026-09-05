@@ -99,13 +99,24 @@ module huffman_decoder #(
             hit[L]     = hit_raw[L] && fits[L];
         end
     end
-    // A code matched but did not fit: the stream ended part-way through it.
-    logic short_c;
-    assign short_c = (|hit_raw) && !(|hit);
-
     // ---- priority encode: the shortest matching length wins ----------------
     logic [4:0] len_c;
-    logic       found;
+    logic       found, found_raw;
+
+    // A code matched but did not fit: the stream ended part-way through it.
+    // Derived from a priority-encoder pass rather than from (|hit_raw), because
+    // a reduction OR over an unprogrammed table row yields X, and `!short_c`
+    // then makes the err assignment below unreachable - the decoder would
+    // livelock on a corrupt table instead of halting. `if (hit_raw[L])` treats
+    // X as false, which is the same rule `found` already uses.
+    always_comb begin
+        found_raw = 1'b0;
+        for (int L = MAXBITS; L >= 1; L--)
+            if (hit_raw[L]) found_raw = 1'b1;
+    end
+    logic short_c;
+    assign short_c = found_raw && !found;
+
     always_comb begin
         len_c = '0; found = 1'b0;
         for (int L = MAXBITS; L >= 1; L--)   // last assignment = smallest L
