@@ -431,6 +431,26 @@ for _name, _body in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
             _missing.append(f"{_name} -> {_path}")
 check("every file the reports cite exists", not _missing, "; ".join(sorted(set(_missing))[:4]))
 
+# ---------------------------------------------------------------- synth is current
+# The synthesis figures must describe the RTL that is in the tree. They were
+# once two RTL changes behind, and every existing check passed, because they all
+# verify that the report quotes docs/synthesis_yosys.txt - not that the file
+# still matches hw/rtl/.
+_syn = os.path.join(ROOT, "docs", "synthesis_yosys.txt")
+if os.path.exists(_syn):
+    import hashlib, glob
+    _rtl_files = sorted(glob.glob(os.path.join(ROOT, "hw", "rtl", "*.sv")))
+    _h = hashlib.md5()
+    for _f in _rtl_files:
+        _h.update(hashlib.md5(open(_f, "rb").read()).hexdigest().encode())
+    _stamp = re.search(r"RTL fingerprint: ([0-9a-f]{32})", open(_syn, encoding="utf-8").read())
+    check("docs/synthesis_yosys.txt carries an RTL fingerprint", _stamp is not None,
+          "regenerate it with `make synth` in hw/")
+    if _stamp:
+        check("the synthesis figures describe the RTL in the tree",
+              _stamp.group(1) == _h.hexdigest(),
+              f"the file was generated from different RTL; run `make synth` in hw/")
+
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and
 # hw/tb/MUTATIONS.md is where it is recorded. Recount it from that table rather

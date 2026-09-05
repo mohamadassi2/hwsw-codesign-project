@@ -1,4 +1,5 @@
-# Generic synthesis of huffman_accel_top with Yosys 0.68.
+# Generic synthesis of huffman_accel_top with Yosys 0.68+post.
+# RTL fingerprint: 06d5195fa7b8cc7031c4cb3dbad05967  (3 files under hw/rtl/)
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.
@@ -10,24 +11,24 @@
 # one synchronous read port, is a genuine SRAM candidate.
 
 === 1. as built: limit/base as register files, symbols in SRAM ===
-18774 cells: 5441 flip-flops, 13330 gates, 1 memory
-      170   $_ANDNOT_
-     5798   $_AND_
+18796 cells: 5441 flip-flops, 13352 gates, 1 memory
+      167   $_ANDNOT_
+     5789   $_AND_
        36   $_DFFE_PN0P_
      5334   $_DFFE_PP_
        71   $_DFF_PN0_
-      431   $_MUX_
-     5766   $_NAND_
-      579   $_NOR_
-       13   $_NOT_
-       63   $_ORNOT_
-      371   $_OR_
-       36   $_XNOR_
-      103   $_XOR_
+      434   $_MUX_
+     5794   $_NAND_
+      595   $_NOR_
+       15   $_NOT_
+       73   $_ORNOT_
+      352   $_OR_
+       38   $_XNOR_
+       95   $_XOR_
         1   $mem_v2
         2   $scopeinfo
 
-Longest combinational path (ltp -noff): length=102
+Longest combinational path (ltp -noff): length=98
 # The path ends at \u_dec.err_q, the sticky error flag. That flag is read once per
 # block, so it has a whole clock to settle; it is not what limits the symbol
 # rate. The path that does - peek, the parallel compare, the priority encoder,
@@ -40,20 +41,20 @@ Longest combinational path (ltp -noff): length=102
 
 
 === 2. every table flattened into logic (memory_map) ===
-49833 cells: 19382 flip-flops, 30449 gates
+49804 cells: 19382 flip-flops, 30420 gates
 # The other extreme: even the symbol table becomes gates and flops.
-      515   $_ANDNOT_
-     7894   $_AND_
+      477   $_ANDNOT_
+     7926   $_AND_
        45   $_DFFE_PN0P_
     19266   $_DFFE_PP_
        71   $_DFF_PN0_
-    13683   $_MUX_
-     6400   $_NAND_
-      661   $_NOR_
-       13   $_NOT_
-      302   $_ORNOT_
-      845   $_OR_
-       40   $_XNOR_
-       96   $_XOR_
+    13703   $_MUX_
+     6391   $_NAND_
+      646   $_NOR_
+       11   $_NOT_
+      310   $_ORNOT_
+      819   $_OR_
+       44   $_XNOR_
+       93   $_XOR_
         2   $scopeinfo
 

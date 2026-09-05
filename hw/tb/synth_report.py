@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """Turn the yosys stat/ltp files written by synth.ys into docs/synthesis_yosys.txt.
 
@@ -27,7 +28,18 @@ depth = int(re.search(r"length=(\d+)", ltp).group(1))
 end = [l for l in ltp.splitlines() if l.strip().startswith("ff:")]
 endpoint = end[0].split("(via")[0].replace("ff:", "").strip() if end else "a flip-flop"
 
+# Stamp the RTL these figures describe. Without it the file can silently
+# outlive the design: the numbers below were once regenerated two RTL changes
+# late and nothing noticed, because every check verified that the report quoted
+# this file, not that this file matched the source.
+import hashlib, glob as _glob
+_rtl = sorted(_glob.glob(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rtl", "*.sv")))
+_fp = hashlib.md5()
+for _f in _rtl:
+    _fp.update(hashlib.md5(open(_f, "rb").read()).hexdigest().encode())
+
 print(f"""# Generic synthesis of huffman_accel_top with {ver}.
+# RTL fingerprint: {_fp.hexdigest()}  ({len(_rtl)} files under hw/rtl/)
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.
