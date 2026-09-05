@@ -52,6 +52,8 @@ sim_all: synth_vectors build/tb
 	$(call run_one,err,+expect_err)
 	$(call run_one,badidx,+expect_err)
 	$(call run_one,underrun,+expect_underrun)
+	$(call run_one,drain,)
+	$(call run_one,drain,+last_level +bubble)
 	@$(MAKE) --no-print-directory sim
 	@$(MAKE) --no-print-directory sim_bp
 	@echo "all simulations passed"

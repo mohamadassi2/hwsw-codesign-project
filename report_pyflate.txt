@@ -509,8 +509,8 @@ inside bench_pyflake() also passes in every run.
     hw/tb/mutate.sh injects one bug at a time into the RTL and runs the whole
     simulation suite for each; hw/tb/MUTATIONS.md records every outcome.
     The important result is not the score but what the score exposed. Against
-    the benchmark block alone - one well-formed bzip2 block - eight of the
-    eighteen mutations passed unnoticed, including deleting the end-of-input
+    the benchmark block alone - one well-formed bzip2 block - twelve of the
+    twenty mutations passed unnoticed, including deleting the end-of-input
     handling, tying the flush signal low, ignoring output backpressure, and
     building comparators for only the code lengths this input happens to use
     (2..15 of the 20 the format allows). None of those is a weakness of the
@@ -519,15 +519,19 @@ inside bench_pyflake() also passes in every run.
     nothing, never stalls the consumer and never uses the extreme code lengths.
 
     So the stimulus was extended rather than the score explained away.
-    hw/tb/gen_synth_vectors.py builds five small directed streams - every code
+    hw/tb/gen_synth_vectors.py builds six small directed streams - every code
     length 1..20 including the all-ones maximum code; a stream that ends
     exactly on a code boundary; an incomplete code, so that some bit pattern
-    matches nothing; a table whose base row points past the symbol table; and
-    a stream that ends one bit short of the shortest code - and `make sim_bp`
-    reruns the real block with the input and output handshakes gated
-    pseudo-randomly. `make sim_all` runs all eight.
+    matches nothing; a table whose base row points past the symbol table; a
+    stream that ends one bit short of the shortest code; and one that is a
+    whole number of 32-bit words, so the buffer drains to zero and `done` can
+    be observed at all. `make sim_bp` reruns the real block with both
+    handshakes gated pseudo-randomly, `make sim_last_level` presents LAST as a
+    level with producer bubbles, and the draining stream is run again with the
+    producer stalled for 40 cycles before it hands over the final word.
+    `make sim_all` runs all ten.
 
-    Against that suite 17 of the 18 mutations are caught. The one survivor is
+    Against that suite 19 of the 20 mutations are caught. The one survivor is
     reported rather than removed: the bit reader's saturating bit-count guard
     is unreachable, because the decoder now refuses to consume more bits than
     the buffer holds, so nothing can drive the counter below zero. Unreachable

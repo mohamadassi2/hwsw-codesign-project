@@ -24,11 +24,24 @@ streams that reach the corners the benchmark cannot:
 | `vectors_err` | an incomplete code, so some bit pattern matches nothing |
 | `vectors_badidx` | a table whose base row points past the symbol table |
 | `vectors_underrun` | the stream ends one bit short of the shortest code |
+| `vectors_drain` | a whole number of 32-bit words, so the buffer drains to zero and `done` can assert |
 
 `make sim_bp` reruns the real block with `out_ready` and `in_valid` gated
 pseudo-randomly, which is what makes the handshakes testable at all.
+`make sim_last_level` presents `LAST` as a level with producer bubbles, the way
+a register-mapped host would, and the `drain` set is also run with `+bubble`,
+which stalls the producer for 40 cycles just before it hands over the final
+word. Mutations 19 and 20 exist only because those two runs do.
 
-## Result: 17 of 18 killed, 1 unreachable
+## Against `make sim` alone: 12 of 20 escape
+
+Reproduce with `SUITE=sim tb/mutate.sh`. That is the number worth quoting: the
+single well-formed block cannot reach end-of-input, an unmatchable code, a
+stalled consumer, an out-of-range index, the extreme code lengths, or a
+producer bubble, so a third of the injected bugs pass it unnoticed. The
+directed streams and the throttled runs exist to close exactly that gap.
+
+## Result with `make sim_all`: 19 of 20 killed, 1 unreachable
 
 | # | mutation | verdict |
 |---|---|---|
@@ -50,6 +63,8 @@ pseudo-randomly, which is what makes the handshakes testable at all.
 | 16 | symbol counter counts offers, not takes | KILLED (`sym_count` 296,617 vs 148,271) |
 | 17 | short-code guard removed at end of stream | KILLED (consumed more bits than the buffer held) |
 | 18 | symbol index range check removed | KILLED (a corrupt table returned a symbol) |
+| 19 | end-of-input also flushed on a producer bubble | KILLED (`drain` under `+last_level +bubble`) |
+| 20 | `done` ignores a symbol still waiting to be taken | KILLED (`drain`: done with symbols outstanding) |
 
 ## The one that survives, and why that is the right answer
 

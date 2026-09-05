@@ -26,7 +26,12 @@ SUITE=${SUITE:-sim_all}
 
 run() {   # run NAME 'sed-expression' FILE
   local name=$1 expr=$2 file=$3
-  cp "$file" "$file.orig"; sed -i.bak "$expr" "$file"; rm -f "$file.bak"
+  cp "$file" "$file.orig"
+  if ! sed -i.bak "$expr" "$file" 2>/dev/null; then
+    echo "[$name] SED FAILED - the expression is malformed, not a result"
+    rm -f "$file.bak"; mv "$file.orig" "$file"; return
+  fi
+  rm -f "$file.bak"
   if cmp -s "$file" "$file.orig"; then echo "[$name] mutation did not apply - check the pattern"; mv "$file.orig" "$file"; return; fi
   rm -rf build
   local out rc
@@ -69,5 +74,5 @@ run "output backpressure ignored"               's/assign out_free  = !sym_valid
 run "symbol counter counts offers not takes"    's/else if (sym_valid \&\& out_ready) sym_count/else if (sym_valid) sym_count/' rtl/huffman_accel_top.sv
 run "short-code guard removed at end of stream" 's/hit\[L\]     = hit_raw\[L\] \&\& fits\[L\];/hit[L]     = hit_raw[L];/' rtl/huffman_decoder.sv
 run "symbol index range check removed"          's/take \&\& idx_ok/take/g'                                     rtl/huffman_decoder.sv
-run "end-of-input flushed on a producer bubble" 's|assign flush_c = in_last \& in_valid \& in_ready;|assign flush_c = in_last \& ((in_valid \& in_ready) | ~in_valid);|' rtl/huffman_accel_top.sv
-run "done ignores the unaccepted last symbol" 's|assign done = bits_done \& ~sym_valid;|assign done = bits_done;|' rtl/huffman_accel_top.sv
+run "end-of-input flushed on a producer bubble" 's#assign flush_c = in_last \& in_valid \& in_ready;#assign flush_c = in_last \& ((in_valid \& in_ready) \| ~in_valid);#' rtl/huffman_accel_top.sv
+run "done ignores the unaccepted last symbol" 's#assign done = bits_done \& ~sym_valid;#assign done = bits_done;#' rtl/huffman_accel_top.sv

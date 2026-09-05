@@ -43,6 +43,13 @@ module tb_huffman;
     // held, and therefore high across cycles in which the producer has nothing
     // to hand over. The accelerator must not read that as end of input.
     logic               last_level = 0;
+    // +bubble stalls the producer for a long, deterministic run of cycles just
+    // before the final word is handed over. That is the one shape that tells a
+    // correct end-of-input condition from one that also fires on `LAST` while
+    // the producer simply has nothing ready.
+    logic               bubble_mode = 0;
+    int                 bubble = 0;
+    logic               bubbled = 0;
     logic [15:0]        lfsr = 16'hACE1;
 
     huffman_accel_top #(.MAXBITS(MAXBITS), .NSYM(NSYM), .SYMW(SYMW), .NTAB(NTAB), .INW(INW)) dut (
@@ -87,8 +94,13 @@ module tb_huffman;
     // continuous assignment over SystemVerilog int variables (vvp aborts with
     // "recv_real not implemented"). Listing the scalar inputs explicitly avoids
     // both; the behaviour is the same as an @* block.
-    always @(widx, nwords, run, bp_mode, lfsr, last_level) begin
-        in_valid = (widx < nwords) && run && (!bp_mode || lfsr[7]);
+    // Armed combinationally: registering it costs a cycle, and with a 64-bit
+    // buffer and 32-bit words the reader has already taken the final word by
+    // then, so the stall lands after the moment it was meant to test.
+    wire arm_bubble = bubble_mode && !bubbled && (widx == nwords - 1);
+    always @(widx, nwords, run, bp_mode, lfsr, last_level, bubble, arm_bubble) begin
+        in_valid = (widx < nwords) && run && (!bp_mode || lfsr[7])
+                   && (bubble == 0) && !arm_bubble;
         in_data  = words[widx];
         // LAST accompanies the final beat. Held as a level from the final word
         // onwards it would flush during table programming, when run is low and
@@ -96,6 +108,13 @@ module tb_huffman;
         in_last  = last_level ? (widx >= nwords - 1) : ((widx == nwords - 1) && in_valid);
     end
     always @(posedge clk) if (in_valid && in_ready) widx <= widx + 1;
+    // Stall once, on reaching the last word, for long enough that a premature
+    // flush has time to poison the reader before the word arrives.
+    always @(posedge clk) begin
+        if (!rst_n) begin bubble <= 0; bubbled <= 1'b0; end
+        else if (arm_bubble) begin bubble <= 40; bubbled <= 1'b1; end
+        else if (bubble > 0) bubble <= bubble - 1;
+    end
 
     // selector for the symbol about to be decoded
     int cur_tsel;
@@ -213,6 +232,8 @@ module tb_huffman;
         want_err      = $test$plusargs("expect_err");
         want_underrun = $test$plusargs("expect_underrun");
         last_level    = $test$plusargs("last_level");
+        bubble_mode   = $test$plusargs("bubble");
+        if (bubble_mode) $display("producer stalls for 40 cycles before handing over the final word");
         if (last_level) $display("host style: LAST held as a level, with bubbles from the producer");
         if (bp_mode) $display("backpressure mode: out_ready and in_valid are gated pseudo-randomly");
         if (want_err) $display("directed mode: the stream ends in a code that matches nothing; err must assert");
@@ -306,6 +327,13 @@ module tb_huffman;
         // Belt and braces: a run that checked nothing is not a pass - unless
         // decoding nothing is the point, as when the very first table row is
         // corrupt and the decoder must refuse rather than return a symbol.
+        // On a stream that is a whole number of words the buffer drains to
+        // zero, so done must be observable. If it never rises here, the signal
+        // is untested everywhere.
+        if (nwords * 32 == nbytes * 8 - skip_bits && !want_err && !want_underrun && done !== 1'b1) begin
+            $display("FAIL: the stream drained but done never asserted");
+            $fatal(1);
+        end
         if (nchk == 0 && !want_err) begin
             $display("FAIL: decoded no symbols");
             $fatal(1);
@@ -338,7 +366,8 @@ module tb_huffman;
         // One symbol per cycle is a headline claim of the report, so assert it
         // rather than only printing it. Two cycles of slack cover the pipeline
         // fill. Backpressure mode deliberately throttles, so skip it there.
-        if (!bp_mode && !want_err && !want_underrun && (last_cycle - first_cycle + 1) > nsym + 2) begin
+        if (!bp_mode && !bubble_mode && !want_err && !want_underrun
+            && (last_cycle - first_cycle + 1) > nsym + 2) begin
             $display("FAIL: throughput %0d cycles for %0d symbols (expected at most %0d)",
                      last_cycle - first_cycle + 1, nsym, nsym + 2);
             $fatal(1);

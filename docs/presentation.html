@@ -223,10 +223,10 @@ the datapath as the subject and say so, rather than implying otherwise.</p></div
 <p class="lede">It now compares with <code>!==</code>, flags <code>X</code>, fails the build on a
 timeout, and asserts the one-symbol-per-cycle rate instead of printing it.</p>
 <p>Mutation testing found that. Eighteen bugs injected one at a time &mdash; and against the
-benchmark block alone, <strong>eight passed unnoticed</strong>: end-of-input, flush, backpressure,
+benchmark block alone, <strong>twelve passed unnoticed</strong>: end-of-input, flush, backpressure,
 the code lengths this input never uses. A weakness of one well-formed stimulus, not of the design.</p>
-<p>So the stimulus grew &mdash; five directed streams plus a throttled run &mdash; and now
-<span class="num">17 of 18</span> are caught. The survivor is an unreachable guard: reported, not removed.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>14/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; cost</span><span class="kick">15</span></div><div class="body"><h2>What it costs in silicon</h2>
+<p>So the stimulus grew &mdash; six directed streams plus three throttled runs &mdash; and now
+<span class="num">19 of 20</span> are caught. The survivor is an unreachable guard: reported, not removed.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>14/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; cost</span><span class="kick">15</span></div><div class="body"><h2>What it costs in silicon</h2>
 <div class="grid g3">
 <div class="stat alt"><div class="k">logic</div><div class="v">18,774</div><div class="s2">cells, 5,441 of them flip-flops (yosys)</div></div>
 <div class="stat alt"><div class="k">symbol table</div><div class="v">13.9<span style="font-size:.42em"> kbit</span></div><div class="s2">1.7 KB of SRAM; limit/base are registers</div></div>

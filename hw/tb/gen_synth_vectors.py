@@ -56,7 +56,8 @@ def canonical(lengths):
     return codes, limit, base, minb, maxb, syms
 
 
-def emit(dirname, lengths, sequence, corrupt_tail=False, exact_end=True, bad_base=None):
+def emit(dirname, lengths, sequence, corrupt_tail=False, exact_end=True, bad_base=None,
+         word_align=False):
     codes, limit, base, minb, maxb, syms = canonical(lengths)
     d = os.path.join(HW, dirname)
     os.makedirs(d, exist_ok=True)
@@ -82,6 +83,17 @@ def emit(dirname, lengths, sequence, corrupt_tail=False, exact_end=True, bad_bas
         # must raise err and stop rather than loop on the same bits.
         bits.extend([1] * (MAXBITS + 4))
         # not in `expected`: the testbench stops at nsym and checks err separately
+
+    if word_align:
+        # Pad with the shortest code until the stream is a whole number of
+        # 32-bit words, so the reader's buffer drains to exactly zero and `done`
+        # can actually assert. Every other set leaves byte padding behind, which
+        # is why done is unobservable in them.
+        short_sym = min(codes, key=lambda k: codes[k][1])
+        sc, sl = codes[short_sym]
+        while (len(bits) % 32) != 0:
+            bits.extend((sc >> (sl - 1 - k)) & 1 for k in range(sl))
+            expected.append((0, short_sym, sl))
 
     if exact_end:
         # Pad to a byte boundary with zeros. Those pad bits are a prefix of the
@@ -136,6 +148,12 @@ def main():
     #    ever reach the error path. Here lengths {1,2} leave the pattern "11"
     #    unassigned, and the decoder must raise err and halt on it.
     emit("tb/vectors_err", [(0, 1), (1, 2)], [0, 1, 0, 1], corrupt_tail=True)
+
+    # 3b. A stream that is a whole number of 32-bit words, so the buffer drains
+    #     to zero and `done` asserts. Without this, done never rises in any test
+    #     and anything about it is unverifiable.
+    emit("tb/vectors_drain", [(i, i) for i in range(1, 5)] + [(5, 4)],
+         [1, 2, 3, 4, 5] * 4, word_align=True)
 
     # 4. A table whose base row points past the end of the symbol table. The
     #    index check is the only thing between that and a silently wrong

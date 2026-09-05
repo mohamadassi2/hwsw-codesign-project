@@ -412,6 +412,14 @@ if os.path.exists(_mut):
     _escaped = len(re.findall(r"\*\*escapes", _m))
     _total = _killed + _escaped
     check(f"MUTATIONS.md lists {_total} mutations, {_killed} killed", _total > 0 and _killed > 0)
+    # The table and the script that produces it must describe the same suite.
+    # Two mutations were added to mutate.sh without MUTATIONS.md following, and
+    # nothing noticed because every check downstream reads only the table.
+    _sh = os.path.join(ROOT, "hw", "tb", "mutate.sh")
+    if os.path.exists(_sh):
+        _runs = len(re.findall(r"^run ", open(_sh, encoding="utf-8").read(), re.M))
+        check(f"MUTATIONS.md covers every mutation mutate.sh runs ({_runs})",
+              _total == _runs, f"the script runs {_runs}, the table lists {_total}")
     for _rel in ("report_pyflate.txt", "docs/presentation.html"):
         _t = re.sub(r"\s+", " ", open(os.path.join(ROOT, _rel), encoding="utf-8").read())
         check(f"{_rel} quotes the mutation score {_killed} of {_total}",
