@@ -43,10 +43,12 @@ Data structures and algorithm.
 
 2. Initial analysis
 ----------------------------------------------------------------------------------
-Tools as for pyflate: perf record with the software event -e cpu-clock (the
-default cycles event opens but never overflows in this guest - see the note in
-report_pyflate.txt section 2) plus the FlameGraph scripts, py-spy for
-Python-level frames, and cProfile for exact call counts.
+Tools as for pyflate: py-spy for Python-level frames, rendered with the
+FlameGraph scripts, and cProfile for exact call counts. perf record collected
+no samples here either, for any event we tried - results/mdp/perf_event_chosen.txt
+records "none" and results/mdp/perf_base.folded is empty - so the flame graphs
+in results/mdp/ are py-spy's. report_pyflate.txt section 2 has the evidence on
+why sampling does not work in this guest.
 
 Where the time goes (cProfile, one evaluate(), baseline):
                                        self     cum       calls
@@ -74,11 +76,12 @@ getCritDist being called 3,659 times with only THREE distinct argument tuples,
 recomputing the same exact distributions over and over.
 
 Hardware counters in the VM (results/mdp/perfstat_base.txt, perf stat -r 3
-over four loops of the worker): the baseline retires 118,536,344,707
-instructions in 48,395,707,435 cycles, an IPC of 2.45, with 24,951,795,918
-branches. The IPC is healthy and the branch-miss rate is 0.54%, so this is not
-a stalled or badly predicted workload - it is simply executing far more
-instructions than the problem needs, which is what section 3 removes.
+over four loops of the worker): the baseline retires 118,398,887,823
+instructions in 47,530,388,408 cycles, an IPC of 2.49, with
+24,923,650,707 branches. The IPC is healthy and the branch-miss rate is
+0.52%, so this is not a stalled or badly predicted workload - it is simply
+executing far more instructions than the problem needs, which is what section 3
+removes.
 
 
 3. Optimizations

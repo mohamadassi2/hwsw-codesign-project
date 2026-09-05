@@ -60,10 +60,14 @@ tables with code lengths between 2 and 15 bits (measured by hw/gen_vectors.py).
 
 2. Initial analysis
 ----------------------------------------------------------------------------------
-Tools. We used three views of the same run: perf record -F 999 -g with the
-FlameGraph scripts (flame_pyflate_base_perf.svg), py-spy to get Python-level
-frames instead of interpreter internals (flame_pyflate_base_pyspy.svg), and
-cProfile for exact call counts. All three agree.
+Tools. Two views of the same run, and one that failed. py-spy gives
+Python-level frames rather than interpreter internals
+(flame_pyflate_base_focus.svg), and cProfile gives exact call counts; the two
+agree on which functions dominate. perf record produced nothing at all in this
+guest - not with its default cycles event and not with the software events
+either - and the note further down this section explains what we found when we
+went looking for the reason. No perf-derived flame graph exists in results/,
+which is why none is cited here.
 
 Where the time goes (cProfile, one decode of the benchmark input, baseline):
                                 self     cum      calls

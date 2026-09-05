@@ -89,6 +89,17 @@ if _b and _o:
         check("section 2 quotes the measured baseline cycles", f"{pb['cycles']/1e9:.1f} billion cycles" in _pf, f"{pb['cycles']/1e9:.1f}")
         check("section 2 quotes the measured baseline instructions", f"{pb['instructions']/1e9:.1f} billion instructions" in _pf, f"{pb['instructions']/1e9:.1f}")
         check("section 2 quotes the measured baseline IPC", f"IPC {pb['instructions']/pb['cycles']:.2f}" in _pf, f"{pb['instructions']/pb['cycles']:.2f}")
+# mdp section 2 quotes the same counters; gate them too (it once drifted a whole run)
+_mps = _ps(os.path.join(ROOT, "results", "mdp", "perfstat_base.txt"))
+if _mps:
+    _mflat = re.sub(r"\s+", " ", _md)
+    check("mdp section 2 quotes the measured instructions", f"{_mps['instructions']:,.0f}" in _mflat, f"{_mps['instructions']:,.0f}")
+    check("mdp section 2 quotes the measured cycles", f"{_mps['cycles']:,.0f}" in _mflat, f"{_mps['cycles']:,.0f}")
+    check("mdp section 2 quotes the measured branches", f"{_mps['branches']:,.0f}" in _mflat, f"{_mps['branches']:,.0f}")
+    check("mdp section 2 IPC agrees with section 4.1",
+          f"IPC of {_mps['instructions']/_mps['cycles']:.2f}" in _mflat,
+          f"{_mps['instructions']/_mps['cycles']:.2f}")
+
 _mb = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_base.json"))
 _mo = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_opt.json"))
 if _mb and _mo:
@@ -110,6 +121,12 @@ _rmo = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_opt.
 if _mb and _mo and _rmb and _rmo:
     check("reproducibility: mdp both speedups quoted",
           f"{_rmb/_rmo:.3f}x against the shipped {_mb/_mo:.3f}x" in _flat(_md), f"{_rmb/_rmo:.3f} / {_mb/_mo:.3f}")
+
+# every flame graph a report names must exist
+for _rep, _txt in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
+    for _svg in set(re.findall(r"(flame_[A-Za-z0-9_]+\.svg)", _txt)):
+        _found = any(os.path.exists(os.path.join(ROOT, "results", _b, _svg)) for _b in ("pyflate", "mdp"))
+        check(f"{_rep} cites {_svg} and it exists", _found, "no such file under results/")
 
 # ---------------------------------------------------------------- derived: accelerator
 SYMBOLS, CYCLES = 148271, 148272
