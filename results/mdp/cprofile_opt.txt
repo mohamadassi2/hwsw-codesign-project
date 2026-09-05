@@ -1,0 +1,70 @@
+mdp: 2.38 sec
+=== by cumulative time ===
+         2451314 function calls (2449426 primitive calls) in 2.492 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1319 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    2.492    2.492 /usr/lib/python3.10/runpy.py:260(run_path)
+     86/2    0.000    0.000    2.487    1.244 {built-in method builtins.exec}
+        1    0.000    0.000    2.487    2.487 /usr/lib/python3.10/runpy.py:89(_run_module_code)
+        1    0.000    0.000    2.487    2.487 /usr/lib/python3.10/runpy.py:63(_run_code)
+        1    0.000    0.000    2.487    2.487 benchmarks/mdp/run_benchmark_opt.py:1(<module>)
+        1    0.000    0.000    2.390    2.390 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:485(bench_time_func)
+        1    0.000    0.000    2.389    2.389 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:455(_main)
+        1    0.000    0.000    2.389    2.389 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:434(_worker)
+        1    0.000    0.000    2.388    2.388 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:298(create_run)
+        1    0.000    0.000    2.388    2.388 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:353(compute)
+        1    0.000    0.000    2.388    2.388 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:275(compute)
+        1    0.000    0.000    2.377    2.377 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:264(compute_warmups_values)
+        1    0.000    0.000    2.377    2.377 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:46(_compute_values)
+        1    0.000    0.000    2.377    2.377 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:496(task_func)
+        1    0.003    0.003    2.377    2.377 benchmarks/mdp/run_benchmark_opt.py:349(bench_mdp)
+        1    0.828    0.828    2.374    2.374 benchmarks/mdp/run_benchmark_opt.py:231(evaluate)
+        1    0.036    0.036    1.403    1.403 benchmarks/mdp/run_benchmark_opt.py:16(topoSort)
+     4823    0.014    0.000    1.345    0.000 benchmarks/mdp/run_benchmark_opt.py:223(getSuccessorsList)
+     9642    0.025    0.000    1.334    0.000 benchmarks/mdp/run_benchmark_opt.py:207(getSuccessors)
+     5983    0.009    0.000    0.835    0.000 benchmarks/mdp/run_benchmark_opt.py:137(_applyAction)
+     5983    0.148    0.000    0.809    0.000 benchmarks/mdp/run_benchmark_opt.py:114(_applyActionSide1)
+     2324    0.019    0.000    0.808    0.000 benchmarks/mdp/run_benchmark_opt.py:175(_getSuccessorsB)
+     4648    0.043    0.000    0.727    0.000 benchmarks/mdp/run_benchmark_opt.py:165(_applyActionPair)
+    86411    0.066    0.000    0.531    0.000 /usr/lib/python3.10/fractions.py:356(forward)
+     1335    0.036    0.000    0.477    0.000 benchmarks/mdp/run_benchmark_opt.py:194(_getSuccessorsC)
+
+
+
+=== by self (tottime) ===
+         2451314 function calls (2449426 primitive calls) in 2.492 seconds
+
+   Ordered by: internal time
+   List reduced from 1319 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.828    0.828    2.374    2.374 benchmarks/mdp/run_benchmark_opt.py:231(evaluate)
+    75304    0.202    0.000    0.384    0.000 /usr/lib/python3.10/fractions.py:451(_add)
+   137825    0.172    0.000    0.203    0.000 /usr/lib/python3.10/fractions.py:62(__new__)
+     5983    0.148    0.000    0.809    0.000 benchmarks/mdp/run_benchmark_opt.py:114(_applyActionSide1)
+   192755    0.078    0.000    0.078    0.000 {built-in method __new__ of type object at 0x55e0df7619a0}
+   312640    0.076    0.000    0.076    0.000 {built-in method builtins.max}
+    54430    0.076    0.000    0.250    0.000 benchmarks/mdp/run_benchmark_opt.py:94(applyHPChange)
+    86411    0.066    0.000    0.531    0.000 /usr/lib/python3.10/fractions.py:356(forward)
+    54486    0.050    0.000    0.141    0.000 /usr/lib/python3.10/collections/__init__.py:430(_replace)
+     4648    0.043    0.000    0.727    0.000 benchmarks/mdp/run_benchmark_opt.py:165(_applyActionPair)
+   128982    0.036    0.000    0.036    0.000 benchmarks/mdp/run_benchmark_opt.py:323(<listcomp>)
+        1    0.036    0.036    1.403    1.403 benchmarks/mdp/run_benchmark_opt.py:16(topoSort)
+     1335    0.036    0.000    0.477    0.000 benchmarks/mdp/run_benchmark_opt.py:194(_getSuccessorsC)
+   128982    0.036    0.000    0.036    0.000 benchmarks/mdp/run_benchmark_opt.py:324(<listcomp>)
+    54486    0.034    0.000    0.091    0.000 /usr/lib/python3.10/collections/__init__.py:420(_make)
+    11101    0.033    0.000    0.061    0.000 /usr/lib/python3.10/fractions.py:483(_mul)
+   116447    0.033    0.000    0.052    0.000 {built-in method builtins.isinstance}
+   140336    0.033    0.000    0.033    0.000 {built-in method math.gcd}
+   196573    0.031    0.000    0.031    0.000 /usr/lib/python3.10/fractions.py:256(numerator)
+   196573    0.029    0.000    0.029    0.000 /usr/lib/python3.10/fractions.py:260(denominator)
+     9642    0.025    0.000    1.334    0.000 benchmarks/mdp/run_benchmark_opt.py:207(getSuccessors)
+    20097    0.020    0.000    0.048    0.000 /usr/lib/python3.10/fractions.py:691(_richcmp)
+     2324    0.019    0.000    0.808    0.000 benchmarks/mdp/run_benchmark_opt.py:175(_getSuccessorsB)
+    20095    0.019    0.000    0.025    0.000 /usr/lib/python3.10/numbers.py:283(__float__)
+    55236    0.016    0.000    0.016    0.000 {built-in method builtins.min}
+
+

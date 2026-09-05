@@ -1,0 +1,95 @@
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232) 129
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:367);move_to_front (run_benchmark.py:289) 10
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:388);populate_huffman_symbols (run_benchmark.py:200);reverse_bits (run_benchmark.py:158) 8
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:418) 40
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:309);bwt_transform (run_benchmark.py:294) 209
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:233) 62
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:388);populate_huffman_symbols (run_benchmark.py:200);reverse_bits (run_benchmark.py:160) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:113) 147
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:309);bwt_transform (run_benchmark.py:301) 114
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:115);_mask (run_benchmark.py:55) 193
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232);readbits (run_benchmark.py:120) 214
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:449) 254
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:417) 3
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:437) 8
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232);readbits (run_benchmark.py:123) 7
+bench_pyflake (run_benchmark.py:645) 5
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52);_more (run_benchmark.py:107);_read (run_benchmark.py:44) 44
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:426) 59
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:380);readbits (run_benchmark.py:122) 7
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:362);readbits (run_benchmark.py:122);_mask (run_benchmark.py:55) 3
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:442) 66
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:381);readbits (run_benchmark.py:118) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:309);bwt_transform (run_benchmark.py:302) 258
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:436) 67
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:380);readbits (run_benchmark.py:120) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:231) 420
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:362);readbits (run_benchmark.py:122) 20
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:442);move_to_front (run_benchmark.py:289) 1539
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52);_more (run_benchmark.py:107);_read (run_benchmark.py:45) 8
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:451) 24
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:476);readbits (run_benchmark.py:119);needbits (run_benchmark.py:52);_more (run_benchmark.py:108) 2
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:362) 2
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:388);populate_huffman_symbols (run_benchmark.py:200) 4
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:227) 162
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:387);__init__ (run_benchmark.py:251);__init__ (run_benchmark.py:182) 4
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:388);populate_huffman_symbols (run_benchmark.py:200);reverse_bits (run_benchmark.py:159) 3
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:387);__init__ (run_benchmark.py:251);__init__ (run_benchmark.py:184) 2
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52);_more (run_benchmark.py:107) 53
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:454) 320
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:438) 43
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:441) 28
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:455) 124
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232);readbits (run_benchmark.py:121) 110
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232);readbits (run_benchmark.py:122);_mask (run_benchmark.py:55) 88
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52) 53
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52);_more (run_benchmark.py:107);_read (run_benchmark.py:47) 45
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:380);readbits (run_benchmark.py:120);_mask (run_benchmark.py:55) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232);readbits (run_benchmark.py:118) 52
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:362);readbits (run_benchmark.py:118) 3
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232);readbits (run_benchmark.py:120);_mask (run_benchmark.py:55) 66
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:232);readbits (run_benchmark.py:122) 395
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:362);readbits (run_benchmark.py:119);needbits (run_benchmark.py:52);_more (run_benchmark.py:108) 2
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:228) 285
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:309);bwt_transform (run_benchmark.py:300) 93
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:432) 28
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52);_more (run_benchmark.py:110) 59
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:419) 28
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229) 291
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:51) 49
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:234) 26
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:443) 81
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446) 76
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52);_more (run_benchmark.py:108) 55
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:333) 23
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:330) 184
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:225) 20
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:444) 5
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114) 63
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:329) 77
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479) 10
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:422) 4
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:485) 99
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:399);compute_used (run_benchmark.py:342);readbits (run_benchmark.py:119);needbits (run_benchmark.py:52);_more (run_benchmark.py:107);_read (run_benchmark.py:47) 3
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:380);readbits (run_benchmark.py:118) 3
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:381);readbits (run_benchmark.py:122) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:362);readbits (run_benchmark.py:120) 13
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:381) 4
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425) 128
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:230) 86
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:309);bwt_transform (run_benchmark.py:297) 23
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:359) 4
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:388);populate_huffman_symbols (run_benchmark.py:198) 4
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:226) 11
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:380);readbits (run_benchmark.py:121) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:380);readbits (run_benchmark.py:119);needbits (run_benchmark.py:52);_more (run_benchmark.py:107);_read (run_benchmark.py:44) 3
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:446);bwt_reverse (run_benchmark.py:331) 209
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:115) 603
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:425);find_next_symbol (run_benchmark.py:229);snoopbits (run_benchmark.py:114);needbits (run_benchmark.py:52);_more (run_benchmark.py:109) 69
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:427) 23
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:405);compute_selectors_list (run_benchmark.py:368) 2
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:380) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:407);compute_tables (run_benchmark.py:387);__init__ (run_benchmark.py:251);__init__ (run_benchmark.py:185) 1
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:430) 31
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:429) 37
+bench_pyflake (run_benchmark.py:645);bzip2_main (run_benchmark.py:479);decode_huffman_block (run_benchmark.py:450) 713

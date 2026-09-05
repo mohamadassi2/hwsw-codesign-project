@@ -1,0 +1,70 @@
+pyflate: 875 ms
+=== by cumulative time ===
+         938628 function calls (936718 primitive calls) in 0.996 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1335 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.996    0.996 /usr/lib/python3.10/runpy.py:260(run_path)
+     87/2    0.000    0.000    0.989    0.495 {built-in method builtins.exec}
+        1    0.000    0.000    0.989    0.989 /usr/lib/python3.10/runpy.py:89(_run_module_code)
+        1    0.000    0.000    0.989    0.989 /usr/lib/python3.10/runpy.py:63(_run_code)
+        1    0.000    0.000    0.989    0.989 benchmarks/pyflate/run_benchmark_opt.py:1(<module>)
+        1    0.000    0.000    0.889    0.889 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:485(bench_time_func)
+        1    0.000    0.000    0.889    0.889 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:455(_main)
+        1    0.000    0.000    0.889    0.889 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:434(_worker)
+        1    0.000    0.000    0.888    0.888 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:298(create_run)
+        1    0.000    0.000    0.888    0.888 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:353(compute)
+        1    0.000    0.000    0.888    0.888 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:275(compute)
+        1    0.000    0.000    0.876    0.876 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:264(compute_warmups_values)
+        1    0.000    0.000    0.876    0.876 /root/proj/venv/lib/python3.10/site-packages/pyperf/_worker.py:46(_compute_values)
+        1    0.000    0.000    0.876    0.876 /root/proj/venv/lib/python3.10/site-packages/pyperf/_runner.py:496(task_func)
+        1    0.000    0.000    0.876    0.876 benchmarks/pyflate/run_benchmark_opt.py:733(bench_pyflake)
+        1    0.001    0.001    0.875    0.875 benchmarks/pyflate/run_benchmark_opt.py:561(bzip2_main)
+        1    0.161    0.161    0.875    0.875 benchmarks/pyflate/run_benchmark_opt.py:496(decode_huffman_block)
+   148271    0.250    0.000    0.448    0.000 benchmarks/pyflate/run_benchmark_opt.py:312(find_next_symbol)
+        1    0.059    0.059    0.159    0.159 benchmarks/pyflate/run_benchmark_opt.py:406(bwt_reverse)
+   156708    0.105    0.000    0.106    0.000 benchmarks/pyflate/run_benchmark_opt.py:175(readbits)
+        1    0.074    0.074    0.099    0.099 benchmarks/pyflate/run_benchmark_opt.py:391(bwt_transform)
+   148271    0.062    0.000    0.098    0.000 benchmarks/pyflate/run_benchmark_opt.py:170(snoopbits)
+    120/7    0.001    0.000    0.097    0.014 <frozen importlib._bootstrap>:1022(_find_and_load)
+    120/7    0.000    0.000    0.097    0.014 <frozen importlib._bootstrap>:987(_find_and_load_unlocked)
+    114/7    0.001    0.000    0.096    0.014 <frozen importlib._bootstrap>:664(_load_unlocked)
+
+
+
+=== by self (tottime) ===
+         938628 function calls (936718 primitive calls) in 0.996 seconds
+
+   Ordered by: internal time
+   List reduced from 1335 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+   148271    0.250    0.000    0.448    0.000 benchmarks/pyflate/run_benchmark_opt.py:312(find_next_symbol)
+        1    0.161    0.161    0.875    0.875 benchmarks/pyflate/run_benchmark_opt.py:496(decode_huffman_block)
+   156708    0.105    0.000    0.106    0.000 benchmarks/pyflate/run_benchmark_opt.py:175(readbits)
+        1    0.074    0.074    0.099    0.099 benchmarks/pyflate/run_benchmark_opt.py:391(bwt_transform)
+   148271    0.062    0.000    0.098    0.000 benchmarks/pyflate/run_benchmark_opt.py:170(snoopbits)
+        1    0.059    0.059    0.159    0.159 benchmarks/pyflate/run_benchmark_opt.py:406(bwt_reverse)
+    92816    0.024    0.000    0.024    0.000 {method 'insert' of 'list' objects}
+        7    0.023    0.003    0.027    0.004 {built-in method builtins.sorted}
+    92803    0.021    0.000    0.021    0.000 {method 'pop' of 'list' objects}
+   134340    0.017    0.000    0.017    0.000 {method 'append' of 'list' objects}
+     8446    0.014    0.000    0.031    0.000 benchmarks/pyflate/run_benchmark_opt.py:164(_more)
+       22    0.013    0.001    0.021    0.001 {method 'sub' of 're.Pattern' objects}
+       86    0.011    0.000    0.011    0.000 {built-in method marshal.loads}
+     8446    0.011    0.000    0.013    0.000 benchmarks/pyflate/run_benchmark_opt.py:88(_read)
+        3    0.008    0.003    0.008    0.003 {method 'join' of 'bytes' objects}
+        2    0.006    0.003    0.006    0.003 {built-in method builtins.compile}
+     8542    0.006    0.000    0.009    0.000 benchmarks/pyflate/run_benchmark_opt.py:556(<lambda>)
+     8446    0.006    0.000    0.036    0.000 benchmarks/pyflate/run_benchmark_opt.py:100(needbits)
+   205/67    0.005    0.000    0.014    0.000 /usr/lib/python3.10/sre_parse.py:494(_parse)
+30879/30508    0.005    0.000    0.005    0.000 {built-in method builtins.len}
+  304/301    0.005    0.000    0.017    0.000 {built-in method builtins.__build_class__}
+        1    0.004    0.004    0.012    0.012 benchmarks/pyflate/run_benchmark_opt.py:457(compute_selectors_list)
+       47    0.003    0.000    0.003    0.000 {built-in method builtins.eval}
+       47    0.003    0.000    0.007    0.000 /usr/lib/python3.10/collections/__init__.py:328(namedtuple)
+      882    0.003    0.000    0.003    0.000 benchmarks/pyflate/run_benchmark_opt.py:212(reverse_bits)
+
+

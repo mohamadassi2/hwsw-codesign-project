@@ -1,4 +1,4 @@
-# Generic synthesis of huffman_accel_top with Yosys 0.68+post.
+# Generic synthesis of huffman_accel_top with Yosys 0.68.
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.

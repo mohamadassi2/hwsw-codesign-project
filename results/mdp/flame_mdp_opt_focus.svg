@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" width="1400" height="278" onload="init(evt)" viewBox="0 0 1400 278" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg version="1.1" width="1200" height="278" onload="init(evt)" viewBox="0 0 1200 278" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <!-- Flame graph stack visualization. See https://github.com/brendangregg/FlameGraph for latest version, and http://www.brendangregg.com/flamegraphs.html for examples. -->
 <!-- NOTES:  -->
 <defs>
@@ -422,973 +422,949 @@
 	}
 ]]>
 </script>
-<rect x="0.0" y="0" width="1400.0" height="278.0" fill="url(#background)"  />
-<text id="title" x="700.00" y="24" >mdp opt: Python frames below bench_mdp (py-spy, course VM)</text>
+<rect x="0.0" y="0" width="1200.0" height="278.0" fill="url(#background)"  />
+<text id="title" x="600.00" y="24" >mdp optimized: Python frames below bench_mdp (py-spy)</text>
 <text id="details" x="10.00" y="261" > </text>
 <text id="unzoom" x="10.00" y="24" class="hide">Reset Zoom</text>
-<text id="search" x="1290.00" y="24" >Search</text>
-<text id="ignorecase" x="1374.00" y="24" >ic</text>
-<text id="matched" x="1290.00" y="261" > </text>
+<text id="search" x="1090.00" y="24" >Search</text>
+<text id="ignorecase" x="1174.00" y="24" >ic</text>
+<text id="matched" x="1090.00" y="261" > </text>
 <g id="frames">
 <g >
-<title>evaluate (run_benchmark_opt.py:266) (12 samples, 0.48%)</title><rect x="628.2" y="197" width="6.6" height="15.0" fill="rgb(76,188,188)" rx="2" ry="2" />
-<text  x="631.18" y="207.5" ></text>
+<title>_mul (fractions.py:495) (6 samples, 0.23%)</title><rect x="285.8" y="85" width="2.7" height="15.0" fill="rgb(79,191,191)" rx="2" ry="2" />
+<text  x="288.81" y="95.5" ></text>
 </g>
 <g >
-<title>_getSuccessorsB (run_benchmark_opt.py:170) (3 samples, 0.12%)</title><rect x="51.4" y="133" width="1.7" height="15.0" fill="rgb(75,188,188)" rx="2" ry="2" />
-<text  x="54.43" y="143.5" ></text>
+<title>_add (fractions.py:462) (3 samples, 0.11%)</title><rect x="272.7" y="85" width="1.4" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="275.72" y="95.5" ></text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:111) (4 samples, 0.16%)</title><rect x="72.4" y="85" width="2.2" height="15.0" fill="rgb(56,170,170)" rx="2" ry="2" />
-<text  x="75.43" y="95.5" ></text>
+<title>&lt;listcomp&gt; (run_benchmark_opt.py:309) (5 samples, 0.19%)</title><rect x="544.0" y="181" width="2.3" height="15.0" fill="rgb(70,184,184)" rx="2" ry="2" />
+<text  x="547.02" y="191.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:312) (57 samples, 2.28%)</title><rect x="1325.9" y="197" width="31.5" height="15.0" fill="rgb(78,190,190)" rx="2" ry="2" />
-<text  x="1328.92" y="207.5" >ev..</text>
+<title>numerator (fractions.py:258) (3 samples, 0.11%)</title><rect x="278.1" y="69" width="1.4" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="281.14" y="79.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:158) (3 samples, 0.12%)</title><rect x="95.1" y="69" width="1.6" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="98.08" y="79.5" ></text>
+<title>evaluate (run_benchmark_opt.py:292) (5 samples, 0.19%)</title><rect x="541.8" y="197" width="2.2" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
+<text  x="544.77" y="207.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:462) (17 samples, 0.68%)</title><rect x="287.3" y="53" width="9.4" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="290.33" y="63.5" ></text>
+<title>&lt;dictcomp&gt; (run_benchmark_opt.py:192) (39 samples, 1.49%)</title><rect x="288.5" y="117" width="17.6" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
+<text  x="291.52" y="127.5" ></text>
 </g>
 <g >
-<title>__gt__ (fractions.py:719) (17 samples, 0.68%)</title><rect x="572.9" y="101" width="9.4" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
-<text  x="575.94" y="111.5" ></text>
+<title>_add (fractions.py:457) (25 samples, 0.96%)</title><rect x="456.4" y="101" width="11.3" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="459.45" y="111.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (7 samples, 0.28%)</title><rect x="301.1" y="37" width="3.9" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="304.14" y="47.5" ></text>
+<title>__hash__ (fractions.py:646) (7 samples, 0.27%)</title><rect x="91.7" y="53" width="3.2" height="15.0" fill="rgb(98,209,209)" rx="2" ry="2" />
+<text  x="94.71" y="63.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (10 samples, 0.40%)</title><rect x="552.5" y="85" width="5.5" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="555.50" y="95.5" ></text>
+<title>getSuccessors (run_benchmark_opt.py:220) (9 samples, 0.34%)</title><rect x="499.3" y="149" width="4.1" height="15.0" fill="rgb(94,205,205)" rx="2" ry="2" />
+<text  x="502.33" y="159.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:463) (15 samples, 0.60%)</title><rect x="296.7" y="53" width="8.3" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="299.72" y="63.5" ></text>
+<title>evaluate (run_benchmark_opt.py:329) (44 samples, 1.68%)</title><rect x="731.8" y="197" width="19.9" height="15.0" fill="rgb(76,188,188)" rx="2" ry="2" />
+<text  x="734.81" y="207.5" ></text>
 </g>
 <g >
-<title>getCritDist (run_benchmark_opt.py:53) (27 samples, 1.08%)</title><rect x="98.4" y="69" width="14.9" height="15.0" fill="rgb(74,187,187)" rx="2" ry="2" />
-<text  x="101.39" y="79.5" ></text>
+<title>_applyAction (run_benchmark_opt.py:139) (21 samples, 0.80%)</title><rect x="56.9" y="101" width="9.5" height="15.0" fill="rgb(74,187,187)" rx="2" ry="2" />
+<text  x="59.95" y="111.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (6 samples, 0.24%)</title><rect x="293.4" y="37" width="3.3" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="296.40" y="47.5" ></text>
+<title>_add (fractions.py:455) (4 samples, 0.15%)</title><rect x="262.8" y="85" width="1.8" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="265.79" y="95.5" ></text>
 </g>
 <g >
-<title>topoSort (run_benchmark_opt.py:21) (6 samples, 0.24%)</title><rect x="15.0" y="181" width="3.3" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="17.97" y="191.5" ></text>
+<title>__new__ (fractions.py:142) (2 samples, 0.08%)</title><rect x="414.0" y="53" width="0.9" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="417.02" y="63.5" ></text>
 </g>
 <g >
-<title>applyHPChange (run_benchmark_opt.py:87) (2 samples, 0.08%)</title><rect x="434.3" y="85" width="1.1" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="437.28" y="95.5" ></text>
+<title>evaluate (run_benchmark_opt.py:346) (1 samples, 0.04%)</title><rect x="1189.5" y="197" width="0.5" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
+<text  x="1192.55" y="207.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (8 samples, 0.32%)</title><rect x="270.8" y="37" width="4.4" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="273.75" y="47.5" ></text>
+<title>_make (collections/__init__.py:425) (1 samples, 0.04%)</title><rect x="331.0" y="53" width="0.4" height="15.0" fill="rgb(104,214,214)" rx="2" ry="2" />
+<text  x="333.96" y="63.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:458) (1 samples, 0.04%)</title><rect x="275.2" y="53" width="0.5" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
-<text  x="278.17" y="63.5" ></text>
+<title>__new__ (fractions.py:93) (4 samples, 0.15%)</title><rect x="207.7" y="37" width="1.8" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="210.72" y="47.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:265) (4 samples, 0.16%)</title><rect x="626.0" y="197" width="2.2" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
-<text  x="628.97" y="207.5" ></text>
+<title>_richcmp (fractions.py:704) (5 samples, 0.19%)</title><rect x="489.0" y="85" width="2.2" height="15.0" fill="rgb(90,202,202)" rx="2" ry="2" />
+<text  x="491.95" y="95.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:453) (4 samples, 0.16%)</title><rect x="324.3" y="85" width="2.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="327.34" y="95.5" ></text>
+<title>__new__ (fractions.py:96) (2 samples, 0.08%)</title><rect x="446.5" y="117" width="0.9" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="449.52" y="127.5" ></text>
 </g>
 <g >
-<title>_mul (fractions.py:493) (3 samples, 0.12%)</title><rect x="346.4" y="85" width="1.7" height="15.0" fill="rgb(94,205,205)" rx="2" ry="2" />
-<text  x="349.44" y="95.5" ></text>
+<title>_replace (collections/__init__.py:431) (13 samples, 0.50%)</title><rect x="59.2" y="53" width="5.9" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="62.20" y="63.5" ></text>
 </g>
 <g >
-<title>_applyAction (run_benchmark_opt.py:130) (3 samples, 0.12%)</title><rect x="55.9" y="101" width="1.6" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
-<text  x="58.85" y="111.5" ></text>
+<title>_add (fractions.py:457) (13 samples, 0.50%)</title><rect x="203.7" y="53" width="5.8" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="206.66" y="63.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:236) (1,087 samples, 43.51%)</title><rect x="13.3" y="197" width="600.5" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="16.31" y="207.5" >evaluate (run_benchmark_opt.py:236)</text>
+<title>_applyActionSide1 (run_benchmark_opt.py:125) (7 samples, 0.27%)</title><rect x="311.1" y="101" width="3.2" height="15.0" fill="rgb(77,190,190)" rx="2" ry="2" />
+<text  x="314.09" y="111.5" ></text>
 </g>
 <g >
-<title>denominator (fractions.py:262) (1 samples, 0.04%)</title><rect x="367.4" y="85" width="0.6" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
-<text  x="370.43" y="95.5" ></text>
+<title>evaluate (run_benchmark_opt.py:280) (2 samples, 0.08%)</title><rect x="513.3" y="197" width="0.9" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="516.33" y="207.5" ></text>
 </g>
 <g >
-<title>_mul (fractions.py:485) (3 samples, 0.12%)</title><rect x="84.0" y="85" width="1.7" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="87.03" y="95.5" ></text>
+<title>_replace (collections/__init__.py:431) (27 samples, 1.03%)</title><rect x="372.9" y="69" width="12.2" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="375.94" y="79.5" ></text>
 </g>
 <g >
-<title>__instancecheck__ (abc.py:119) (5 samples, 0.20%)</title><rect x="577.4" y="69" width="2.7" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="580.36" y="79.5" ></text>
+<title>_add (fractions.py:463) (1 samples, 0.04%)</title><rect x="274.1" y="85" width="0.4" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="277.08" y="95.5" ></text>
 </g>
 <g >
-<title>bench_mdp (run_benchmark_opt.py:333) (2,498 samples, 100.00%)</title><rect x="10.0" y="213" width="1380.0" height="15.0" fill="rgb(89,200,200)" rx="2" ry="2" />
-<text  x="13.00" y="223.5" >bench_mdp (run_benchmark_opt.py:333)</text>
+<title>evaluate (run_benchmark_opt.py:287) (5 samples, 0.19%)</title><rect x="516.0" y="197" width="2.3" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="519.04" y="207.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:297) (19 samples, 0.76%)</title><rect x="672.9" y="197" width="10.5" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
-<text  x="675.93" y="207.5" ></text>
+<title>_applyAction (run_benchmark_opt.py:142) (142 samples, 5.43%)</title><rect x="358.0" y="117" width="64.1" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="361.04" y="127.5" >_applyA..</text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:124) (19 samples, 0.76%)</title><rect x="390.1" y="101" width="10.5" height="15.0" fill="rgb(85,197,197)" rx="2" ry="2" />
-<text  x="393.08" y="111.5" ></text>
+<title>_add (fractions.py:460) (17 samples, 0.65%)</title><rect x="214.5" y="53" width="7.7" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="217.49" y="63.5" ></text>
 </g>
 <g >
-<title>_mul (fractions.py:495) (5 samples, 0.20%)</title><rect x="85.7" y="85" width="2.7" height="15.0" fill="rgb(79,191,191)" rx="2" ry="2" />
-<text  x="88.68" y="95.5" ></text>
+<title>_applyActionSide1 (run_benchmark_opt.py:130) (1 samples, 0.04%)</title><rect x="97.6" y="85" width="0.4" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
+<text  x="100.57" y="95.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (2 samples, 0.08%)</title><rect x="422.7" y="53" width="1.1" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="425.67" y="63.5" ></text>
+<title>_add (fractions.py:459) (7 samples, 0.27%)</title><rect x="211.3" y="53" width="3.2" height="15.0" fill="rgb(65,179,179)" rx="2" ry="2" />
+<text  x="214.33" y="63.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:269) (9 samples, 0.36%)</title><rect x="650.8" y="197" width="5.0" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="653.83" y="207.5" ></text>
+<title>applyHPChange (run_benchmark_opt.py:95) (48 samples, 1.84%)</title><rect x="102.5" y="69" width="21.7" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="105.54" y="79.5" >a..</text>
 </g>
 <g >
-<title>_add (fractions.py:453) (4 samples, 0.16%)</title><rect x="539.2" y="101" width="2.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="542.24" y="111.5" ></text>
+<title>_mul (fractions.py:486) (6 samples, 0.23%)</title><rect x="279.5" y="85" width="2.7" height="15.0" fill="rgb(79,191,191)" rx="2" ry="2" />
+<text  x="282.50" y="95.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:461) (1 samples, 0.04%)</title><rect x="286.8" y="53" width="0.5" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="289.77" y="63.5" ></text>
+<title>evaluate (run_benchmark_opt.py:282) (4 samples, 0.15%)</title><rect x="514.2" y="197" width="1.8" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="517.23" y="207.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:289) (2 samples, 0.08%)</title><rect x="655.8" y="197" width="1.1" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
-<text  x="658.80" y="207.5" ></text>
+<title>evaluate (run_benchmark_opt.py:323) (50 samples, 1.91%)</title><rect x="577.0" y="197" width="22.5" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="579.98" y="207.5" >e..</text>
 </g>
 <g >
-<title>__new__ (fractions.py:158) (3 samples, 0.12%)</title><rect x="267.4" y="37" width="1.7" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="270.44" y="47.5" ></text>
+<title>__new__ (fractions.py:142) (1 samples, 0.04%)</title><rect x="224.0" y="37" width="0.4" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="226.97" y="47.5" ></text>
 </g>
 <g >
-<title>__eq__ (fractions.py:676) (6 samples, 0.24%)</title><rect x="101.7" y="53" width="3.3" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="104.71" y="63.5" ></text>
+<title>forward (fractions.py:357) (6 samples, 0.23%)</title><rect x="188.3" y="69" width="2.7" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
+<text  x="191.31" y="79.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (4 samples, 0.16%)</title><rect x="355.3" y="69" width="2.2" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="358.28" y="79.5" ></text>
+<title>_applyActionSide1 (run_benchmark_opt.py:118) (18 samples, 0.69%)</title><rect x="56.9" y="85" width="8.2" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="59.95" y="95.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:259) (3 samples, 0.12%)</title><rect x="621.6" y="197" width="1.6" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="624.55" y="207.5" ></text>
+<title>topoSort (run_benchmark_opt.py:30) (4 samples, 0.15%)</title><rect x="10.9" y="181" width="1.8" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="13.90" y="191.5" ></text>
 </g>
 <g >
-<title>_replace (collections/__init__.py:431) (19 samples, 0.76%)</title><rect x="61.9" y="53" width="10.5" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="64.93" y="63.5" ></text>
+<title>_add (fractions.py:454) (6 samples, 0.23%)</title><rect x="344.0" y="69" width="2.8" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="347.05" y="79.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:455) (1 samples, 0.04%)</title><rect x="482.9" y="69" width="0.5" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="485.89" y="79.5" ></text>
+<title>__new__ (fractions.py:93) (5 samples, 0.19%)</title><rect x="184.7" y="69" width="2.3" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="187.70" y="79.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (2 samples, 0.08%)</title><rect x="87.3" y="69" width="1.1" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="90.34" y="79.5" ></text>
+<title>_add (fractions.py:462) (11 samples, 0.42%)</title><rect x="222.2" y="53" width="4.9" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="225.17" y="63.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:162) (1 samples, 0.04%)</title><rect x="51.4" y="117" width="0.6" height="15.0" fill="rgb(70,183,183)" rx="2" ry="2" />
-<text  x="54.43" y="127.5" ></text>
-</g>
-<g >
-<title>applyHPChange (run_benchmark_opt.py:87) (4 samples, 0.16%)</title><rect x="391.7" y="85" width="2.2" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="394.74" y="95.5" ></text>
-</g>
-<g >
-<title>_make (collections/__init__.py:422) (3 samples, 0.12%)</title><rect x="444.8" y="53" width="1.6" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="447.77" y="63.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:93) (2 samples, 0.08%)</title><rect x="52.0" y="117" width="1.1" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="54.99" y="127.5" ></text>
-</g>
-<g >
-<title>topoSort (run_benchmark_opt.py:30) (8 samples, 0.32%)</title><rect x="609.4" y="181" width="4.4" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="612.40" y="191.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:165) (2 samples, 0.08%)</title><rect x="300.0" y="37" width="1.1" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="303.03" y="47.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:97) (2 samples, 0.08%)</title><rect x="234.8" y="69" width="1.1" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
-<text  x="237.84" y="79.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsC (run_benchmark_opt.py:196) (94 samples, 3.76%)</title><rect x="506.1" y="133" width="51.9" height="15.0" fill="rgb(65,179,179)" rx="2" ry="2" />
-<text  x="509.09" y="143.5" >_getS..</text>
-</g>
-<g >
-<title>__new__ (fractions.py:164) (3 samples, 0.12%)</title><rect x="353.6" y="69" width="1.7" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="356.62" y="79.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:164) (2 samples, 0.08%)</title><rect x="550.8" y="85" width="1.1" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="553.84" y="95.5" ></text>
-</g>
-<g >
-<title>_richcmp (fractions.py:704) (2 samples, 0.08%)</title><rect x="581.2" y="85" width="1.1" height="15.0" fill="rgb(90,202,202)" rx="2" ry="2" />
-<text  x="584.22" y="95.5" ></text>
-</g>
-<g >
-<title>numerator (fractions.py:258) (2 samples, 0.08%)</title><rect x="326.5" y="69" width="1.2" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="329.55" y="79.5" ></text>
-</g>
-<g >
-<title>_replace (collections/__init__.py:431) (99 samples, 3.96%)</title><rect x="143.1" y="53" width="54.7" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="146.14" y="63.5" >_repl..</text>
-</g>
-<g >
-<title>_applyActionPair (run_benchmark_opt.py:158) (34 samples, 1.36%)</title><rect x="55.9" y="117" width="18.7" height="15.0" fill="rgb(56,171,171)" rx="2" ry="2" />
-<text  x="58.85" y="127.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:309) (191 samples, 7.65%)</title><rect x="1194.4" y="197" width="105.6" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="1197.44" y="207.5" >evaluate (ru..</text>
-</g>
-<g >
-<title>applyHPChange (run_benchmark_opt.py:87) (19 samples, 0.76%)</title><rect x="124.9" y="69" width="10.5" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="127.91" y="79.5" ></text>
-</g>
-<g >
-<title>_make (collections/__init__.py:422) (6 samples, 0.24%)</title><rect x="69.1" y="37" width="3.3" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="72.11" y="47.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:321) (5 samples, 0.20%)</title><rect x="1386.7" y="197" width="2.7" height="15.0" fill="rgb(78,190,190)" rx="2" ry="2" />
-<text  x="1389.69" y="207.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:454) (2 samples, 0.08%)</title><rect x="326.5" y="85" width="1.2" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="329.55" y="95.5" ></text>
-</g>
-<g >
-<title>_richcmp (fractions.py:702) (8 samples, 0.32%)</title><rect x="575.7" y="85" width="4.4" height="15.0" fill="rgb(106,216,216)" rx="2" ry="2" />
-<text  x="578.70" y="95.5" ></text>
-</g>
-<g >
-<title>_applyActionSide1 (run_benchmark_opt.py:125) (43 samples, 1.72%)</title><rect x="400.6" y="101" width="23.7" height="15.0" fill="rgb(77,190,190)" rx="2" ry="2" />
-<text  x="403.58" y="111.5" >_..</text>
-</g>
-<g >
-<title>_mul (fractions.py:487) (8 samples, 0.32%)</title><rect x="339.8" y="85" width="4.4" height="15.0" fill="rgb(71,184,184)" rx="2" ry="2" />
-<text  x="342.81" y="95.5" ></text>
-</g>
-<g >
-<title>_make (collections/__init__.py:423) (1 samples, 0.04%)</title><rect x="446.4" y="53" width="0.6" height="15.0" fill="rgb(59,174,174)" rx="2" ry="2" />
-<text  x="449.43" y="63.5" ></text>
-</g>
-<g >
-<title>getSuccessorsList (run_benchmark_opt.py:220) (9 samples, 0.36%)</title><rect x="603.3" y="165" width="5.0" height="15.0" fill="rgb(80,192,192)" rx="2" ry="2" />
-<text  x="606.32" y="175.5" ></text>
-</g>
-<g >
-<title>&lt;listcomp&gt; (run_benchmark_opt.py:301) (33 samples, 1.32%)</title><rect x="859.7" y="181" width="18.2" height="15.0" fill="rgb(72,186,186)" rx="2" ry="2" />
-<text  x="862.66" y="191.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsB (run_benchmark_opt.py:169) (3 samples, 0.12%)</title><rect x="49.8" y="133" width="1.6" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
-<text  x="52.78" y="143.5" ></text>
-</g>
-<g >
-<title>_mul (fractions.py:485) (2 samples, 0.08%)</title><rect x="336.5" y="85" width="1.1" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="339.49" y="95.5" ></text>
-</g>
-<g >
-<title>denominator (fractions.py:262) (2 samples, 0.08%)</title><rect x="479.0" y="53" width="1.1" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
-<text  x="482.02" y="63.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsB (run_benchmark_opt.py:173) (4 samples, 0.16%)</title><rect x="53.6" y="133" width="2.3" height="15.0" fill="rgb(51,166,166)" rx="2" ry="2" />
-<text  x="56.64" y="143.5" ></text>
-</g>
-<g >
-<title>_make (collections/__init__.py:422) (6 samples, 0.24%)</title><rect x="397.3" y="53" width="3.3" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="400.26" y="63.5" ></text>
-</g>
-<g >
-<title>_mul (fractions.py:495) (17 samples, 0.68%)</title><rect x="348.1" y="85" width="9.4" height="15.0" fill="rgb(79,191,191)" rx="2" ry="2" />
-<text  x="351.09" y="95.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:262) (5 samples, 0.20%)</title><rect x="623.2" y="197" width="2.8" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="626.21" y="207.5" ></text>
-</g>
-<g >
-<title>forward (fractions.py:357) (1 samples, 0.04%)</title><rect x="323.8" y="101" width="0.5" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
-<text  x="326.79" y="111.5" ></text>
-</g>
-<g >
-<title>forward (fractions.py:357) (2 samples, 0.08%)</title><rect x="475.2" y="85" width="1.1" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
-<text  x="478.16" y="95.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:457) (4 samples, 0.16%)</title><rect x="418.8" y="69" width="2.2" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="421.81" y="79.5" ></text>
-</g>
-<g >
-<title>numerator (fractions.py:258) (3 samples, 0.12%)</title><rect x="368.0" y="85" width="1.6" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="370.98" y="95.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:462) (3 samples, 0.12%)</title><rect x="422.1" y="69" width="1.7" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="425.12" y="79.5" ></text>
-</g>
-<g >
-<title>_applyActionSide1 (run_benchmark_opt.py:125) (89 samples, 3.56%)</title><rect x="448.1" y="101" width="49.2" height="15.0" fill="rgb(77,190,190)" rx="2" ry="2" />
-<text  x="451.09" y="111.5" >_app..</text>
-</g>
-<g >
-<title>forward (fractions.py:357) (7 samples, 0.28%)</title><rect x="235.9" y="69" width="3.9" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
-<text  x="238.95" y="79.5" ></text>
-</g>
-<g >
-<title>__float__ (numbers.py:291) (5 samples, 0.20%)</title><rect x="366.9" y="101" width="2.7" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="369.88" y="111.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:164) (1 samples, 0.04%)</title><rect x="292.3" y="37" width="0.6" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="295.30" y="47.5" ></text>
-</g>
-<g >
-<title>getCritDist (run_benchmark_opt.py:53) (2 samples, 0.08%)</title><rect x="389.0" y="85" width="1.1" height="15.0" fill="rgb(74,187,187)" rx="2" ry="2" />
-<text  x="391.98" y="95.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:93) (7 samples, 0.28%)</title><rect x="471.3" y="85" width="3.9" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="474.29" y="95.5" ></text>
-</g>
-<g >
-<title>getSuccessors (run_benchmark_opt.py:201) (4 samples, 0.16%)</title><rect x="617.7" y="181" width="2.2" height="15.0" fill="rgb(101,212,212)" rx="2" ry="2" />
-<text  x="620.69" y="191.5" ></text>
-</g>
-<g >
-<title>numerator (fractions.py:258) (4 samples, 0.16%)</title><rect x="248.1" y="37" width="2.2" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="251.10" y="47.5" ></text>
-</g>
-<g >
-<title>forward (fractions.py:357) (5 samples, 0.20%)</title><rect x="79.1" y="101" width="2.7" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
-<text  x="82.06" y="111.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:93) (3 samples, 0.12%)</title><rect x="419.4" y="53" width="1.6" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="422.36" y="63.5" ></text>
-</g>
-<g >
-<title>__hash__ (fractions.py:646) (11 samples, 0.44%)</title><rect x="105.0" y="53" width="6.1" height="15.0" fill="rgb(98,209,209)" rx="2" ry="2" />
-<text  x="108.02" y="63.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:142) (2 samples, 0.08%)</title><rect x="352.5" y="69" width="1.1" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="355.51" y="79.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsB (run_benchmark_opt.py:177) (59 samples, 2.36%)</title><rect x="55.9" y="133" width="32.5" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
-<text  x="58.85" y="143.5" >_g..</text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:323) (1 samples, 0.04%)</title><rect x="1389.4" y="197" width="0.6" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="1392.45" y="207.5" ></text>
-</g>
-<g >
-<title>forward (fractions.py:357) (9 samples, 0.36%)</title><rect x="533.2" y="117" width="4.9" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
-<text  x="536.16" y="127.5" ></text>
-</g>
-<g >
-<title>applyHPChange (run_benchmark_opt.py:88) (23 samples, 0.92%)</title><rect x="435.4" y="85" width="12.7" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="438.38" y="95.5" ></text>
-</g>
-<g >
-<title>_applyActionSide1 (run_benchmark_opt.py:125) (194 samples, 7.77%)</title><rect x="197.8" y="85" width="107.2" height="15.0" fill="rgb(77,190,190)" rx="2" ry="2" />
-<text  x="200.83" y="95.5" >_applyActionS..</text>
-</g>
-<g >
-<title>_add (fractions.py:454) (8 samples, 0.32%)</title><rect x="250.3" y="53" width="4.4" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="253.31" y="63.5" ></text>
-</g>
-<g >
-<title>_applyActionSide1 (run_benchmark_opt.py:113) (2 samples, 0.08%)</title><rect x="92.3" y="85" width="1.1" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
-<text  x="95.31" y="95.5" ></text>
-</g>
-<g >
-<title>getSuccessorsList (run_benchmark_opt.py:216) (2 samples, 0.08%)</title><rect x="39.3" y="165" width="1.1" height="15.0" fill="rgb(101,212,212)" rx="2" ry="2" />
-<text  x="42.28" y="175.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:93) (2 samples, 0.08%)</title><rect x="335.4" y="69" width="1.1" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="338.39" y="79.5" ></text>
-</g>
-<g >
-<title>numerator (fractions.py:258) (1 samples, 0.04%)</title><rect x="254.2" y="37" width="0.5" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="257.18" y="47.5" ></text>
-</g>
-<g >
-<title>numerator (fractions.py:258) (1 samples, 0.04%)</title><rect x="541.4" y="85" width="0.6" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="544.45" y="95.5" ></text>
-</g>
-<g >
-<title>topoSort (run_benchmark_opt.py:24) (13 samples, 0.52%)</title><rect x="19.4" y="181" width="7.2" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="22.39" y="191.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:460) (8 samples, 0.32%)</title><rect x="282.4" y="53" width="4.4" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="285.35" y="63.5" ></text>
-</g>
-<g >
-<title>forward (fractions.py:358) (20 samples, 0.80%)</title><rect x="413.3" y="85" width="11.0" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
-<text  x="416.28" y="95.5" ></text>
-</g>
-<g >
-<title>_make (collections/__init__.py:422) (50 samples, 2.00%)</title><rect x="167.4" y="37" width="27.7" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="170.45" y="47.5" >_..</text>
-</g>
-<g >
-<title>__hash__ (fractions.py:666) (2 samples, 0.08%)</title><rect x="433.2" y="69" width="1.1" height="15.0" fill="rgb(83,195,195)" rx="2" ry="2" />
-<text  x="436.17" y="79.5" ></text>
-</g>
-<g >
-<title>forward (fractions.py:358) (60 samples, 2.40%)</title><rect x="324.3" y="101" width="33.2" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
-<text  x="327.34" y="111.5" >fo..</text>
-</g>
-<g >
-<title>getSuccessors (run_benchmark_opt.py:202) (1 samples, 0.04%)</title><rect x="44.8" y="149" width="0.6" height="15.0" fill="rgb(94,205,205)" rx="2" ry="2" />
-<text  x="47.80" y="159.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:158) (3 samples, 0.12%)</title><rect x="426.5" y="85" width="1.7" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="429.54" y="95.5" ></text>
-</g>
-<g >
-<title>_applyAction (run_benchmark_opt.py:134) (132 samples, 5.28%)</title><rect x="424.3" y="117" width="73.0" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="427.33" y="127.5" >_applyAc..</text>
-</g>
-<g >
-<title>topoSort (run_benchmark_opt.py:27) (1,047 samples, 41.91%)</title><rect x="31.0" y="181" width="578.4" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="33.99" y="191.5" >topoSort (run_benchmark_opt.py:27)</text>
-</g>
-<g >
-<title>__new__ (fractions.py:165) (1 samples, 0.04%)</title><rect x="292.9" y="37" width="0.5" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="295.85" y="47.5" ></text>
-</g>
-<g >
-<title>applyHPChange (run_benchmark_opt.py:88) (113 samples, 4.52%)</title><rect x="135.4" y="69" width="62.4" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="138.40" y="79.5" >applyH..</text>
-</g>
-<g >
-<title>_add (fractions.py:456) (3 samples, 0.12%)</title><rect x="260.8" y="53" width="1.7" height="15.0" fill="rgb(89,200,200)" rx="2" ry="2" />
-<text  x="263.81" y="63.5" ></text>
-</g>
-<g >
-<title>_replace (collections/__init__.py:431) (10 samples, 0.40%)</title><rect x="395.1" y="69" width="5.5" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="398.05" y="79.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsB (run_benchmark_opt.py:179) (487 samples, 19.50%)</title><rect x="88.4" y="133" width="269.1" height="15.0" fill="rgb(65,179,179)" rx="2" ry="2" />
-<text  x="91.45" y="143.5" >_getSuccessorsB (run_benchmark_opt...</text>
-</g>
-<g >
-<title>forward (fractions.py:358) (12 samples, 0.48%)</title><rect x="81.8" y="101" width="6.6" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
-<text  x="84.82" y="111.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:460) (2 samples, 0.08%)</title><rect x="421.0" y="69" width="1.1" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="424.02" y="79.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:161) (2 samples, 0.08%)</title><rect x="96.7" y="69" width="1.1" height="15.0" fill="rgb(78,190,190)" rx="2" ry="2" />
-<text  x="99.73" y="79.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:305) (4 samples, 0.16%)</title><rect x="881.2" y="197" width="2.2" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="884.20" y="207.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:455) (6 samples, 0.24%)</title><rect x="542.0" y="101" width="3.3" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="545.00" y="111.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:165) (1 samples, 0.04%)</title><rect x="329.3" y="69" width="0.6" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="332.31" y="79.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:290) (3 samples, 0.12%)</title><rect x="656.9" y="197" width="1.7" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="659.91" y="207.5" ></text>
-</g>
-<g >
-<title>topoSort (run_benchmark_opt.py:22) (2 samples, 0.08%)</title><rect x="18.3" y="181" width="1.1" height="15.0" fill="rgb(78,191,191)" rx="2" ry="2" />
-<text  x="21.29" y="191.5" ></text>
-</g>
-<g >
-<title>&lt;listcomp&gt; (run_benchmark_opt.py:286) (2 samples, 0.08%)</title><rect x="655.8" y="181" width="1.1" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="658.80" y="191.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:463) (1 samples, 0.04%)</title><rect x="423.8" y="69" width="0.5" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="426.78" y="79.5" ></text>
-</g>
-<g >
-<title>_applyAction (run_benchmark_opt.py:131) (64 samples, 2.56%)</title><rect x="389.0" y="117" width="35.3" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="391.98" y="127.5" >_a..</text>
-</g>
-<g >
-<title>&lt;dictcomp&gt; (run_benchmark_opt.py:135) (11 samples, 0.44%)</title><rect x="497.3" y="101" width="6.0" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
-<text  x="500.25" y="111.5" ></text>
-</g>
-<g >
-<title>getCritDist (run_benchmark_opt.py:53) (10 samples, 0.40%)</title><rect x="428.8" y="85" width="5.5" height="15.0" fill="rgb(74,187,187)" rx="2" ry="2" />
-<text  x="431.75" y="95.5" ></text>
-</g>
-<g >
-<title>_applyActionPair (run_benchmark_opt.py:158) (395 samples, 15.81%)</title><rect x="89.0" y="117" width="218.2" height="15.0" fill="rgb(56,171,171)" rx="2" ry="2" />
-<text  x="92.00" y="127.5" >_applyActionPair (run_benchm..</text>
-</g>
-<g >
-<title>_add (fractions.py:457) (9 samples, 0.36%)</title><rect x="327.7" y="85" width="4.9" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="330.65" y="95.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:313) (53 samples, 2.12%)</title><rect x="1357.4" y="197" width="29.3" height="15.0" fill="rgb(70,183,183)" rx="2" ry="2" />
-<text  x="1360.41" y="207.5" >ev..</text>
-</g>
-<g >
-<title>_add (fractions.py:453) (10 samples, 0.40%)</title><rect x="244.8" y="53" width="5.5" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="247.79" y="63.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:164) (3 samples, 0.12%)</title><rect x="269.1" y="37" width="1.7" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="272.10" y="47.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:310) (47 samples, 1.88%)</title><rect x="1300.0" y="197" width="25.9" height="15.0" fill="rgb(93,205,205)" rx="2" ry="2" />
-<text  x="1302.95" y="207.5" >e..</text>
-</g>
-<g >
-<title>__new__ (fractions.py:164) (1 samples, 0.04%)</title><rect x="422.1" y="53" width="0.6" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="425.12" y="63.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:294) (16 samples, 0.64%)</title><rect x="658.6" y="197" width="8.8" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
-<text  x="661.57" y="207.5" ></text>
-</g>
-<g >
-<title>denominator (fractions.py:262) (2 samples, 0.08%)</title><rect x="82.9" y="69" width="1.1" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
-<text  x="85.92" y="79.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:454) (5 samples, 0.20%)</title><rect x="480.1" y="69" width="2.8" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="483.13" y="79.5" ></text>
-</g>
-<g >
-<title>_applyActionPair (run_benchmark_opt.py:165) (25 samples, 1.00%)</title><rect x="74.6" y="117" width="13.8" height="15.0" fill="rgb(72,185,185)" rx="2" ry="2" />
-<text  x="77.64" y="127.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:307) (229 samples, 9.17%)</title><rect x="906.6" y="197" width="126.5" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="909.61" y="207.5" >evaluate (run_b..</text>
-</g>
-<g >
-<title>getSuccessors (run_benchmark_opt.py:212) (9 samples, 0.36%)</title><rect x="598.4" y="149" width="4.9" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="601.35" y="159.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsC (run_benchmark_opt.py:192) (5 samples, 0.20%)</title><rect x="503.3" y="133" width="2.8" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="506.33" y="143.5" ></text>
-</g>
-<g >
-<title>getSuccessors (run_benchmark_opt.py:201) (8 samples, 0.32%)</title><rect x="40.4" y="149" width="4.4" height="15.0" fill="rgb(101,212,212)" rx="2" ry="2" />
-<text  x="43.38" y="159.5" ></text>
-</g>
-<g >
-<title>applyHPChange (run_benchmark_opt.py:88) (12 samples, 0.48%)</title><rect x="393.9" y="85" width="6.7" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="396.95" y="95.5" ></text>
-</g>
-<g >
-<title>_richcmp (fractions.py:702) (13 samples, 0.52%)</title><rect x="374.6" y="85" width="7.2" height="15.0" fill="rgb(106,216,216)" rx="2" ry="2" />
-<text  x="377.61" y="95.5" ></text>
-</g>
-<g >
-<title>forward (fractions.py:358) (36 samples, 1.44%)</title><rect x="538.1" y="117" width="19.9" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
-<text  x="541.13" y="127.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:308) (292 samples, 11.69%)</title><rect x="1033.1" y="197" width="161.3" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="1036.12" y="207.5" >evaluate (run_benchm..</text>
-</g>
-<g >
-<title>getSuccessors (run_benchmark_opt.py:205) (4 samples, 0.16%)</title><rect x="45.4" y="149" width="2.2" height="15.0" fill="rgb(70,184,184)" rx="2" ry="2" />
-<text  x="48.36" y="159.5" ></text>
-</g>
-<g >
-<title>applyHPChange (run_benchmark_opt.py:87) (6 samples, 0.24%)</title><rect x="58.1" y="69" width="3.3" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="61.06" y="79.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsC (run_benchmark_opt.py:187) (2 samples, 0.08%)</title><rect x="383.5" y="133" width="1.1" height="15.0" fill="rgb(65,179,179)" rx="2" ry="2" />
-<text  x="386.45" y="143.5" ></text>
-</g>
-<g >
-<title>&lt;lambda&gt; (run_benchmark_opt.py:211) (15 samples, 0.60%)</title><rect x="590.1" y="133" width="8.3" height="15.0" fill="rgb(94,206,206)" rx="2" ry="2" />
-<text  x="593.06" y="143.5" ></text>
-</g>
-<g >
-<title>_getSuccessorsB (run_benchmark_opt.py:172) (1 samples, 0.04%)</title><rect x="53.1" y="133" width="0.5" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="56.09" y="143.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:459) (1 samples, 0.04%)</title><rect x="332.6" y="85" width="0.6" height="15.0" fill="rgb(65,179,179)" rx="2" ry="2" />
-<text  x="335.63" y="95.5" ></text>
-</g>
-<g >
-<title>_applyActionSide1 (run_benchmark_opt.py:122) (1 samples, 0.04%)</title><rect x="113.3" y="85" width="0.6" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
-<text  x="116.31" y="95.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:301) (207 samples, 8.29%)</title><rect x="711.0" y="197" width="114.4" height="15.0" fill="rgb(93,205,205)" rx="2" ry="2" />
-<text  x="714.05" y="207.5" >evaluate (run_..</text>
-</g>
-<g >
-<title>_applyActionSide1 (run_benchmark_opt.py:124) (25 samples, 1.00%)</title><rect x="434.3" y="101" width="13.8" height="15.0" fill="rgb(85,197,197)" rx="2" ry="2" />
-<text  x="437.28" y="111.5" ></text>
-</g>
-<g >
-<title>__float__ (numbers.py:291) (1 samples, 0.04%)</title><rect x="572.4" y="101" width="0.5" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="575.39" y="111.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:165) (1 samples, 0.04%)</title><rect x="551.9" y="85" width="0.6" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="554.95" y="95.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:256) (3 samples, 0.12%)</title><rect x="619.9" y="197" width="1.7" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
-<text  x="622.90" y="207.5" ></text>
-</g>
-<g >
-<title>__eq__ (fractions.py:676) (4 samples, 0.16%)</title><rect x="431.0" y="69" width="2.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="433.96" y="79.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:255) (4 samples, 0.16%)</title><rect x="617.7" y="197" width="2.2" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="620.69" y="207.5" ></text>
-</g>
-<g >
-<title>&lt;genexpr&gt; (run_benchmark_opt.py:27) (7 samples, 0.28%)</title><rect x="35.4" y="165" width="3.9" height="15.0" fill="rgb(89,201,201)" rx="2" ry="2" />
-<text  x="38.41" y="175.5" ></text>
-</g>
-<g >
-<title>&lt;dictcomp&gt; (run_benchmark_opt.py:184) (40 samples, 1.60%)</title><rect x="359.7" y="117" width="22.1" height="15.0" fill="rgb(69,182,182)" rx="2" ry="2" />
-<text  x="362.70" y="127.5" >&lt;..</text>
-</g>
-<g >
-<title>_replace (collections/__init__.py:432) (2 samples, 0.08%)</title><rect x="447.0" y="69" width="1.1" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="449.98" y="79.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:98) (2 samples, 0.08%)</title><rect x="73.5" y="69" width="1.1" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
-<text  x="76.53" y="79.5" ></text>
-</g>
-<g >
-<title>evaluate (run_benchmark_opt.py:303) (95 samples, 3.80%)</title><rect x="825.4" y="197" width="52.5" height="15.0" fill="rgb(78,190,190)" rx="2" ry="2" />
-<text  x="828.40" y="207.5" >evalu..</text>
-</g>
-<g >
-<title>__gt__ (fractions.py:719) (22 samples, 0.88%)</title><rect x="369.6" y="101" width="12.2" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
-<text  x="372.64" y="111.5" ></text>
-</g>
-<g >
-<title>__new__ (fractions.py:165) (1 samples, 0.04%)</title><rect x="86.8" y="69" width="0.5" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="89.79" y="79.5" ></text>
-</g>
-<g >
-<title>getSuccessorsList (run_benchmark_opt.py:218) (1,019 samples, 40.79%)</title><rect x="40.4" y="165" width="562.9" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="43.38" y="175.5" >getSuccessorsList (run_benchmark_opt.py:218)</text>
-</g>
-<g >
-<title>forward (fractions.py:358) (38 samples, 1.52%)</title><rect x="476.3" y="85" width="21.0" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
-<text  x="479.26" y="95.5" ></text>
-</g>
-<g >
-<title>_mul (fractions.py:486) (4 samples, 0.16%)</title><rect x="337.6" y="85" width="2.2" height="15.0" fill="rgb(79,191,191)" rx="2" ry="2" />
-<text  x="340.60" y="95.5" ></text>
-</g>
-<g >
-<title>_add (fractions.py:457) (25 samples, 1.00%)</title><rect x="483.4" y="69" width="13.9" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="486.44" y="79.5" ></text>
-</g>
-<g >
-<title>all (2,498 samples, 100%)</title><rect x="10.0" y="229" width="1380.0" height="15.0" fill="rgb(209,63,63)" rx="2" ry="2" />
+<title>all (2,614 samples, 100%)</title><rect x="10.0" y="229" width="1180.0" height="15.0" fill="rgb(209,63,63)" rx="2" ry="2" />
 <text  x="13.00" y="239.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:455) (11 samples, 0.44%)</title><rect x="254.7" y="53" width="6.1" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="257.73" y="63.5" ></text>
+<title>__new__ (fractions.py:162) (2 samples, 0.08%)</title><rect x="50.6" y="117" width="0.9" height="15.0" fill="rgb(70,183,183)" rx="2" ry="2" />
+<text  x="53.63" y="127.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (3 samples, 0.12%)</title><rect x="410.0" y="85" width="1.6" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="412.97" y="95.5" ></text>
+<title>evaluate (run_benchmark_opt.py:244) (1,105 samples, 42.27%)</title><rect x="10.9" y="197" width="498.8" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="13.90" y="207.5" >evaluate (run_benchmark_opt.py:244)</text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:268) (29 samples, 1.16%)</title><rect x="634.8" y="197" width="16.0" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="637.81" y="207.5" ></text>
+<title>_getSuccessorsB (run_benchmark_opt.py:187) (465 samples, 17.79%)</title><rect x="78.6" y="133" width="209.9" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
+<text  x="81.62" y="143.5" >_getSuccessorsB (run_benchm..</text>
 </g>
 <g >
-<title>_add (fractions.py:453) (6 samples, 0.24%)</title><rect x="413.3" y="69" width="3.3" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="416.28" y="79.5" ></text>
+<title>_add (fractions.py:456) (3 samples, 0.11%)</title><rect x="346.8" y="69" width="1.3" height="15.0" fill="rgb(89,200,200)" rx="2" ry="2" />
+<text  x="349.76" y="79.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:298) (34 samples, 1.36%)</title><rect x="683.4" y="197" width="18.8" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
-<text  x="686.43" y="207.5" ></text>
+<title>__new__ (fractions.py:93) (4 samples, 0.15%)</title><rect x="352.2" y="53" width="1.8" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="355.17" y="63.5" ></text>
 </g>
 <g >
-<title>_make (collections/__init__.py:423) (5 samples, 0.20%)</title><rect x="195.1" y="37" width="2.7" height="15.0" fill="rgb(59,174,174)" rx="2" ry="2" />
-<text  x="198.07" y="47.5" ></text>
+<title>numerator (fractions.py:258) (1 samples, 0.04%)</title><rect x="196.0" y="37" width="0.4" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="198.98" y="47.5" ></text>
 </g>
 <g >
-<title>topoSort (run_benchmark_opt.py:26) (2 samples, 0.08%)</title><rect x="29.9" y="181" width="1.1" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="32.89" y="191.5" ></text>
+<title>__new__ (fractions.py:93) (3 samples, 0.11%)</title><rect x="356.7" y="53" width="1.3" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="359.69" y="63.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (5 samples, 0.20%)</title><rect x="232.1" y="69" width="2.7" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="235.08" y="79.5" ></text>
+<title>_applyActionSide1 (run_benchmark_opt.py:131) (3 samples, 0.11%)</title><rect x="98.0" y="85" width="1.4" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
+<text  x="101.03" y="95.5" ></text>
 </g>
 <g >
-<title>__instancecheck__ (abc.py:119) (1 samples, 0.04%)</title><rect x="381.2" y="69" width="0.6" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="384.24" y="79.5" ></text>
+<title>_add (fractions.py:454) (5 samples, 0.19%)</title><rect x="408.1" y="69" width="2.3" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="411.15" y="79.5" ></text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:117) (18 samples, 0.72%)</title><rect x="424.3" y="101" width="10.0" height="15.0" fill="rgb(69,183,183)" rx="2" ry="2" />
-<text  x="427.33" y="111.5" ></text>
+<title>getSuccessors (run_benchmark_opt.py:209) (1 samples, 0.04%)</title><rect x="36.6" y="149" width="0.5" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="39.63" y="159.5" ></text>
 </g>
 <g >
-<title>getSuccessors (run_benchmark_opt.py:210) (363 samples, 14.53%)</title><rect x="381.8" y="149" width="200.5" height="15.0" fill="rgb(101,212,212)" rx="2" ry="2" />
-<text  x="384.79" y="159.5" >getSuccessors (run_benchma..</text>
+<title>topoSort (run_benchmark_opt.py:35) (1,069 samples, 40.90%)</title><rect x="26.7" y="181" width="482.6" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="29.70" y="191.5" >topoSort (run_benchmark_opt.py:35)</text>
 </g>
 <g >
-<title>getSuccessors (run_benchmark_opt.py:211) (29 samples, 1.16%)</title><rect x="582.3" y="149" width="16.1" height="15.0" fill="rgb(94,205,205)" rx="2" ry="2" />
-<text  x="585.33" y="159.5" ></text>
+<title>__new__ (fractions.py:163) (1 samples, 0.04%)</title><rect x="274.1" y="69" width="0.4" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="277.08" y="79.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:462) (3 samples, 0.12%)</title><rect x="334.8" y="85" width="1.7" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="337.84" y="95.5" ></text>
+<title>_getSuccessorsB (run_benchmark_opt.py:192) (39 samples, 1.49%)</title><rect x="288.5" y="133" width="17.6" height="15.0" fill="rgb(104,214,214)" rx="2" ry="2" />
+<text  x="291.52" y="143.5" ></text>
 </g>
 <g >
-<title>_getSuccessorsB (run_benchmark_opt.py:184) (44 samples, 1.76%)</title><rect x="357.5" y="133" width="24.3" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="360.49" y="143.5" >_..</text>
+<title>applyHPChange (run_benchmark_opt.py:95) (8 samples, 0.31%)</title><rect x="317.0" y="85" width="3.6" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="319.96" y="95.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:453) (7 samples, 0.28%)</title><rect x="476.3" y="69" width="3.8" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="479.26" y="79.5" ></text>
+<title>numerator (fractions.py:258) (1 samples, 0.04%)</title><rect x="201.4" y="37" width="0.5" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="204.40" y="47.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (5 samples, 0.20%)</title><rect x="329.9" y="69" width="2.7" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="332.86" y="79.5" ></text>
+<title>forward (fractions.py:357) (3 samples, 0.11%)</title><rect x="256.0" y="101" width="1.4" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
+<text  x="259.02" y="111.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:455) (1 samples, 0.04%)</title><rect x="418.3" y="69" width="0.5" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="421.25" y="79.5" ></text>
+<title>__float__ (numbers.py:291) (10 samples, 0.38%)</title><rect x="296.2" y="101" width="4.5" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="299.20" y="111.5" ></text>
 </g>
 <g >
-<title>_getSuccessorsC (run_benchmark_opt.py:197) (44 samples, 1.76%)</title><rect x="558.0" y="133" width="24.3" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
-<text  x="561.02" y="143.5" >_..</text>
+<title>__new__ (fractions.py:164) (2 samples, 0.08%)</title><rect x="415.8" y="53" width="0.9" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="418.82" y="63.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:142) (3 samples, 0.12%)</title><rect x="491.7" y="53" width="1.7" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="494.73" y="63.5" ></text>
+<title>__new__ (fractions.py:97) (1 samples, 0.04%)</title><rect x="447.4" y="117" width="0.5" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
+<text  x="450.42" y="127.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:97) (1 samples, 0.04%)</title><rect x="531.5" y="117" width="0.6" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
-<text  x="534.51" y="127.5" ></text>
+<title>_add (fractions.py:457) (22 samples, 0.84%)</title><rect x="411.8" y="69" width="9.9" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="414.76" y="79.5" ></text>
 </g>
 <g >
-<title>forward (fractions.py:358) (118 samples, 4.72%)</title><rect x="239.8" y="69" width="65.2" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
-<text  x="242.82" y="79.5" >forward..</text>
+<title>_add (fractions.py:453) (5 samples, 0.19%)</title><rect x="405.9" y="69" width="2.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="408.89" y="79.5" ></text>
 </g>
 <g >
-<title>&lt;dictcomp&gt; (run_benchmark_opt.py:135) (4 samples, 0.16%)</title><rect x="305.0" y="85" width="2.2" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
-<text  x="308.00" y="95.5" ></text>
+<title>evaluate (run_benchmark_opt.py:321) (27 samples, 1.03%)</title><rect x="564.8" y="197" width="12.2" height="15.0" fill="rgb(78,190,190)" rx="2" ry="2" />
+<text  x="567.79" y="207.5" ></text>
 </g>
 <g >
-<title>&lt;dictcomp&gt; (run_benchmark_opt.py:197) (42 samples, 1.68%)</title><rect x="559.1" y="117" width="23.2" height="15.0" fill="rgb(98,209,209)" rx="2" ry="2" />
-<text  x="562.13" y="127.5" >&lt;..</text>
+<title>_mul (fractions.py:487) (3 samples, 0.11%)</title><rect x="282.2" y="85" width="1.4" height="15.0" fill="rgb(71,184,184)" rx="2" ry="2" />
+<text  x="285.20" y="95.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:247) (7 samples, 0.28%)</title><rect x="613.8" y="197" width="3.9" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
-<text  x="616.82" y="207.5" ></text>
+<title>evaluate (run_benchmark_opt.py:318) (14 samples, 0.54%)</title><rect x="551.7" y="197" width="6.3" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="554.70" y="207.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:300) (16 samples, 0.64%)</title><rect x="702.2" y="197" width="8.8" height="15.0" fill="rgb(101,212,212)" rx="2" ry="2" />
-<text  x="705.21" y="207.5" ></text>
+<title>&lt;genexpr&gt; (run_benchmark_opt.py:35) (5 samples, 0.19%)</title><rect x="32.1" y="165" width="2.3" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
+<text  x="35.12" y="175.5" ></text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:117) (36 samples, 1.44%)</title><rect x="93.4" y="85" width="19.9" height="15.0" fill="rgb(69,183,183)" rx="2" ry="2" />
-<text  x="96.42" y="95.5" ></text>
+<title>__new__ (fractions.py:165) (1 samples, 0.04%)</title><rect x="288.1" y="69" width="0.4" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="291.07" y="79.5" ></text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:117) (2 samples, 0.08%)</title><rect x="389.0" y="101" width="1.1" height="15.0" fill="rgb(69,183,183)" rx="2" ry="2" />
-<text  x="391.98" y="111.5" ></text>
+<title>_add (fractions.py:457) (4 samples, 0.15%)</title><rect x="348.1" y="69" width="1.8" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="351.11" y="79.5" ></text>
 </g>
 <g >
-<title>_applyAction (run_benchmark_opt.py:134) (385 samples, 15.41%)</title><rect x="92.3" y="101" width="212.7" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="95.31" y="111.5" >_applyAction (run_benchmark_..</text>
+<title>__hash__ (fractions.py:666) (3 samples, 0.11%)</title><rect x="94.9" y="53" width="1.3" height="15.0" fill="rgb(83,195,195)" rx="2" ry="2" />
+<text  x="97.87" y="63.5" ></text>
 </g>
 <g >
-<title>applyHPChange (run_benchmark_opt.py:88) (20 samples, 0.80%)</title><rect x="61.4" y="69" width="11.0" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="64.38" y="79.5" ></text>
+<title>_add (fractions.py:454) (8 samples, 0.31%)</title><rect x="451.0" y="101" width="3.6" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="454.03" y="111.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:454) (3 samples, 0.12%)</title><rect x="416.6" y="69" width="1.7" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="419.60" y="79.5" ></text>
+<title>getCritDist (run_benchmark_opt.py:61) (7 samples, 0.27%)</title><rect x="311.1" y="85" width="3.2" height="15.0" fill="rgb(81,194,194)" rx="2" ry="2" />
+<text  x="314.09" y="95.5" ></text>
 </g>
 <g >
-<title>_applyAction (run_benchmark_opt.py:131) (31 samples, 1.24%)</title><rect x="57.5" y="101" width="17.1" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="60.51" y="111.5" ></text>
+<title>__new__ (fractions.py:155) (2 samples, 0.08%)</title><rect x="414.9" y="53" width="0.9" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="417.92" y="63.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (4 samples, 0.16%)</title><rect x="495.0" y="53" width="2.3" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="498.04" y="63.5" ></text>
+<title>__new__ (fractions.py:93) (6 samples, 0.23%)</title><rect x="224.4" y="37" width="2.7" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="227.42" y="47.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:459) (12 samples, 0.48%)</title><rect x="275.7" y="53" width="6.7" height="15.0" fill="rgb(65,179,179)" rx="2" ry="2" />
-<text  x="278.72" y="63.5" ></text>
+<title>_mul (fractions.py:491) (3 samples, 0.11%)</title><rect x="284.0" y="85" width="1.4" height="15.0" fill="rgb(50,165,165)" rx="2" ry="2" />
+<text  x="287.01" y="95.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (8 samples, 0.32%)</title><rect x="319.4" y="101" width="4.4" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="322.37" y="111.5" ></text>
+<title>__gt__ (fractions.py:719) (12 samples, 0.46%)</title><rect x="300.7" y="101" width="5.4" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
+<text  x="303.71" y="111.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:295) (10 samples, 0.40%)</title><rect x="667.4" y="197" width="5.5" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="670.41" y="207.5" ></text>
+<title>_applyActionPair (run_benchmark_opt.py:169) (3 samples, 0.11%)</title><rect x="239.8" y="117" width="1.3" height="15.0" fill="rgb(101,211,211)" rx="2" ry="2" />
+<text  x="242.77" y="127.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (1 samples, 0.04%)</title><rect x="97.8" y="69" width="0.6" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="100.84" y="79.5" ></text>
+<title>_replace (collections/__init__.py:431) (48 samples, 1.84%)</title><rect x="126.9" y="53" width="21.7" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="129.92" y="63.5" >_..</text>
 </g>
 <g >
-<title>&lt;listcomp&gt; (run_benchmark_opt.py:300) (39 samples, 1.56%)</title><rect x="803.9" y="181" width="21.5" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
-<text  x="806.86" y="191.5" >&lt;..</text>
+<title>evaluate (run_benchmark_opt.py:345) (3 samples, 0.11%)</title><rect x="1188.2" y="197" width="1.3" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="1191.19" y="207.5" ></text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:306) (42 samples, 1.68%)</title><rect x="883.4" y="197" width="23.2" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="886.41" y="207.5" >e..</text>
+<title>evaluate (run_benchmark_opt.py:336) (51 samples, 1.95%)</title><rect x="1162.0" y="197" width="23.0" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="1165.01" y="207.5" >e..</text>
 </g>
 <g >
-<title>_add (fractions.py:453) (4 samples, 0.16%)</title><rect x="81.8" y="85" width="2.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="84.82" y="95.5" ></text>
+<title>forward (fractions.py:358) (69 samples, 2.64%)</title><rect x="257.4" y="101" width="31.1" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
+<text  x="260.38" y="111.5" >fo..</text>
 </g>
 <g >
-<title>__new__ (fractions.py:155) (3 samples, 0.12%)</title><rect x="424.9" y="85" width="1.6" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="427.88" y="95.5" ></text>
+<title>_applyActionSide1 (run_benchmark_opt.py:126) (3 samples, 0.11%)</title><rect x="96.2" y="85" width="1.4" height="15.0" fill="rgb(69,183,183)" rx="2" ry="2" />
+<text  x="99.22" y="95.5" ></text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:124) (141 samples, 5.64%)</title><rect x="119.9" y="85" width="77.9" height="15.0" fill="rgb(85,197,197)" rx="2" ry="2" />
-<text  x="122.94" y="95.5" >_applyAct..</text>
+<title>__new__ (fractions.py:155) (3 samples, 0.11%)</title><rect x="206.4" y="37" width="1.3" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="209.37" y="47.5" ></text>
 </g>
 <g >
-<title>_mul (fractions.py:491) (4 samples, 0.16%)</title><rect x="344.2" y="85" width="2.2" height="15.0" fill="rgb(50,165,165)" rx="2" ry="2" />
-<text  x="347.23" y="95.5" ></text>
+<title>&lt;lambda&gt; (run_benchmark_opt.py:219) (3 samples, 0.11%)</title><rect x="498.0" y="133" width="1.3" height="15.0" fill="rgb(92,204,204)" rx="2" ry="2" />
+<text  x="500.98" y="143.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:165) (3 samples, 0.12%)</title><rect x="493.4" y="53" width="1.6" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="496.39" y="63.5" ></text>
+<title>evaluate (run_benchmark_opt.py:317) (11 samples, 0.42%)</title><rect x="546.7" y="197" width="5.0" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="549.73" y="207.5" ></text>
 </g>
 <g >
-<title>topoSort (run_benchmark_opt.py:25) (6 samples, 0.24%)</title><rect x="26.6" y="181" width="3.3" height="15.0" fill="rgb(55,169,169)" rx="2" ry="2" />
-<text  x="29.57" y="191.5" ></text>
+<title>_make (collections/__init__.py:422) (19 samples, 0.73%)</title><rect x="376.5" y="53" width="8.6" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="379.55" y="63.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:457) (23 samples, 0.92%)</title><rect x="262.5" y="53" width="12.7" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="265.47" y="63.5" ></text>
+<title>numerator (fractions.py:258) (2 samples, 0.08%)</title><rect x="407.2" y="53" width="0.9" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="410.25" y="63.5" ></text>
 </g>
 <g >
-<title>_getSuccessorsC (run_benchmark_opt.py:189) (215 samples, 8.61%)</title><rect x="384.6" y="133" width="118.7" height="15.0" fill="rgb(109,219,219)" rx="2" ry="2" />
-<text  x="387.56" y="143.5" >_getSuccessors..</text>
+<title>_applyActionPair (run_benchmark_opt.py:166) (27 samples, 1.03%)</title><rect x="54.2" y="117" width="12.2" height="15.0" fill="rgb(64,178,178)" rx="2" ry="2" />
+<text  x="57.24" y="127.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:93) (10 samples, 0.40%)</title><rect x="526.0" y="117" width="5.5" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
-<text  x="528.98" y="127.5" ></text>
+<title>_getSuccessorsB (run_benchmark_opt.py:177) (4 samples, 0.15%)</title><rect x="39.3" y="133" width="1.8" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
+<text  x="42.34" y="143.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:454) (1 samples, 0.04%)</title><rect x="541.4" y="101" width="0.6" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="544.45" y="111.5" ></text>
+<title>_add (fractions.py:460) (4 samples, 0.15%)</title><rect x="270.9" y="85" width="1.8" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="273.92" y="95.5" ></text>
 </g>
 <g >
-<title>__new__ (fractions.py:98) (2 samples, 0.08%)</title><rect x="532.1" y="117" width="1.1" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
-<text  x="535.06" y="127.5" ></text>
+<title>_applyAction (run_benchmark_opt.py:143) (3 samples, 0.11%)</title><rect x="237.5" y="101" width="1.4" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="240.51" y="111.5" ></text>
 </g>
 <g >
-<title>_applyActionPair (run_benchmark_opt.py:165) (91 samples, 3.64%)</title><rect x="307.2" y="117" width="50.3" height="15.0" fill="rgb(72,185,185)" rx="2" ry="2" />
-<text  x="310.21" y="127.5" >_appl..</text>
+<title>_getSuccessorsC (run_benchmark_opt.py:197) (266 samples, 10.18%)</title><rect x="309.3" y="133" width="120.1" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
+<text  x="312.29" y="143.5" >_getSuccessors..</text>
 </g>
 <g >
-<title>getCritDist (run_benchmark_opt.py:52) (1 samples, 0.04%)</title><rect x="428.2" y="85" width="0.6" height="15.0" fill="rgb(81,194,194)" rx="2" ry="2" />
-<text  x="431.20" y="95.5" ></text>
+<title>&lt;dictcomp&gt; (run_benchmark_opt.py:143) (13 samples, 0.50%)</title><rect x="423.5" y="101" width="5.9" height="15.0" fill="rgb(107,218,218)" rx="2" ry="2" />
+<text  x="426.50" y="111.5" ></text>
 </g>
 <g >
-<title>forward (fractions.py:357) (3 samples, 0.12%)</title><rect x="411.6" y="85" width="1.7" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
-<text  x="414.63" y="95.5" ></text>
+<title>_mul (fractions.py:489) (1 samples, 0.04%)</title><rect x="283.6" y="85" width="0.4" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
+<text  x="286.56" y="95.5" ></text>
 </g>
 <g >
-<title>_getSuccessorsB (run_benchmark_opt.py:168) (1 samples, 0.04%)</title><rect x="49.2" y="133" width="0.6" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
-<text  x="52.22" y="143.5" ></text>
+<title>topoSort (run_benchmark_opt.py:38) (1 samples, 0.04%)</title><rect x="509.3" y="181" width="0.4" height="15.0" fill="rgb(84,196,196)" rx="2" ry="2" />
+<text  x="512.27" y="191.5" ></text>
 </g>
 <g >
-<title>_applyAction (run_benchmark_opt.py:135) (11 samples, 0.44%)</title><rect x="497.3" y="117" width="6.0" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
-<text  x="500.25" y="127.5" ></text>
+<title>_getSuccessorsC (run_benchmark_opt.py:204) (82 samples, 3.14%)</title><rect x="430.7" y="133" width="37.0" height="15.0" fill="rgb(82,195,195)" rx="2" ry="2" />
+<text  x="433.72" y="143.5" >_ge..</text>
 </g>
 <g >
-<title>_replace (collections/__init__.py:431) (16 samples, 0.64%)</title><rect x="438.1" y="69" width="8.9" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="441.14" y="79.5" ></text>
+<title>_getSuccessorsB (run_benchmark_opt.py:178) (16 samples, 0.61%)</title><rect x="41.1" y="133" width="7.3" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
+<text  x="44.15" y="143.5" ></text>
 </g>
 <g >
-<title>__eq__ (fractions.py:674) (6 samples, 0.24%)</title><rect x="98.4" y="53" width="3.3" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="101.39" y="63.5" ></text>
+<title>__new__ (fractions.py:155) (2 samples, 0.08%)</title><rect x="461.9" y="85" width="0.9" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="464.87" y="95.5" ></text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:123) (11 samples, 0.44%)</title><rect x="113.9" y="85" width="6.0" height="15.0" fill="rgb(93,204,204)" rx="2" ry="2" />
-<text  x="116.86" y="95.5" ></text>
+<title>evaluate (run_benchmark_opt.py:326) (112 samples, 4.28%)</title><rect x="676.7" y="197" width="50.6" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="679.74" y="207.5" >evalu..</text>
 </g>
 <g >
-<title>evaluate (run_benchmark_opt.py:304) (6 samples, 0.24%)</title><rect x="877.9" y="197" width="3.3" height="15.0" fill="rgb(70,183,183)" rx="2" ry="2" />
-<text  x="880.89" y="207.5" ></text>
+<title>forward (fractions.py:358) (103 samples, 3.94%)</title><rect x="191.0" y="69" width="46.5" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
+<text  x="194.02" y="79.5" >forw..</text>
 </g>
 <g >
-<title>getSuccessorsList (run_benchmark_opt.py:221) (2 samples, 0.08%)</title><rect x="608.3" y="165" width="1.1" height="15.0" fill="rgb(72,185,185)" rx="2" ry="2" />
-<text  x="611.29" y="175.5" ></text>
+<title>evaluate (run_benchmark_opt.py:332) (193 samples, 7.38%)</title><rect x="1034.3" y="197" width="87.1" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="1037.26" y="207.5" >evaluate (..</text>
 </g>
 <g >
-<title>getSuccessors (run_benchmark_opt.py:208) (605 samples, 24.22%)</title><rect x="47.6" y="149" width="334.2" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="50.57" y="159.5" >getSuccessors (run_benchmark_opt.py:208)</text>
+<title>evaluate (run_benchmark_opt.py:313) (1 samples, 0.04%)</title><rect x="546.3" y="197" width="0.4" height="15.0" fill="rgb(70,183,183)" rx="2" ry="2" />
+<text  x="549.28" y="207.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:457) (23 samples, 0.92%)</title><rect x="545.3" y="101" width="12.7" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="548.32" y="111.5" ></text>
+<title>_add (fractions.py:453) (4 samples, 0.15%)</title><rect x="342.2" y="69" width="1.8" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="345.24" y="79.5" ></text>
 </g>
 <g >
-<title>_applyAction (run_benchmark_opt.py:135) (4 samples, 0.16%)</title><rect x="305.0" y="101" width="2.2" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
-<text  x="308.00" y="111.5" ></text>
+<title>numerator (fractions.py:258) (4 samples, 0.15%)</title><rect x="452.8" y="85" width="1.8" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="455.84" y="95.5" ></text>
 </g>
 <g >
-<title>_add (fractions.py:460) (3 samples, 0.12%)</title><rect x="333.2" y="85" width="1.6" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
-<text  x="336.18" y="95.5" ></text>
+<title>_add (fractions.py:457) (5 samples, 0.19%)</title><rect x="75.0" y="85" width="2.3" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="78.00" y="95.5" ></text>
 </g>
 <g >
-<title>numerator (fractions.py:258) (2 samples, 0.08%)</title><rect x="481.8" y="53" width="1.1" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="484.79" y="63.5" ></text>
+<title>getCritDist (run_benchmark_opt.py:61) (6 samples, 0.23%)</title><rect x="358.0" y="85" width="2.7" height="15.0" fill="rgb(81,194,194)" rx="2" ry="2" />
+<text  x="361.04" y="95.5" ></text>
 </g>
 <g >
-<title>_applyActionSide1 (run_benchmark_opt.py:110) (26 samples, 1.04%)</title><rect x="58.1" y="85" width="14.3" height="15.0" fill="rgb(64,177,177)" rx="2" ry="2" />
-<text  x="61.06" y="95.5" ></text>
+<title>numerator (fractions.py:258) (3 samples, 0.11%)</title><rect x="261.4" y="69" width="1.4" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="264.44" y="79.5" ></text>
 </g>
 <g >
-<title>_richcmp (fractions.py:703) (2 samples, 0.08%)</title><rect x="580.1" y="85" width="1.1" height="15.0" fill="rgb(98,209,209)" rx="2" ry="2" />
-<text  x="583.12" y="95.5" ></text>
+<title>_applyAction (run_benchmark_opt.py:139) (104 samples, 3.98%)</title><rect x="311.1" y="117" width="46.9" height="15.0" fill="rgb(74,187,187)" rx="2" ry="2" />
+<text  x="314.09" y="127.5" >_app..</text>
 </g>
 <g >
-<title>__hash__ (fractions.py:667) (4 samples, 0.16%)</title><rect x="111.1" y="53" width="2.2" height="15.0" fill="rgb(75,188,188)" rx="2" ry="2" />
-<text  x="114.10" y="63.5" ></text>
+<title>__new__ (fractions.py:93) (7 samples, 0.27%)</title><rect x="401.4" y="85" width="3.1" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="404.38" y="95.5" ></text>
+</g>
+<g >
+<title>getSuccessorsList (run_benchmark_opt.py:228) (13 samples, 0.50%)</title><rect x="503.4" y="165" width="5.9" height="15.0" fill="rgb(78,191,191)" rx="2" ry="2" />
+<text  x="506.40" y="175.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:454) (5 samples, 0.19%)</title><rect x="260.5" y="85" width="2.3" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="263.54" y="95.5" ></text>
+</g>
+<g >
+<title>_getSuccessorsA (run_benchmark_opt.py:162) (4 samples, 0.15%)</title><rect x="37.5" y="133" width="1.8" height="15.0" fill="rgb(75,188,188)" rx="2" ry="2" />
+<text  x="40.54" y="143.5" ></text>
+</g>
+<g >
+<title>topoSort (run_benchmark_opt.py:33) (2 samples, 0.08%)</title><rect x="24.4" y="181" width="0.9" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="27.45" y="191.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:320) (15 samples, 0.57%)</title><rect x="558.0" y="197" width="6.8" height="15.0" fill="rgb(85,197,197)" rx="2" ry="2" />
+<text  x="561.02" y="207.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (18 samples, 0.69%)</title><rect x="438.4" y="117" width="8.1" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="441.39" y="127.5" ></text>
+</g>
+<g >
+<title>_applyActionPair (run_benchmark_opt.py:166) (355 samples, 13.58%)</title><rect x="78.6" y="117" width="160.3" height="15.0" fill="rgb(64,178,178)" rx="2" ry="2" />
+<text  x="81.62" y="127.5" >_applyActionPair (ru..</text>
+</g>
+<g >
+<title>_mul (fractions.py:492) (1 samples, 0.04%)</title><rect x="285.4" y="85" width="0.4" height="15.0" fill="rgb(102,212,212)" rx="2" ry="2" />
+<text  x="288.36" y="95.5" ></text>
+</g>
+<g >
+<title>_make (collections/__init__.py:423) (1 samples, 0.04%)</title><rect x="64.6" y="37" width="0.5" height="15.0" fill="rgb(59,174,174)" rx="2" ry="2" />
+<text  x="67.62" y="47.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:121) (2 samples, 0.08%)</title><rect x="80.4" y="85" width="0.9" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
+<text  x="83.42" y="95.5" ></text>
+</g>
+<g >
+<title>applyHPChange (run_benchmark_opt.py:95) (18 samples, 0.69%)</title><rect x="360.7" y="85" width="8.2" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="363.75" y="95.5" ></text>
+</g>
+<g >
+<title>_richcmp (fractions.py:702) (8 samples, 0.31%)</title><rect x="302.5" y="85" width="3.6" height="15.0" fill="rgb(106,216,216)" rx="2" ry="2" />
+<text  x="305.52" y="95.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (11 samples, 0.42%)</title><rect x="416.7" y="53" width="5.0" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="419.73" y="63.5" ></text>
+</g>
+<g >
+<title>_make (collections/__init__.py:422) (8 samples, 0.31%)</title><rect x="327.3" y="53" width="3.7" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="330.35" y="63.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:142) (1 samples, 0.04%)</title><rect x="287.6" y="69" width="0.5" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="290.62" y="79.5" ></text>
+</g>
+<g >
+<title>__eq__ (fractions.py:674) (1 samples, 0.04%)</title><rect x="313.4" y="69" width="0.4" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="316.35" y="79.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:324) (171 samples, 6.54%)</title><rect x="599.5" y="197" width="77.2" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="602.55" y="207.5" >evaluate..</text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:133) (195 samples, 7.46%)</title><rect x="149.5" y="85" width="88.0" height="15.0" fill="rgb(85,197,197)" rx="2" ry="2" />
+<text  x="152.49" y="95.5" >_applyActi..</text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:289) (26 samples, 0.99%)</title><rect x="518.3" y="197" width="11.7" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
+<text  x="521.29" y="207.5" ></text>
+</g>
+<g >
+<title>&lt;dictcomp&gt; (run_benchmark_opt.py:205) (48 samples, 1.84%)</title><rect x="469.5" y="117" width="21.7" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
+<text  x="472.54" y="127.5" >&lt;..</text>
+</g>
+<g >
+<title>forward (fractions.py:357) (3 samples, 0.11%)</title><rect x="72.3" y="101" width="1.3" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
+<text  x="75.30" y="111.5" ></text>
+</g>
+<g >
+<title>_replace (collections/__init__.py:432) (2 samples, 0.08%)</title><rect x="148.6" y="53" width="0.9" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="151.58" y="63.5" ></text>
+</g>
+<g >
+<title>forward (fractions.py:358) (35 samples, 1.34%)</title><rect x="342.2" y="85" width="15.8" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
+<text  x="345.24" y="95.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:460) (3 samples, 0.11%)</title><rect x="350.4" y="69" width="1.3" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="353.37" y="79.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:156) (1 samples, 0.04%)</title><rect x="87.2" y="69" width="0.4" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="90.19" y="79.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:344) (6 samples, 0.23%)</title><rect x="1185.5" y="197" width="2.7" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="1188.49" y="207.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:462) (5 samples, 0.19%)</title><rect x="351.7" y="69" width="2.3" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="354.72" y="79.5" ></text>
+</g>
+<g >
+<title>__eq__ (fractions.py:674) (2 samples, 0.08%)</title><rect x="90.8" y="53" width="0.9" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="93.80" y="63.5" ></text>
+</g>
+<g >
+<title>numerator (fractions.py:258) (3 samples, 0.11%)</title><rect x="342.7" y="53" width="1.3" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="345.69" y="63.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:342) (1 samples, 0.04%)</title><rect x="1185.0" y="197" width="0.5" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="1188.03" y="207.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (11 samples, 0.42%)</title><rect x="462.8" y="85" width="4.9" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="465.77" y="95.5" ></text>
+</g>
+<g >
+<title>applyHPChange (run_benchmark_opt.py:96) (18 samples, 0.69%)</title><rect x="56.9" y="69" width="8.2" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="59.95" y="79.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:462) (1 samples, 0.04%)</title><rect x="421.7" y="69" width="0.4" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="424.69" y="79.5" ></text>
+</g>
+<g >
+<title>denominator (fractions.py:262) (3 samples, 0.11%)</title><rect x="280.8" y="69" width="1.4" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
+<text  x="283.85" y="79.5" ></text>
+</g>
+<g >
+<title>topoSort (run_benchmark_opt.py:32) (26 samples, 0.99%)</title><rect x="12.7" y="181" width="11.7" height="15.0" fill="rgb(70,184,184)" rx="2" ry="2" />
+<text  x="15.71" y="191.5" ></text>
+</g>
+<g >
+<title>_applyActionPair (run_benchmark_opt.py:173) (27 samples, 1.03%)</title><rect x="66.4" y="117" width="12.2" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
+<text  x="69.43" y="127.5" ></text>
+</g>
+<g >
+<title>getSuccessors (run_benchmark_opt.py:219) (18 samples, 0.69%)</title><rect x="491.2" y="149" width="8.1" height="15.0" fill="rgb(92,203,203)" rx="2" ry="2" />
+<text  x="494.21" y="159.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (3 samples, 0.11%)</title><rect x="348.6" y="53" width="1.3" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="351.56" y="63.5" ></text>
+</g>
+<g >
+<title>_make (collections/__init__.py:422) (12 samples, 0.46%)</title><rect x="59.2" y="37" width="5.4" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="62.20" y="47.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:133) (82 samples, 3.14%)</title><rect x="385.1" y="101" width="37.0" height="15.0" fill="rgb(85,197,197)" rx="2" ry="2" />
+<text  x="388.13" y="111.5" >_ap..</text>
+</g>
+<g >
+<title>bench_mdp (run_benchmark_opt.py:356) (2,614 samples, 100.00%)</title><rect x="10.0" y="213" width="1180.0" height="15.0" fill="rgb(50,165,165)" rx="2" ry="2" />
+<text  x="13.00" y="223.5" >bench_mdp (run_benchmark_opt.py:356)</text>
+</g>
+<g >
+<title>getSuccessors (run_benchmark_opt.py:213) (4 samples, 0.15%)</title><rect x="37.5" y="149" width="1.8" height="15.0" fill="rgb(78,191,191)" rx="2" ry="2" />
+<text  x="40.54" y="159.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:335) (28 samples, 1.07%)</title><rect x="1149.4" y="197" width="12.6" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="1152.37" y="207.5" ></text>
+</g>
+<g >
+<title>__eq__ (fractions.py:672) (2 samples, 0.08%)</title><rect x="359.4" y="69" width="0.9" height="15.0" fill="rgb(83,195,195)" rx="2" ry="2" />
+<text  x="362.40" y="79.5" ></text>
+</g>
+<g >
+<title>forward (fractions.py:358) (44 samples, 1.68%)</title><rect x="447.9" y="117" width="19.8" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
+<text  x="450.87" y="127.5" ></text>
+</g>
+<g >
+<title>__float__ (numbers.py:291) (9 samples, 0.34%)</title><rect x="479.9" y="101" width="4.1" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="482.92" y="111.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:463) (9 samples, 0.34%)</title><rect x="354.0" y="69" width="4.0" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="356.98" y="79.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:125) (6 samples, 0.23%)</title><rect x="358.0" y="101" width="2.7" height="15.0" fill="rgb(77,190,190)" rx="2" ry="2" />
+<text  x="361.04" y="111.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:454) (12 samples, 0.46%)</title><rect x="196.4" y="53" width="5.5" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="199.43" y="63.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:264) (8 samples, 0.31%)</title><rect x="509.7" y="197" width="3.6" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="512.72" y="207.5" ></text>
+</g>
+<g >
+<title>_mul (fractions.py:485) (11 samples, 0.42%)</title><rect x="274.5" y="85" width="5.0" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="277.53" y="95.5" ></text>
+</g>
+<g >
+<title>applyHPChange (run_benchmark_opt.py:96) (36 samples, 1.38%)</title><rect x="368.9" y="85" width="16.2" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="371.88" y="95.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:453) (1 samples, 0.04%)</title><rect x="260.1" y="85" width="0.4" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="263.08" y="95.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:456) (1 samples, 0.04%)</title><rect x="264.6" y="85" width="0.4" height="15.0" fill="rgb(89,200,200)" rx="2" ry="2" />
+<text  x="267.60" y="95.5" ></text>
+</g>
+<g >
+<title>numerator (fractions.py:258) (1 samples, 0.04%)</title><rect x="450.6" y="85" width="0.4" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="453.58" y="95.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:158) (1 samples, 0.04%)</title><rect x="87.6" y="69" width="0.5" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="90.64" y="79.5" ></text>
+</g>
+<g >
+<title>applyHPChange (run_benchmark_opt.py:96) (24 samples, 0.92%)</title><rect x="320.6" y="85" width="10.8" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="323.57" y="95.5" ></text>
+</g>
+<g >
+<title>_applyActionPair (run_benchmark_opt.py:173) (103 samples, 3.94%)</title><rect x="242.0" y="117" width="46.5" height="15.0" fill="rgb(79,192,192)" rx="2" ry="2" />
+<text  x="245.03" y="127.5" >_app..</text>
+</g>
+<g >
+<title>denominator (fractions.py:262) (2 samples, 0.08%)</title><rect x="409.5" y="53" width="0.9" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
+<text  x="412.50" y="63.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:458) (4 samples, 0.15%)</title><rect x="209.5" y="53" width="1.8" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
+<text  x="212.53" y="63.5" ></text>
+</g>
+<g >
+<title>&lt;listcomp&gt; (run_benchmark_opt.py:323) (32 samples, 1.22%)</title><rect x="662.3" y="181" width="14.4" height="15.0" fill="rgb(101,212,212)" rx="2" ry="2" />
+<text  x="665.30" y="191.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:333) (62 samples, 2.37%)</title><rect x="1121.4" y="197" width="28.0" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="1124.38" y="207.5" >e..</text>
+</g>
+<g >
+<title>getSuccessors (run_benchmark_opt.py:218) (410 samples, 15.68%)</title><rect x="306.1" y="149" width="185.1" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="309.13" y="159.5" >getSuccessors (run_bench..</text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:132) (54 samples, 2.07%)</title><rect x="360.7" y="101" width="24.4" height="15.0" fill="rgb(93,204,204)" rx="2" ry="2" />
+<text  x="363.75" y="111.5" >_..</text>
+</g>
+<g >
+<title>_add (fractions.py:453) (5 samples, 0.19%)</title><rect x="448.8" y="101" width="2.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="451.78" y="111.5" ></text>
+</g>
+<g >
+<title>_applyActionPair (run_benchmark_opt.py:172) (2 samples, 0.08%)</title><rect x="241.1" y="117" width="0.9" height="15.0" fill="rgb(87,199,199)" rx="2" ry="2" />
+<text  x="244.12" y="127.5" ></text>
+</g>
+<g >
+<title>getSuccessors (run_benchmark_opt.py:211) (1 samples, 0.04%)</title><rect x="37.1" y="149" width="0.4" height="15.0" fill="rgb(94,205,205)" rx="2" ry="2" />
+<text  x="40.08" y="159.5" ></text>
+</g>
+<g >
+<title>applyHPChange (run_benchmark_opt.py:96) (56 samples, 2.14%)</title><rect x="124.2" y="69" width="25.3" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="127.21" y="79.5" >a..</text>
+</g>
+<g >
+<title>_add (fractions.py:453) (11 samples, 0.42%)</title><rect x="191.5" y="53" width="4.9" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="194.47" y="63.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:455) (4 samples, 0.15%)</title><rect x="454.6" y="101" width="1.8" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="457.64" y="111.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:328) (10 samples, 0.38%)</title><rect x="727.3" y="197" width="4.5" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
+<text  x="730.30" y="207.5" ></text>
+</g>
+<g >
+<title>_mul (fractions.py:495) (3 samples, 0.11%)</title><rect x="77.3" y="85" width="1.3" height="15.0" fill="rgb(79,191,191)" rx="2" ry="2" />
+<text  x="80.26" y="95.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:312) (5 samples, 0.19%)</title><rect x="544.0" y="197" width="2.3" height="15.0" fill="rgb(78,190,190)" rx="2" ry="2" />
+<text  x="547.02" y="207.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:164) (7 samples, 0.27%)</title><rect x="43.4" y="117" width="3.2" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="46.40" y="127.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (4 samples, 0.15%)</title><rect x="254.2" y="101" width="1.8" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="257.22" y="111.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (2 samples, 0.08%)</title><rect x="76.4" y="69" width="0.9" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="79.36" y="79.5" ></text>
+</g>
+<g >
+<title>topoSort (run_benchmark_opt.py:34) (3 samples, 0.11%)</title><rect x="25.3" y="181" width="1.4" height="15.0" fill="rgb(55,169,169)" rx="2" ry="2" />
+<text  x="28.35" y="191.5" ></text>
+</g>
+<g >
+<title>_richcmp (fractions.py:702) (4 samples, 0.15%)</title><rect x="487.1" y="85" width="1.9" height="15.0" fill="rgb(106,216,216)" rx="2" ry="2" />
+<text  x="490.15" y="95.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (3 samples, 0.11%)</title><rect x="340.9" y="85" width="1.3" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="343.89" y="95.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:132) (33 samples, 1.26%)</title><rect x="316.5" y="101" width="14.9" height="15.0" fill="rgb(93,204,204)" rx="2" ry="2" />
+<text  x="319.51" y="111.5" ></text>
+</g>
+<g >
+<title>_applyActionPair (run_benchmark_opt.py:167) (2 samples, 0.08%)</title><rect x="238.9" y="117" width="0.9" height="15.0" fill="rgb(56,171,171)" rx="2" ry="2" />
+<text  x="241.87" y="127.5" ></text>
+</g>
+<g >
+<title>_applyAction (run_benchmark_opt.py:142) (348 samples, 13.31%)</title><rect x="80.4" y="101" width="157.1" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="83.42" y="111.5" >_applyAction (run_be..</text>
+</g>
+<g >
+<title>_getSuccessorsB (run_benchmark_opt.py:185) (58 samples, 2.22%)</title><rect x="52.4" y="133" width="26.2" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
+<text  x="55.43" y="143.5" >_..</text>
+</g>
+<g >
+<title>&lt;dictcomp&gt; (run_benchmark_opt.py:143) (3 samples, 0.11%)</title><rect x="237.5" y="85" width="1.4" height="15.0" fill="rgb(107,218,218)" rx="2" ry="2" />
+<text  x="240.51" y="95.5" ></text>
+</g>
+<g >
+<title>_getSuccessorsC (run_benchmark_opt.py:205) (52 samples, 1.99%)</title><rect x="467.7" y="133" width="23.5" height="15.0" fill="rgb(75,188,188)" rx="2" ry="2" />
+<text  x="470.74" y="143.5" >_..</text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:131) (5 samples, 0.19%)</title><rect x="314.3" y="101" width="2.2" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
+<text  x="317.25" y="111.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:97) (3 samples, 0.11%)</title><rect x="187.0" y="69" width="1.3" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
+<text  x="189.95" y="79.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (1 samples, 0.04%)</title><rect x="88.5" y="69" width="0.5" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="91.55" y="79.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:458) (1 samples, 0.04%)</title><rect x="349.9" y="69" width="0.5" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
+<text  x="352.92" y="79.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:455) (4 samples, 0.15%)</title><rect x="201.9" y="53" width="1.8" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="204.85" y="63.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:463) (23 samples, 0.88%)</title><rect x="227.1" y="53" width="10.4" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="230.13" y="63.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:125) (33 samples, 1.26%)</title><rect x="81.3" y="85" width="14.9" height="15.0" fill="rgb(77,190,190)" rx="2" ry="2" />
+<text  x="84.32" y="95.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:158) (3 samples, 0.11%)</title><rect x="42.1" y="117" width="1.3" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="45.05" y="127.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:164) (1 samples, 0.04%)</title><rect x="88.1" y="69" width="0.4" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="91.09" y="79.5" ></text>
+</g>
+<g >
+<title>__hash__ (fractions.py:646) (1 samples, 0.04%)</title><rect x="313.8" y="69" width="0.5" height="15.0" fill="rgb(98,209,209)" rx="2" ry="2" />
+<text  x="316.80" y="79.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:119) (3 samples, 0.11%)</title><rect x="65.1" y="85" width="1.3" height="15.0" fill="rgb(54,168,168)" rx="2" ry="2" />
+<text  x="68.07" y="95.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:291) (26 samples, 0.99%)</title><rect x="530.0" y="197" width="11.8" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="533.03" y="207.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:330) (270 samples, 10.33%)</title><rect x="751.7" y="197" width="121.9" height="15.0" fill="rgb(78,190,190)" rx="2" ry="2" />
+<text  x="754.68" y="207.5" >evaluate (run_b..</text>
+</g>
+<g >
+<title>getSuccessors (run_benchmark_opt.py:216) (591 samples, 22.61%)</title><rect x="39.3" y="149" width="266.8" height="15.0" fill="rgb(55,169,169)" rx="2" ry="2" />
+<text  x="42.34" y="159.5" >getSuccessors (run_benchmark_opt.py..</text>
+</g>
+<g >
+<title>_add (fractions.py:457) (13 samples, 0.50%)</title><rect x="265.0" y="85" width="5.9" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="268.05" y="95.5" ></text>
+</g>
+<g >
+<title>forward (fractions.py:358) (11 samples, 0.42%)</title><rect x="73.6" y="101" width="5.0" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
+<text  x="76.65" y="111.5" ></text>
+</g>
+<g >
+<title>_getSuccessorsC (run_benchmark_opt.py:198) (3 samples, 0.11%)</title><rect x="429.4" y="133" width="1.3" height="15.0" fill="rgb(109,219,219)" rx="2" ry="2" />
+<text  x="432.36" y="143.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:453) (3 samples, 0.11%)</title><rect x="73.6" y="85" width="1.4" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="76.65" y="95.5" ></text>
+</g>
+<g >
+<title>_getSuccessorsB (run_benchmark_opt.py:184) (2 samples, 0.08%)</title><rect x="51.5" y="133" width="0.9" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="54.53" y="143.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:133) (59 samples, 2.26%)</title><rect x="331.4" y="101" width="26.6" height="15.0" fill="rgb(85,197,197)" rx="2" ry="2" />
+<text  x="334.41" y="111.5" >_..</text>
+</g>
+<g >
+<title>getSuccessorsList (run_benchmark_opt.py:226) (1,039 samples, 39.75%)</title><rect x="34.4" y="165" width="469.0" height="15.0" fill="rgb(93,205,205)" rx="2" ry="2" />
+<text  x="37.38" y="175.5" >getSuccessorsList (run_benchmark_opt.py:226)</text>
+</g>
+<g >
+<title>getCritDist (run_benchmark_opt.py:61) (13 samples, 0.50%)</title><rect x="90.4" y="69" width="5.8" height="15.0" fill="rgb(81,194,194)" rx="2" ry="2" />
+<text  x="93.35" y="79.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (6 samples, 0.23%)</title><rect x="268.2" y="69" width="2.7" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="271.21" y="79.5" ></text>
+</g>
+<g >
+<title>_applyActionSide1 (run_benchmark_opt.py:132) (111 samples, 4.25%)</title><rect x="99.4" y="85" width="50.1" height="15.0" fill="rgb(93,204,204)" rx="2" ry="2" />
+<text  x="102.38" y="95.5" >_appl..</text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (8 samples, 0.31%)</title><rect x="233.9" y="37" width="3.6" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="236.90" y="47.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:164) (1 samples, 0.04%)</title><rect x="233.5" y="37" width="0.4" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="236.45" y="47.5" ></text>
+</g>
+<g >
+<title>_add (fractions.py:455) (3 samples, 0.11%)</title><rect x="410.4" y="69" width="1.4" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="413.41" y="79.5" ></text>
+</g>
+<g >
+<title>numerator (fractions.py:258) (1 samples, 0.04%)</title><rect x="483.5" y="85" width="0.5" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="486.53" y="95.5" ></text>
+</g>
+<g >
+<title>__hash__ (fractions.py:646) (1 samples, 0.04%)</title><rect x="360.3" y="69" width="0.4" height="15.0" fill="rgb(98,209,209)" rx="2" ry="2" />
+<text  x="363.30" y="79.5" ></text>
+</g>
+<g >
+<title>_make (collections/__init__.py:422) (21 samples, 0.80%)</title><rect x="139.1" y="37" width="9.5" height="15.0" fill="rgb(67,181,181)" rx="2" ry="2" />
+<text  x="142.10" y="47.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:142) (3 samples, 0.11%)</title><rect x="85.8" y="69" width="1.4" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="88.84" y="79.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:156) (1 samples, 0.04%)</title><rect x="267.8" y="69" width="0.4" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="270.76" y="79.5" ></text>
+</g>
+<g >
+<title>_replace (collections/__init__.py:431) (14 samples, 0.54%)</title><rect x="325.1" y="69" width="6.3" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="328.09" y="79.5" ></text>
+</g>
+<g >
+<title>evaluate (run_benchmark_opt.py:331) (356 samples, 13.62%)</title><rect x="873.6" y="197" width="160.7" height="15.0" fill="rgb(70,183,183)" rx="2" ry="2" />
+<text  x="876.56" y="207.5" >evaluate (run_benchm..</text>
+</g>
+<g >
+<title>forward (fractions.py:358) (39 samples, 1.49%)</title><rect x="404.5" y="85" width="17.6" height="15.0" fill="rgb(71,185,185)" rx="2" ry="2" />
+<text  x="407.54" y="95.5" ></text>
+</g>
+<g >
+<title>_applyAction (run_benchmark_opt.py:143) (16 samples, 0.61%)</title><rect x="422.1" y="117" width="7.3" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="425.14" y="127.5" ></text>
+</g>
+<g >
+<title>_getSuccessorsB (run_benchmark_opt.py:179) (7 samples, 0.27%)</title><rect x="48.4" y="133" width="3.1" height="15.0" fill="rgb(65,179,179)" rx="2" ry="2" />
+<text  x="51.37" y="143.5" ></text>
+</g>
+<g >
+<title>&lt;listcomp&gt; (run_benchmark_opt.py:324) (35 samples, 1.34%)</title><rect x="711.5" y="181" width="15.8" height="15.0" fill="rgb(94,205,205)" rx="2" ry="2" />
+<text  x="714.50" y="191.5" ></text>
+</g>
+<g >
+<title>__new__ (fractions.py:93) (4 samples, 0.15%)</title><rect x="46.6" y="117" width="1.8" height="15.0" fill="rgb(59,173,173)" rx="2" ry="2" />
+<text  x="49.56" y="127.5" ></text>
+</g>
+<g >
+<title>__gt__ (fractions.py:719) (16 samples, 0.61%)</title><rect x="484.0" y="101" width="7.2" height="15.0" fill="rgb(88,200,200)" rx="2" ry="2" />
+<text  x="486.99" y="111.5" ></text>
+</g>
+<g >
+<title>getCritDist (run_benchmark_opt.py:60) (3 samples, 0.11%)</title><rect x="89.0" y="69" width="1.4" height="15.0" fill="rgb(89,201,201)" rx="2" ry="2" />
+<text  x="92.00" y="79.5" ></text>
 </g>
 </g>
 </svg>

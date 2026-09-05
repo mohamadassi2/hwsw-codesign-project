@@ -1,0 +1,3 @@
+    cycles: no samples
+    cpu-clock: no samples
+    task-clock: no samples

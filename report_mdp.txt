@@ -79,7 +79,7 @@ recomputing the same exact distributions over and over.
 
 Hardware counters in the VM (results/mdp/perfstat_base.txt, perf stat -r 3
 over four loops of the worker): the baseline retires 118,398,887,823
-instructions in 47,530,388,408 cycles, an IPC of 2.49, with
+instructions in 47,932,903,155 cycles, an IPC of 2.47, with
 24,923,650,707 branches. The IPC is healthy and the branch-miss rate is
 0.52%, so this is not a stalled or badly predicted workload - it is simply
 executing far more instructions than the problem needs, which is what section 3
@@ -142,27 +142,29 @@ Correctness. scripts/local_check.py runs both versions:
     Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
     -cpu host -accel kvm. Measured by script_mdp.sh; raw files in results/mdp/.
 
-      pyperformance run --bench mdp     4.979 +- 0.018 s  (n=20)
-      pyperf, baseline (vendored copy)  4.986 +- 0.032 s  (n=18)
-      pyperf, optimized                 1.305 +- 0.006 s  (n=18)
-      speedup  3.82x   (73.8% less time; the assignment asks for 7%)
+      pyperformance run --bench mdp     4.993 +- 0.028 s  (n=20)
+      pyperf, baseline (vendored copy)  4.997 +- 0.032 s  (n=18)
+      pyperf, optimized                 1.303 +- 0.006 s  (n=18)
+      speedup  3.83x   (73.9% less time; the assignment asks for 7%)
 
     pyperf compare_to:
       +-----------+----------+------------------------+
       | Benchmark | mdp_base | mdp_opt                |
       +===========+==========+========================+
-      | mdp       | 4.99 sec | 1.31 sec: 3.82x faster |
+      | mdp       | 5.00 sec | 1.30 sec: 3.83x faster |
       +-----------+----------+------------------------+
 
     perf stat (worker run):
     counter                       baseline           optimized    ratio
-    task-clock                   19,987.56            5,384.01     3.71
-    cycles                  47,530,388,408      12,773,933,522     3.72
-    instructions           118,398,887,823      31,346,557,805     3.78
-    branches                24,923,650,707       5,922,726,906     4.21
-    branch-misses              129,373,810          40,560,497     3.19
-    IPC (baseline): 2.491
-    IPC (optimized): 2.454
+    task-clock                   20,184.87            5,372.59     3.76
+    cycles                  47,932,903,155      12,754,919,073     3.76
+    instructions           118,254,711,426      31,408,294,585     3.77
+    branches                24,871,859,041       5,937,290,722     4.19
+    branch-misses              131,850,773          40,272,109     3.27
+    IPC (baseline): 2.467
+    IPC (optimized): 2.462
+    (IPC above is instructions/cycles of the three-run means. perf's own
+     'insn per cycle' line averages the per-run ratios and prints base 2.47, opt 2.46.)
 
     Flame graphs:
       results/mdp/flame_mdp_base_focus.svg
@@ -185,10 +187,16 @@ Correctness. scripts/local_check.py runs both versions:
     updates.
 
 4.3 Reproducibility
-    An independent rerun of commit 195dcd8 in the same guest
-    (results/reproducibility/, compared with scripts/compare_runs.py) gives
-    3.804x against the shipped 3.820x, a difference of
-    0.42%; the optimized time differs by 0.17%.
+    An independent second run in the same guest (results/reproducibility/,
+    compared with scripts/compare_runs.py) gives 3.820x against the shipped
+    3.834x, a difference of 0.37%; the optimized time differs by 0.14%.
+
+    A third run, made while the shared host was busy, is excluded and the
+    reason is worth stating: it put mdp at 2.33 s against 1.30 s while
+    executing the same 31.5 billion instructions, because "CPUs utilized" had
+    fallen from 1.00 to 0.58. Instruction and cycle counts were unaffected; only
+    the wall clock moved. script_mdp.sh now checks that figure and says so
+    rather than letting the run be quoted (results/mdp/contention.txt).
 
 
 5. Hardware acceleration proposal
@@ -215,8 +223,8 @@ is not a datapath problem.
 The benchmark's cost was not the value iteration itself but the way it was
 indexed: dictionary lookups keyed by nested tuples inside the hottest loop, plus
 exact-arithmetic distributions recomputed thousands of times. Indexing the graph
-once and memoizing the distributions gives 3.82x in the course VM (4.99 s to 1.31
-s, 73.8% less time), and a result identical to the original to the last bit on the
+once and memoizing the distributions gives 3.83x in the course VM (5.00 s to 1.30
+s, 73.9% less time), and a result identical to the original to the last bit on the
 VM's interpreter, which
 is the kind of change we would be comfortable shipping to the benchmark suite
 itself.

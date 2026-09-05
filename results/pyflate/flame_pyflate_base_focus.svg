@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" width="1400" height="214" onload="init(evt)" viewBox="0 0 1400 214" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<svg version="1.1" width="1200" height="214" onload="init(evt)" viewBox="0 0 1200 214" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <!-- Flame graph stack visualization. See https://github.com/brendangregg/FlameGraph for latest version, and http://www.brendangregg.com/flamegraphs.html for examples. -->
 <!-- NOTES:  -->
 <defs>
@@ -422,437 +422,477 @@
 	}
 ]]>
 </script>
-<rect x="0.0" y="0" width="1400.0" height="214.0" fill="url(#background)"  />
-<text id="title" x="700.00" y="24" >pyflate base: Python frames below bench_pyflake (py-spy, course VM)</text>
+<rect x="0.0" y="0" width="1200.0" height="214.0" fill="url(#background)"  />
+<text id="title" x="600.00" y="24" >pyflate baseline: Python frames below bench_pyflake (py-spy)</text>
 <text id="details" x="10.00" y="197" > </text>
 <text id="unzoom" x="10.00" y="24" class="hide">Reset Zoom</text>
-<text id="search" x="1290.00" y="24" >Search</text>
-<text id="ignorecase" x="1374.00" y="24" >ic</text>
-<text id="matched" x="1290.00" y="197" > </text>
+<text id="search" x="1090.00" y="24" >Search</text>
+<text id="ignorecase" x="1174.00" y="24" >ic</text>
+<text id="matched" x="1090.00" y="197" > </text>
 <g id="frames">
 <g >
-<title>find_next_symbol (run_benchmark.py:227) (144 samples, 1.67%)</title><rect x="73.4" y="101" width="23.1" height="15.0" fill="rgb(89,201,201)" rx="2" ry="2" />
-<text  x="76.37" y="111.5" >f..</text>
+<title>decode_huffman_block (run_benchmark.py:441) (28 samples, 0.31%)</title><rect x="598.3" y="117" width="3.7" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="601.30" y="127.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:442) (1,516 samples, 17.62%)</title><rect x="723.7" y="117" width="243.3" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
-<text  x="726.74" y="127.5" >decode_huffman_block (run_benchm..</text>
+<title>compute_tables (run_benchmark.py:387) (7 samples, 0.08%)</title><rect x="23.4" y="101" width="0.9" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
+<text  x="26.36" y="111.5" ></text>
 </g>
 <g >
-<title>bench_pyflake (run_benchmark.py:645) (8,598 samples, 99.95%)</title><rect x="10.0" y="149" width="1379.4" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="13.00" y="159.5" >bench_pyflake (run_benchmark.py:645)</text>
+<title>readbits (run_benchmark.py:120) (13 samples, 0.14%)</title><rect x="14.1" y="85" width="1.7" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
+<text  x="17.06" y="95.5" ></text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:229) (1,710 samples, 19.88%)</title><rect x="139.9" y="101" width="274.4" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
-<text  x="142.95" y="111.5" >find_next_symbol (run_benchmark.py:2..</text>
+<title>decode_huffman_block (run_benchmark.py:451) (24 samples, 0.27%)</title><rect x="1115.8" y="117" width="3.1" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
+<text  x="1118.76" y="127.5" ></text>
 </g>
 <g >
-<title>compute_tables (run_benchmark.py:388) (17 samples, 0.20%)</title><rect x="28.1" y="101" width="2.8" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="31.13" y="111.5" ></text>
+<title>needbits (run_benchmark.py:51) (49 samples, 0.54%)</title><rect x="181.7" y="69" width="6.4" height="15.0" fill="rgb(104,214,214)" rx="2" ry="2" />
+<text  x="184.66" y="79.5" ></text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:232) (1,110 samples, 12.90%)</title><rect x="483.7" y="101" width="178.1" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="486.74" y="111.5" >find_next_symbol (run_b..</text>
+<title>readbits (run_benchmark.py:123) (7 samples, 0.08%)</title><rect x="547.1" y="85" width="0.9" height="15.0" fill="rgb(92,203,203)" rx="2" ry="2" />
+<text  x="550.10" y="95.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:120) (2 samples, 0.02%)</title><rect x="12.2" y="101" width="0.4" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
-<text  x="15.25" y="111.5" ></text>
+<title>bzip2_main (run_benchmark.py:479) (8,906 samples, 98.82%)</title><rect x="10.9" y="133" width="1166.1" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="13.92" y="143.5" >bzip2_main (run_benchmark.py:479)</text>
 </g>
 <g >
-<title>bwt_transform (run_benchmark.py:300) (72 samples, 0.84%)</title><rect x="1024.5" y="85" width="11.6" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="1027.55" y="95.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:425) (3,993 samples, 44.31%)</title><rect x="36.7" y="117" width="522.8" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
+<text  x="39.71" y="127.5" >decode_huffman_block (run_benchmark.py:425)</text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:120) (393 samples, 4.57%)</title><rect x="511.0" y="85" width="63.1" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
-<text  x="514.02" y="95.5" >readbi..</text>
+<title>bwt_transform (run_benchmark.py:302) (258 samples, 2.86%)</title><rect x="890.8" y="85" width="33.8" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
+<text  x="893.81" y="95.5" >bw..</text>
 </g>
 <g >
-<title>_read (run_benchmark.py:47) (64 samples, 0.74%)</title><rect x="251.0" y="37" width="10.2" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
-<text  x="253.96" y="47.5" ></text>
+<title>snoopbits (run_benchmark.py:113) (147 samples, 1.63%)</title><rect x="154.2" y="85" width="19.2" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
+<text  x="157.16" y="95.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:405) (70 samples, 0.81%)</title><rect x="13.0" y="117" width="11.3" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="16.05" y="127.5" ></text>
+<title>bwt_reverse (run_benchmark.py:309) (697 samples, 7.73%)</title><rect x="833.3" y="101" width="91.3" height="15.0" fill="rgb(63,177,177)" rx="2" ry="2" />
+<text  x="836.33" y="111.5" >bwt_revers..</text>
 </g>
 <g >
-<title>_mask (run_benchmark.py:55) (2 samples, 0.02%)</title><rect x="25.4" y="69" width="0.3" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
-<text  x="28.40" y="79.5" ></text>
+<title>find_next_symbol (run_benchmark.py:230) (86 samples, 0.95%)</title><rect x="342.8" y="101" width="11.3" height="15.0" fill="rgb(75,188,188)" rx="2" ry="2" />
+<text  x="345.84" y="111.5" ></text>
 </g>
 <g >
-<title>snoopbits (run_benchmark.py:115) (801 samples, 9.31%)</title><rect x="285.8" y="85" width="128.5" height="15.0" fill="rgb(84,197,197)" rx="2" ry="2" />
-<text  x="288.78" y="95.5" >snoopbits (run_b..</text>
+<title>bwt_reverse (run_benchmark.py:329) (77 samples, 0.85%)</title><rect x="924.6" y="101" width="10.1" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
+<text  x="927.59" y="111.5" ></text>
 </g>
 <g >
-<title>bwt_reverse (run_benchmark.py:330) (175 samples, 2.03%)</title><rect x="1110.9" y="101" width="28.0" height="15.0" fill="rgb(50,165,165)" rx="2" ry="2" />
-<text  x="1113.86" y="111.5" >b..</text>
+<title>__init__ (run_benchmark.py:251) (7 samples, 0.08%)</title><rect x="23.4" y="85" width="0.9" height="15.0" fill="rgb(69,182,182)" rx="2" ry="2" />
+<text  x="26.36" y="95.5" ></text>
 </g>
 <g >
-<title>bzip2_main (run_benchmark.py:485) (72 samples, 0.84%)</title><rect x="1377.8" y="133" width="11.6" height="15.0" fill="rgb(109,219,219)" rx="2" ry="2" />
-<text  x="1380.81" y="143.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:437) (8 samples, 0.09%)</title><rect x="591.6" y="117" width="1.1" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="594.62" y="127.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:441) (38 samples, 0.44%)</title><rect x="717.6" y="117" width="6.1" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="720.65" y="127.5" ></text>
+<title>compute_selectors_list (run_benchmark.py:367) (10 samples, 0.11%)</title><rect x="18.8" y="101" width="1.3" height="15.0" fill="rgb(71,184,184)" rx="2" ry="2" />
+<text  x="21.77" y="111.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:118) (2 samples, 0.02%)</title><rect x="14.7" y="85" width="0.3" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
-<text  x="17.65" y="95.5" ></text>
+<title>move_to_front (run_benchmark.py:289) (10 samples, 0.11%)</title><rect x="18.8" y="85" width="1.3" height="15.0" fill="rgb(67,180,180)" rx="2" ry="2" />
+<text  x="21.77" y="95.5" ></text>
 </g>
 <g >
-<title>bwt_transform (run_benchmark.py:294) (209 samples, 2.43%)</title><rect x="988.8" y="85" width="33.5" height="15.0" fill="rgb(103,214,214)" rx="2" ry="2" />
-<text  x="991.77" y="95.5" >bw..</text>
+<title>compute_selectors_list (run_benchmark.py:368) (2 samples, 0.02%)</title><rect x="20.1" y="101" width="0.2" height="15.0" fill="rgb(63,177,177)" rx="2" ry="2" />
+<text  x="23.08" y="111.5" ></text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:234) (30 samples, 0.35%)</title><rect x="673.0" y="101" width="4.9" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="676.05" y="111.5" ></text>
+<title>_mask (run_benchmark.py:55) (1 samples, 0.01%)</title><rect x="21.4" y="69" width="0.1" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
+<text  x="24.39" y="79.5" ></text>
 </g>
 <g >
-<title>_mask (run_benchmark.py:55) (81 samples, 0.94%)</title><rect x="647.5" y="69" width="13.0" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
-<text  x="650.54" y="79.5" ></text>
+<title>readbits (run_benchmark.py:119) (2 samples, 0.02%)</title><rect x="10.7" y="117" width="0.2" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
+<text  x="13.65" y="127.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:427) (22 samples, 0.26%)</title><rect x="688.3" y="117" width="3.5" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="691.29" y="127.5" ></text>
+<title>_read (run_benchmark.py:47) (3 samples, 0.03%)</title><rect x="12.2" y="37" width="0.4" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
+<text  x="15.23" y="47.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:123) (8 samples, 0.09%)</title><rect x="660.5" y="85" width="1.3" height="15.0" fill="rgb(92,203,203)" rx="2" ry="2" />
-<text  x="663.53" y="95.5" ></text>
+<title>compute_tables (run_benchmark.py:380) (17 samples, 0.19%)</title><rect x="20.3" y="101" width="2.3" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
+<text  x="23.34" y="111.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:422) (6 samples, 0.07%)</title><rect x="42.1" y="117" width="0.9" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="45.09" y="127.5" ></text>
+<title>readbits (run_benchmark.py:120) (2 samples, 0.02%)</title><rect x="21.3" y="85" width="0.2" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
+<text  x="24.26" y="95.5" ></text>
 </g>
 <g >
-<title>_mask (run_benchmark.py:55) (4 samples, 0.05%)</title><rect x="26.2" y="69" width="0.6" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
-<text  x="29.20" y="79.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:419) (28 samples, 0.31%)</title><rect x="32.5" y="117" width="3.7" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="35.52" y="127.5" ></text>
 </g>
 <g >
-<title>_read (run_benchmark.py:48) (5 samples, 0.06%)</title><rect x="261.2" y="37" width="0.8" height="15.0" fill="rgb(105,216,216)" rx="2" ry="2" />
-<text  x="264.23" y="47.5" ></text>
+<title>move_to_front (run_benchmark.py:289) (1,539 samples, 17.08%)</title><rect x="610.6" y="101" width="201.5" height="15.0" fill="rgb(67,180,180)" rx="2" ry="2" />
+<text  x="613.61" y="111.5" >move_to_front (run_benchma..</text>
 </g>
 <g >
-<title>needbits (run_benchmark.py:52) (386 samples, 4.49%)</title><rect x="223.9" y="69" width="61.9" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
-<text  x="226.85" y="79.5" >needbi..</text>
+<title>compute_tables (run_benchmark.py:388) (20 samples, 0.22%)</title><rect x="24.3" y="101" width="2.6" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="27.27" y="111.5" ></text>
 </g>
 <g >
-<title>compute_selectors_list (run_benchmark.py:359) (2 samples, 0.02%)</title><rect x="13.0" y="101" width="0.4" height="15.0" fill="rgb(63,177,177)" rx="2" ry="2" />
-<text  x="16.05" y="111.5" ></text>
+<title>_more (run_benchmark.py:107) (3 samples, 0.03%)</title><rect x="20.9" y="53" width="0.4" height="15.0" fill="rgb(66,179,179)" rx="2" ry="2" />
+<text  x="23.87" y="63.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:395) (2 samples, 0.02%)</title><rect x="12.2" y="117" width="0.4" height="15.0" fill="rgb(89,201,201)" rx="2" ry="2" />
-<text  x="15.25" y="127.5" ></text>
+<title>_more (run_benchmark.py:108) (2 samples, 0.02%)</title><rect x="10.7" y="85" width="0.2" height="15.0" fill="rgb(58,172,172)" rx="2" ry="2" />
+<text  x="13.65" y="95.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:407) (44 samples, 0.51%)</title><rect x="24.3" y="117" width="7.0" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="27.28" y="127.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:417) (3 samples, 0.03%)</title><rect x="26.9" y="117" width="0.4" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
+<text  x="29.89" y="127.5" ></text>
 </g>
 <g >
-<title>bwt_transform (run_benchmark.py:301) (134 samples, 1.56%)</title><rect x="1036.1" y="85" width="21.5" height="15.0" fill="rgb(69,182,182)" rx="2" ry="2" />
-<text  x="1039.10" y="95.5" >b..</text>
+<title>populate_huffman_symbols (run_benchmark.py:200) (16 samples, 0.18%)</title><rect x="24.8" y="85" width="2.1" height="15.0" fill="rgb(106,216,216)" rx="2" ry="2" />
+<text  x="27.80" y="95.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:451) (40 samples, 0.47%)</title><rect x="1297.0" y="117" width="6.4" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
-<text  x="1299.95" y="127.5" ></text>
+<title>readbits (run_benchmark.py:122) (7 samples, 0.08%)</title><rect x="21.7" y="85" width="0.9" height="15.0" fill="rgb(100,210,210)" rx="2" ry="2" />
+<text  x="24.65" y="95.5" ></text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:228) (271 samples, 3.15%)</title><rect x="96.5" y="101" width="43.4" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
-<text  x="99.47" y="111.5" >find..</text>
+<title>readbits (run_benchmark.py:118) (3 samples, 0.03%)</title><rect x="13.4" y="85" width="0.4" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
+<text  x="16.40" y="95.5" ></text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:233) (70 samples, 0.81%)</title><rect x="661.8" y="101" width="11.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="664.82" y="111.5" ></text>
+<title>_mask (run_benchmark.py:55) (88 samples, 0.98%)</title><rect x="535.6" y="69" width="11.5" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
+<text  x="538.58" y="79.5" ></text>
 </g>
 <g >
-<title>_more (run_benchmark.py:108) (57 samples, 0.66%)</title><rect x="262.0" y="53" width="9.2" height="15.0" fill="rgb(58,172,172)" rx="2" ry="2" />
-<text  x="265.03" y="63.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:449) (254 samples, 2.82%)</title><rect x="989.1" y="117" width="33.3" height="15.0" fill="rgb(89,201,201)" rx="2" ry="2" />
+<text  x="992.14" y="127.5" >de..</text>
 </g>
 <g >
-<title>__init__ (run_benchmark.py:251) (5 samples, 0.06%)</title><rect x="27.3" y="85" width="0.8" height="15.0" fill="rgb(69,182,182)" rx="2" ry="2" />
-<text  x="30.33" y="95.5" ></text>
+<title>bzip2_main (run_benchmark.py:476) (2 samples, 0.02%)</title><rect x="10.7" y="133" width="0.2" height="15.0" fill="rgb(109,219,219)" rx="2" ry="2" />
+<text  x="13.65" y="143.5" ></text>
 </g>
 <g >
-<title>all (8,602 samples, 100%)</title><rect x="10.0" y="165" width="1380.0" height="15.0" fill="rgb(209,63,63)" rx="2" ry="2" />
+<title>decode_huffman_block (run_benchmark.py:443) (81 samples, 0.90%)</title><rect x="812.1" y="117" width="10.6" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
+<text  x="815.12" y="127.5" ></text>
+</g>
+<g >
+<title>reverse_bits (run_benchmark.py:158) (8 samples, 0.09%)</title><rect x="25.3" y="69" width="1.1" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
+<text  x="28.32" y="79.5" ></text>
+</g>
+<g >
+<title>bwt_reverse (run_benchmark.py:331) (209 samples, 2.32%)</title><rect x="958.8" y="101" width="27.3" height="15.0" fill="rgb(102,212,212)" rx="2" ry="2" />
+<text  x="961.77" y="111.5" >b..</text>
+</g>
+<g >
+<title>all (9,012 samples, 100%)</title><rect x="10.0" y="165" width="1180.0" height="15.0" fill="rgb(209,63,63)" rx="2" ry="2" />
 <text  x="13.00" y="175.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:455) (107 samples, 1.24%)</title><rect x="1360.6" y="117" width="17.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="1363.64" y="127.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:405) (59 samples, 0.65%)</title><rect x="12.6" y="117" width="7.7" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="15.62" y="127.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:399) (3 samples, 0.03%)</title><rect x="12.6" y="117" width="0.4" height="15.0" fill="rgb(58,172,172)" rx="2" ry="2" />
-<text  x="15.57" y="127.5" ></text>
+<title>needbits (run_benchmark.py:52) (3 samples, 0.03%)</title><rect x="20.9" y="69" width="0.4" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="23.87" y="79.5" ></text>
 </g>
 <g >
-<title>compute_used (run_benchmark.py:347) (3 samples, 0.03%)</title><rect x="12.6" y="101" width="0.4" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
-<text  x="15.57" y="111.5" ></text>
+<title>bwt_reverse (run_benchmark.py:333) (23 samples, 0.26%)</title><rect x="986.1" y="101" width="3.0" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
+<text  x="989.13" y="111.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:426) (65 samples, 0.76%)</title><rect x="677.9" y="117" width="10.4" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
-<text  x="680.86" y="127.5" ></text>
+<title>bwt_transform (run_benchmark.py:301) (114 samples, 1.26%)</title><rect x="875.9" y="85" width="14.9" height="15.0" fill="rgb(69,182,182)" rx="2" ry="2" />
+<text  x="878.88" y="95.5" ></text>
 </g>
 <g >
-<title>_read (run_benchmark.py:45) (15 samples, 0.17%)</title><rect x="248.6" y="37" width="2.4" height="15.0" fill="rgb(68,182,182)" rx="2" ry="2" />
-<text  x="251.56" y="47.5" ></text>
+<title>_more (run_benchmark.py:110) (59 samples, 0.65%)</title><rect x="230.9" y="53" width="7.7" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="233.89" y="63.5" ></text>
 </g>
 <g >
-<title>move_to_front (run_benchmark.py:289) (14 samples, 0.16%)</title><rect x="22.0" y="85" width="2.3" height="15.0" fill="rgb(67,180,180)" rx="2" ry="2" />
-<text  x="25.03" y="95.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:430) (31 samples, 0.34%)</title><rect x="575.1" y="117" width="4.1" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="578.12" y="127.5" ></text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:226) (7 samples, 0.08%)</title><rect x="72.2" y="101" width="1.2" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
-<text  x="75.25" y="111.5" ></text>
+<title>find_next_symbol (run_benchmark.py:228) (285 samples, 3.16%)</title><rect x="78.7" y="101" width="37.4" height="15.0" fill="rgb(81,193,193)" rx="2" ry="2" />
+<text  x="81.74" y="111.5" >fin..</text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:418) (30 samples, 0.35%)</title><rect x="31.3" y="117" width="4.8" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="34.34" y="127.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:422) (4 samples, 0.04%)</title><rect x="36.2" y="117" width="0.5" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="39.19" y="127.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:419) (37 samples, 0.43%)</title><rect x="36.1" y="117" width="6.0" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="39.15" y="127.5" ></text>
+<title>_mask (run_benchmark.py:55) (66 samples, 0.73%)</title><rect x="460.8" y="69" width="8.7" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
+<text  x="463.81" y="79.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:432) (14 samples, 0.16%)</title><rect x="705.5" y="117" width="2.2" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="708.45" y="127.5" ></text>
+<title>bench_pyflake (run_benchmark.py:645) (9,012 samples, 100.00%)</title><rect x="10.0" y="149" width="1180.0" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="13.00" y="159.5" >bench_pyflake (run_benchmark.py:645)</text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:430) (33 samples, 0.38%)</title><rect x="699.5" y="117" width="5.3" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="702.52" y="127.5" ></text>
+<title>bwt_transform (run_benchmark.py:297) (23 samples, 0.26%)</title><rect x="860.7" y="85" width="3.0" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
+<text  x="863.69" y="95.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:446) (1,201 samples, 13.96%)</title><rect x="977.1" y="117" width="192.6" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="980.06" y="127.5" >decode_huffman_block (run..</text>
+<title>needbits (run_benchmark.py:52) (3 samples, 0.03%)</title><rect x="12.2" y="69" width="0.4" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="15.23" y="79.5" ></text>
 </g>
 <g >
-<title>_mask (run_benchmark.py:55) (93 samples, 1.08%)</title><rect x="559.1" y="69" width="15.0" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
-<text  x="562.14" y="79.5" ></text>
+<title>_more (run_benchmark.py:108) (2 samples, 0.02%)</title><rect x="13.8" y="53" width="0.3" height="15.0" fill="rgb(58,172,172)" rx="2" ry="2" />
+<text  x="16.80" y="63.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:443) (61 samples, 0.71%)</title><rect x="967.0" y="117" width="9.7" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="969.95" y="127.5" ></text>
+<title>_more (run_benchmark.py:107) (3 samples, 0.03%)</title><rect x="12.2" y="53" width="0.4" height="15.0" fill="rgb(66,179,179)" rx="2" ry="2" />
+<text  x="15.23" y="63.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:120) (14 samples, 0.16%)</title><rect x="15.5" y="85" width="2.2" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
-<text  x="18.45" y="95.5" ></text>
+<title>bzip2_main (run_benchmark.py:485) (99 samples, 1.10%)</title><rect x="1177.0" y="133" width="13.0" height="15.0" fill="rgb(109,219,219)" rx="2" ry="2" />
+<text  x="1180.04" y="143.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:452) (3 samples, 0.03%)</title><rect x="1303.4" y="117" width="0.5" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="1306.37" y="127.5" ></text>
+<title>readbits (run_benchmark.py:120) (280 samples, 3.11%)</title><rect x="432.8" y="85" width="36.7" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
+<text  x="435.79" y="95.5" >rea..</text>
 </g>
 <g >
-<title>compute_tables (run_benchmark.py:380) (16 samples, 0.19%)</title><rect x="24.3" y="101" width="2.5" height="15.0" fill="rgb(62,176,176)" rx="2" ry="2" />
-<text  x="27.28" y="111.5" ></text>
+<title>readbits (run_benchmark.py:121) (1 samples, 0.01%)</title><rect x="21.5" y="85" width="0.2" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="24.52" y="95.5" ></text>
 </g>
 <g >
-<title>compute_tables (run_benchmark.py:387) (6 samples, 0.07%)</title><rect x="27.2" y="101" width="0.9" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
-<text  x="30.17" y="111.5" ></text>
+<title>snoopbits (run_benchmark.py:115) (796 samples, 8.83%)</title><rect x="238.6" y="85" width="104.2" height="15.0" fill="rgb(84,197,197)" rx="2" ry="2" />
+<text  x="241.62" y="95.5" >snoopbits (r..</text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:449) (193 samples, 2.24%)</title><rect x="1169.7" y="117" width="31.0" height="15.0" fill="rgb(89,201,201)" rx="2" ry="2" />
-<text  x="1172.73" y="127.5" >de..</text>
+<title>snoopbits (run_benchmark.py:114) (498 samples, 5.53%)</title><rect x="173.4" y="85" width="65.2" height="15.0" fill="rgb(92,204,204)" rx="2" ry="2" />
+<text  x="176.41" y="95.5" >snoopbi..</text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:425) (3,957 samples, 46.00%)</title><rect x="43.0" y="117" width="634.9" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="46.05" y="127.5" >decode_huffman_block (run_benchmark.py:425)</text>
+<title>find_next_symbol (run_benchmark.py:226) (11 samples, 0.12%)</title><rect x="56.1" y="101" width="1.4" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
+<text  x="59.09" y="111.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:429) (47 samples, 0.55%)</title><rect x="692.0" y="117" width="7.5" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
-<text  x="694.98" y="127.5" ></text>
+<title>needbits (run_benchmark.py:52) (2 samples, 0.02%)</title><rect x="13.8" y="69" width="0.3" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="16.80" y="79.5" ></text>
 </g>
 <g >
-<title>bwt_transform (run_benchmark.py:297) (14 samples, 0.16%)</title><rect x="1022.3" y="85" width="2.2" height="15.0" fill="rgb(80,193,193)" rx="2" ry="2" />
-<text  x="1025.30" y="95.5" ></text>
+<title>readbits (run_benchmark.py:119) (2 samples, 0.02%)</title><rect x="13.8" y="85" width="0.3" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
+<text  x="16.80" y="95.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:444) (2 samples, 0.02%)</title><rect x="976.7" y="117" width="0.4" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
-<text  x="979.74" y="127.5" ></text>
+<title>_read (run_benchmark.py:44) (44 samples, 0.49%)</title><rect x="202.0" y="37" width="5.7" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
+<text  x="204.95" y="47.5" ></text>
 </g>
 <g >
-<title>_more (run_benchmark.py:110) (29 samples, 0.34%)</title><rect x="281.1" y="53" width="4.7" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="284.12" y="63.5" ></text>
+<title>readbits (run_benchmark.py:121) (110 samples, 1.22%)</title><rect x="469.5" y="85" width="14.4" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
+<text  x="472.46" y="95.5" ></text>
 </g>
 <g >
-<title>min_max_bits (run_benchmark.py:215) (3 samples, 0.03%)</title><rect x="30.9" y="85" width="0.4" height="15.0" fill="rgb(58,173,173)" rx="2" ry="2" />
-<text  x="33.86" y="95.5" ></text>
+<title>readbits (run_benchmark.py:122) (23 samples, 0.26%)</title><rect x="15.8" y="85" width="3.0" height="15.0" fill="rgb(100,210,210)" rx="2" ry="2" />
+<text  x="18.76" y="95.5" ></text>
 </g>
 <g >
-<title>populate_huffman_symbols (run_benchmark.py:195) (2 samples, 0.02%)</title><rect x="28.1" y="85" width="0.3" height="15.0" fill="rgb(65,178,178)" rx="2" ry="2" />
-<text  x="31.13" y="95.5" ></text>
+<title>_read (run_benchmark.py:47) (45 samples, 0.50%)</title><rect x="208.8" y="37" width="5.9" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
+<text  x="211.76" y="47.5" ></text>
 </g>
 <g >
-<title>_sort_func (run_benchmark.py:150) (2 samples, 0.02%)</title><rect x="27.8" y="53" width="0.3" height="15.0" fill="rgb(64,178,178)" rx="2" ry="2" />
-<text  x="30.81" y="63.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:444) (5 samples, 0.06%)</title><rect x="822.7" y="117" width="0.7" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
+<text  x="825.72" y="127.5" ></text>
 </g>
 <g >
-<title>bwt_transform (run_benchmark.py:302) (252 samples, 2.93%)</title><rect x="1057.6" y="85" width="40.4" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
-<text  x="1060.59" y="95.5" >bwt..</text>
+<title>reverse_bits (run_benchmark.py:160) (1 samples, 0.01%)</title><rect x="26.8" y="69" width="0.1" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
+<text  x="29.76" y="79.5" ></text>
 </g>
 <g >
-<title>move_to_front (run_benchmark.py:289) (1,443 samples, 16.78%)</title><rect x="735.5" y="101" width="231.5" height="15.0" fill="rgb(67,180,180)" rx="2" ry="2" />
-<text  x="738.45" y="111.5" >move_to_front (run_benchmark.p..</text>
+<title>__init__ (run_benchmark.py:185) (1 samples, 0.01%)</title><rect x="24.1" y="69" width="0.2" height="15.0" fill="rgb(82,195,195)" rx="2" ry="2" />
+<text  x="27.14" y="79.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:454) (354 samples, 4.12%)</title><rect x="1303.9" y="117" width="56.7" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="1306.85" y="127.5" >decode..</text>
+<title>bwt_transform (run_benchmark.py:294) (209 samples, 2.32%)</title><rect x="833.3" y="85" width="27.4" height="15.0" fill="rgb(103,214,214)" rx="2" ry="2" />
+<text  x="836.33" y="95.5" >b..</text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:431) (4 samples, 0.05%)</title><rect x="704.8" y="117" width="0.7" height="15.0" fill="rgb(99,210,210)" rx="2" ry="2" />
-<text  x="707.81" y="127.5" ></text>
+<title>bwt_transform (run_benchmark.py:300) (93 samples, 1.03%)</title><rect x="863.7" y="85" width="12.2" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
+<text  x="866.71" y="95.5" ></text>
 </g>
 <g >
-<title>snoopbits (run_benchmark.py:113) (137 samples, 1.59%)</title><rect x="186.0" y="85" width="22.0" height="15.0" fill="rgb(100,211,211)" rx="2" ry="2" />
-<text  x="188.99" y="95.5" >s..</text>
+<title>_mask (run_benchmark.py:55) (193 samples, 2.14%)</title><rect x="317.6" y="69" width="25.2" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
+<text  x="320.57" y="79.5" >_..</text>
 </g>
 <g >
-<title>bwt_reverse (run_benchmark.py:333) (12 samples, 0.14%)</title><rect x="1167.8" y="101" width="1.9" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="1170.81" y="111.5" ></text>
+<title>_more (run_benchmark.py:108) (55 samples, 0.61%)</title><rect x="214.7" y="53" width="7.2" height="15.0" fill="rgb(58,172,172)" rx="2" ry="2" />
+<text  x="217.65" y="63.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:122) (453 samples, 5.27%)</title><rect x="587.9" y="85" width="72.6" height="15.0" fill="rgb(100,210,210)" rx="2" ry="2" />
-<text  x="590.86" y="95.5" >readbits..</text>
+<title>find_next_symbol (run_benchmark.py:227) (162 samples, 1.80%)</title><rect x="57.5" y="101" width="21.2" height="15.0" fill="rgb(89,201,201)" rx="2" ry="2" />
+<text  x="60.53" y="111.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:120) (2 samples, 0.02%)</title><rect x="25.4" y="85" width="0.3" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
-<text  x="28.40" y="95.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:432) (28 samples, 0.31%)</title><rect x="579.2" y="117" width="3.6" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="582.18" y="127.5" ></text>
 </g>
 <g >
-<title>snoopbits (run_benchmark.py:114) (485 samples, 5.64%)</title><rect x="208.0" y="85" width="77.8" height="15.0" fill="rgb(92,204,204)" rx="2" ry="2" />
-<text  x="210.97" y="95.5" >snoopbit..</text>
+<title>_more (run_benchmark.py:107) (150 samples, 1.66%)</title><rect x="195.0" y="53" width="19.7" height="15.0" fill="rgb(66,179,179)" rx="2" ry="2" />
+<text  x="198.01" y="63.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:122) (13 samples, 0.15%)</title><rect x="19.9" y="85" width="2.1" height="15.0" fill="rgb(100,210,210)" rx="2" ry="2" />
-<text  x="22.95" y="95.5" ></text>
+<title>_mask (run_benchmark.py:55) (3 samples, 0.03%)</title><rect x="18.4" y="69" width="0.4" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
+<text  x="21.38" y="79.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:122) (4 samples, 0.05%)</title><rect x="26.2" y="85" width="0.6" height="15.0" fill="rgb(100,210,210)" rx="2" ry="2" />
-<text  x="29.20" y="95.5" ></text>
+<title>find_next_symbol (run_benchmark.py:229) (1,732 samples, 19.22%)</title><rect x="116.1" y="101" width="226.7" height="15.0" fill="rgb(73,186,186)" rx="2" ry="2" />
+<text  x="119.06" y="111.5" >find_next_symbol (run_benchmar..</text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:230) (46 samples, 0.53%)</title><rect x="414.3" y="101" width="7.4" height="15.0" fill="rgb(75,188,188)" rx="2" ry="2" />
-<text  x="417.28" y="111.5" ></text>
+<title>__init__ (run_benchmark.py:184) (2 samples, 0.02%)</title><rect x="23.9" y="69" width="0.2" height="15.0" fill="rgb(90,202,202)" rx="2" ry="2" />
+<text  x="26.88" y="79.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:121) (3 samples, 0.03%)</title><rect x="25.7" y="85" width="0.5" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="28.72" y="95.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:429) (37 samples, 0.41%)</title><rect x="570.3" y="117" width="4.8" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
+<text  x="573.28" y="127.5" ></text>
 </g>
 <g >
-<title>bzip2_main (run_benchmark.py:479) (8,517 samples, 99.01%)</title><rect x="11.4" y="133" width="1366.4" height="15.0" fill="rgb(86,198,198)" rx="2" ry="2" />
-<text  x="14.44" y="143.5" >bzip2_main (run_benchmark.py:479)</text>
+<title>decode_huffman_block (run_benchmark.py:436) (67 samples, 0.74%)</title><rect x="582.8" y="117" width="8.8" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="585.85" y="127.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:118) (55 samples, 0.64%)</title><rect x="502.2" y="85" width="8.8" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
-<text  x="505.19" y="95.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:418) (40 samples, 0.44%)</title><rect x="27.3" y="117" width="5.2" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="30.28" y="127.5" ></text>
 </g>
 <g >
-<title>_read (run_benchmark.py:44) (80 samples, 0.93%)</title><rect x="235.7" y="37" width="12.9" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
-<text  x="238.72" y="47.5" ></text>
+<title>find_next_symbol (run_benchmark.py:231) (420 samples, 4.66%)</title><rect x="354.1" y="101" width="55.0" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
+<text  x="357.10" y="111.5" >find_..</text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:231) (387 samples, 4.50%)</title><rect x="421.7" y="101" width="62.0" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
-<text  x="424.66" y="111.5" >find_n..</text>
+<title>compute_tables (run_benchmark.py:381) (6 samples, 0.07%)</title><rect x="22.6" y="101" width="0.8" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
+<text  x="25.57" y="111.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:436) (36 samples, 0.42%)</title><rect x="707.7" y="117" width="5.8" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
-<text  x="710.70" y="127.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:455) (124 samples, 1.38%)</title><rect x="1160.8" y="117" width="16.2" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="1163.80" y="127.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:437) (7 samples, 0.08%)</title><rect x="713.5" y="117" width="1.1" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="716.48" y="127.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:399) (3 samples, 0.03%)</title><rect x="12.2" y="117" width="0.4" height="15.0" fill="rgb(58,172,172)" rx="2" ry="2" />
+<text  x="15.23" y="127.5" ></text>
 </g>
 <g >
-<title>reverse_bits (run_benchmark.py:161) (4 samples, 0.05%)</title><rect x="30.2" y="69" width="0.7" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="33.21" y="79.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:442) (1,605 samples, 17.81%)</title><rect x="602.0" y="117" width="210.1" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
+<text  x="604.96" y="127.5" >decode_huffman_block (run_b..</text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:119) (3 samples, 0.03%)</title><rect x="15.0" y="85" width="0.5" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
-<text  x="17.97" y="95.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:407) (50 samples, 0.55%)</title><rect x="20.3" y="117" width="6.6" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
+<text  x="23.34" y="127.5" ></text>
 </g>
 <g >
-<title>compute_selectors_list (run_benchmark.py:367) (14 samples, 0.16%)</title><rect x="22.0" y="101" width="2.3" height="15.0" fill="rgb(71,184,184)" rx="2" ry="2" />
-<text  x="25.03" y="111.5" ></text>
+<title>reverse_bits (run_benchmark.py:159) (3 samples, 0.03%)</title><rect x="26.4" y="69" width="0.4" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
+<text  x="29.37" y="79.5" ></text>
 </g>
 <g >
-<title>__init__ (run_benchmark.py:189) (5 samples, 0.06%)</title><rect x="27.3" y="69" width="0.8" height="15.0" fill="rgb(51,166,166)" rx="2" ry="2" />
-<text  x="30.33" y="79.5" ></text>
+<title>readbits (run_benchmark.py:118) (52 samples, 0.58%)</title><rect x="426.0" y="85" width="6.8" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
+<text  x="428.99" y="95.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:450) (600 samples, 6.98%)</title><rect x="1200.7" y="117" width="96.3" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
-<text  x="1203.70" y="127.5" >decode_huff..</text>
+<title>decode_huffman_block (run_benchmark.py:446) (1,266 samples, 14.05%)</title><rect x="823.4" y="117" width="165.7" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="826.38" y="127.5" >decode_huffman_block ..</text>
 </g>
 <g >
-<title>bwt_reverse (run_benchmark.py:329) (80 samples, 0.93%)</title><rect x="1098.0" y="101" width="12.9" height="15.0" fill="rgb(108,218,218)" rx="2" ry="2" />
-<text  x="1101.02" y="111.5" ></text>
+<title>__init__ (run_benchmark.py:182) (4 samples, 0.04%)</title><rect x="23.4" y="69" width="0.5" height="15.0" fill="rgb(106,216,216)" rx="2" ry="2" />
+<text  x="26.36" y="79.5" ></text>
 </g>
 <g >
-<title>reverse_bits (run_benchmark.py:159) (9 samples, 0.10%)</title><rect x="28.8" y="69" width="1.4" height="15.0" fill="rgb(97,208,208)" rx="2" ry="2" />
-<text  x="31.77" y="79.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:450) (713 samples, 7.91%)</title><rect x="1022.4" y="117" width="93.4" height="15.0" fill="rgb(91,203,203)" rx="2" ry="2" />
+<text  x="1025.40" y="127.5" >decode_huff..</text>
 </g>
 <g >
-<title>find_next_symbol (run_benchmark.py:225) (41 samples, 0.48%)</title><rect x="65.7" y="101" width="6.5" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
-<text  x="68.67" y="111.5" ></text>
+<title>find_next_symbol (run_benchmark.py:232) (1,061 samples, 11.77%)</title><rect x="409.1" y="101" width="138.9" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="412.09" y="111.5" >find_next_symbol ..</text>
 </g>
 <g >
-<title>populate_huffman_symbols (run_benchmark.py:200) (15 samples, 0.17%)</title><rect x="28.4" y="85" width="2.5" height="15.0" fill="rgb(106,216,216)" rx="2" ry="2" />
-<text  x="31.45" y="95.5" ></text>
+<title>readbits (run_benchmark.py:118) (1 samples, 0.01%)</title><rect x="23.1" y="85" width="0.1" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
+<text  x="26.09" y="95.5" ></text>
 </g>
 <g >
-<title>_mask (run_benchmark.py:55) (180 samples, 2.09%)</title><rect x="385.4" y="69" width="28.9" height="15.0" fill="rgb(57,171,171)" rx="2" ry="2" />
-<text  x="388.40" y="79.5" >_m..</text>
+<title>readbits (run_benchmark.py:119) (3 samples, 0.03%)</title><rect x="12.2" y="85" width="0.4" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
+<text  x="15.23" y="95.5" ></text>
 </g>
 <g >
-<title>decode_huffman_block (run_benchmark.py:438) (19 samples, 0.22%)</title><rect x="714.6" y="117" width="3.0" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
-<text  x="717.60" y="127.5" ></text>
+<title>needbits (run_benchmark.py:52) (2 samples, 0.02%)</title><rect x="10.7" y="101" width="0.2" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="13.65" y="111.5" ></text>
 </g>
 <g >
-<title>needbits (run_benchmark.py:51) (3 samples, 0.03%)</title><rect x="15.0" y="69" width="0.5" height="15.0" fill="rgb(104,214,214)" rx="2" ry="2" />
-<text  x="17.97" y="79.5" ></text>
+<title>bwt_reverse (run_benchmark.py:330) (184 samples, 2.04%)</title><rect x="934.7" y="101" width="24.1" height="15.0" fill="rgb(50,165,165)" rx="2" ry="2" />
+<text  x="937.67" y="111.5" >b..</text>
 </g>
 <g >
-<title>compute_selectors_list (run_benchmark.py:362) (54 samples, 0.63%)</title><rect x="13.4" y="101" width="8.6" height="15.0" fill="rgb(109,219,219)" rx="2" ry="2" />
-<text  x="16.37" y="111.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:454) (320 samples, 3.55%)</title><rect x="1118.9" y="117" width="41.9" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="1121.90" y="127.5" >dec..</text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:120) (2 samples, 0.02%)</title><rect x="26.8" y="85" width="0.4" height="15.0" fill="rgb(55,170,170)" rx="2" ry="2" />
-<text  x="29.84" y="95.5" ></text>
+<title>decode_huffman_block (run_benchmark.py:438) (43 samples, 0.48%)</title><rect x="592.7" y="117" width="5.6" height="15.0" fill="rgb(105,215,215)" rx="2" ry="2" />
+<text  x="595.67" y="127.5" ></text>
 </g>
 <g >
-<title>compute_tables (run_benchmark.py:381) (2 samples, 0.02%)</title><rect x="26.8" y="101" width="0.4" height="15.0" fill="rgb(54,169,169)" rx="2" ry="2" />
-<text  x="29.84" y="111.5" ></text>
+<title>_more (run_benchmark.py:109) (69 samples, 0.77%)</title><rect x="221.9" y="53" width="9.0" height="15.0" fill="rgb(50,165,165)" rx="2" ry="2" />
+<text  x="224.86" y="63.5" ></text>
 </g>
 <g >
-<title>needbits (run_benchmark.py:51) (59 samples, 0.69%)</title><rect x="214.4" y="69" width="9.5" height="15.0" fill="rgb(104,214,214)" rx="2" ry="2" />
-<text  x="217.39" y="79.5" ></text>
+<title>readbits (run_benchmark.py:122) (483 samples, 5.36%)</title><rect x="483.9" y="85" width="63.2" height="15.0" fill="rgb(100,210,210)" rx="2" ry="2" />
+<text  x="486.86" y="95.5" >readbi..</text>
 </g>
 <g >
-<title>bwt_reverse (run_benchmark.py:309) (681 samples, 7.92%)</title><rect x="988.8" y="101" width="109.2" height="15.0" fill="rgb(63,177,177)" rx="2" ry="2" />
-<text  x="991.77" y="111.5" >bwt_reverse (..</text>
+<title>decode_huffman_block (run_benchmark.py:427) (23 samples, 0.26%)</title><rect x="567.3" y="117" width="3.0" height="15.0" fill="rgb(60,174,174)" rx="2" ry="2" />
+<text  x="570.27" y="127.5" ></text>
 </g>
 <g >
-<title>compute_tables (run_benchmark.py:389) (3 samples, 0.03%)</title><rect x="30.9" y="101" width="0.4" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
-<text  x="33.86" y="111.5" ></text>
+<title>compute_selectors_list (run_benchmark.py:362) (43 samples, 0.48%)</title><rect x="13.1" y="101" width="5.7" height="15.0" fill="rgb(109,219,219)" rx="2" ry="2" />
+<text  x="16.14" y="111.5" ></text>
 </g>
 <g >
-<title>_more (run_benchmark.py:109) (62 samples, 0.72%)</title><rect x="271.2" y="53" width="9.9" height="15.0" fill="rgb(50,165,165)" rx="2" ry="2" />
-<text  x="274.18" y="63.5" ></text>
+<title>find_next_symbol (run_benchmark.py:225) (20 samples, 0.22%)</title><rect x="53.5" y="101" width="2.6" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="56.47" y="111.5" ></text>
 </g>
 <g >
-<title>_more (run_benchmark.py:107) (198 samples, 2.30%)</title><rect x="230.3" y="53" width="31.7" height="15.0" fill="rgb(66,179,179)" rx="2" ry="2" />
-<text  x="233.27" y="63.5" >_m..</text>
+<title>compute_used (run_benchmark.py:342) (3 samples, 0.03%)</title><rect x="12.2" y="101" width="0.4" height="15.0" fill="rgb(83,196,196)" rx="2" ry="2" />
+<text  x="15.23" y="111.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:121) (86 samples, 1.00%)</title><rect x="574.1" y="85" width="13.8" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="577.06" y="95.5" ></text>
+<title>find_next_symbol (run_benchmark.py:233) (62 samples, 0.69%)</title><rect x="548.0" y="101" width="8.1" height="15.0" fill="rgb(52,167,167)" rx="2" ry="2" />
+<text  x="551.02" y="111.5" ></text>
 </g>
 <g >
-<title>bwt_reverse (run_benchmark.py:331) (180 samples, 2.09%)</title><rect x="1138.9" y="101" width="28.9" height="15.0" fill="rgb(102,212,212)" rx="2" ry="2" />
-<text  x="1141.93" y="111.5" >bw..</text>
+<title>populate_huffman_symbols (run_benchmark.py:198) (4 samples, 0.04%)</title><rect x="24.3" y="85" width="0.5" height="15.0" fill="rgb(101,212,212)" rx="2" ry="2" />
+<text  x="27.27" y="95.5" ></text>
 </g>
 <g >
-<title>bench_pyflake (run_benchmark.py:653) (4 samples, 0.05%)</title><rect x="1389.4" y="149" width="0.6" height="15.0" fill="rgb(104,214,214)" rx="2" ry="2" />
-<text  x="1392.36" y="159.5" ></text>
+<title>readbits (run_benchmark.py:122) (1 samples, 0.01%)</title><rect x="23.2" y="85" width="0.2" height="15.0" fill="rgb(100,210,210)" rx="2" ry="2" />
+<text  x="26.22" y="95.5" ></text>
 </g>
 <g >
-<title>readbits (run_benchmark.py:121) (14 samples, 0.16%)</title><rect x="17.7" y="85" width="2.2" height="15.0" fill="rgb(107,217,217)" rx="2" ry="2" />
-<text  x="20.70" y="95.5" ></text>
+<title>find_next_symbol (run_benchmark.py:234) (26 samples, 0.29%)</title><rect x="556.1" y="101" width="3.4" height="15.0" fill="rgb(104,215,215)" rx="2" ry="2" />
+<text  x="559.14" y="111.5" ></text>
+</g>
+<g >
+<title>readbits (run_benchmark.py:119) (3 samples, 0.03%)</title><rect x="20.9" y="85" width="0.4" height="15.0" fill="rgb(53,168,168)" rx="2" ry="2" />
+<text  x="23.87" y="95.5" ></text>
+</g>
+<g >
+<title>_read (run_benchmark.py:44) (3 samples, 0.03%)</title><rect x="20.9" y="37" width="0.4" height="15.0" fill="rgb(76,189,189)" rx="2" ry="2" />
+<text  x="23.87" y="47.5" ></text>
+</g>
+<g >
+<title>_read (run_benchmark.py:45) (8 samples, 0.09%)</title><rect x="207.7" y="37" width="1.1" height="15.0" fill="rgb(68,182,182)" rx="2" ry="2" />
+<text  x="210.71" y="47.5" ></text>
+</g>
+<g >
+<title>decode_huffman_block (run_benchmark.py:426) (59 samples, 0.65%)</title><rect x="559.5" y="117" width="7.8" height="15.0" fill="rgb(68,181,181)" rx="2" ry="2" />
+<text  x="562.54" y="127.5" ></text>
+</g>
+<g >
+<title>readbits (run_benchmark.py:118) (3 samples, 0.03%)</title><rect x="20.5" y="85" width="0.4" height="15.0" fill="rgb(61,175,175)" rx="2" ry="2" />
+<text  x="23.47" y="95.5" ></text>
+</g>
+<g >
+<title>needbits (run_benchmark.py:52) (386 samples, 4.28%)</title><rect x="188.1" y="69" width="50.5" height="15.0" fill="rgb(96,207,207)" rx="2" ry="2" />
+<text  x="191.07" y="79.5" >needb..</text>
+</g>
+<g >
+<title>compute_selectors_list (run_benchmark.py:359) (4 samples, 0.04%)</title><rect x="12.6" y="101" width="0.5" height="15.0" fill="rgb(63,177,177)" rx="2" ry="2" />
+<text  x="15.62" y="111.5" ></text>
 </g>
 </g>
 </svg>

@@ -118,8 +118,8 @@ A note on profiling inside this VM, because what we found is not what we
 expected and it changed which tool the flame graphs come from.
 
 perf stat counts correctly here. The numbers in section 4.1 are real hardware
-counts: 11.1 billion cycles and 28.6 billion instructions for the baseline,
-IPC 2.59, reproducible to better than 1% over three runs.
+counts: 11.0 billion cycles and 28.8 billion instructions for the baseline,
+IPC 2.62, reproducible to better than 1% over three runs.
 
 perf record collects nothing. Not for the default cycles event, and - this is
 the part that surprised us - not for cpu-clock or task-clock either, which are
@@ -213,10 +213,48 @@ What we deliberately did not do.
     stop the software at the point where the algorithm is right and what is
     left is bit-level work.
 
+3.6 Which of those five actually earned the speedup
+    Quoting one overall ratio for five changes says nothing about which of them
+    mattered, and the obvious assumption - that the algorithmic one dominates -
+    turns out to be wrong. scripts/ablation.py reverts one change at a time to
+    the shipped implementation and times the result; every variant is checked
+    against the benchmark's own md5 before it is timed, so a variant that
+    decoded wrongly could not appear. In the VM (results/pyflate/ablation.txt):
+
+        baseline                                     1,111.8 ms   1.00x
+        optimized (all of 3.1-3.5)                     475.3 ms   2.34x
+        optimized, 3.1 reverted to the table scan      561.7 ms   1.98x
+        optimized, 3.3 reverted to the slice rebuild   478.2 ms   2.33x
+
+    So the canonical decoder is worth 86 ms, a factor of 1.18 out of the 2.34,
+    and move-to-front about 3 ms. The remaining 1.98x comes from the bit reader
+    (3.2) and the local-name and bytearray changes (3.5), which are inside the
+    decode loop and cannot be reverted in isolation.
+
+    That is worth saying plainly, because it is the opposite of what we
+    expected when we started: the algorithmic fix is real and it is what makes
+    the hardware argument in section 5, but most of the measured speedup came
+    from removing per-byte interpreter overhead - the one-byte-at-a-time refill
+    through the io stack above all. An earlier draft of this report called 3.1
+    "the main fix" on no evidence; the measurement says otherwise.
+
+    The same script also explains why the scan is not as expensive as it looks.
+    results/pyflate/table_stats.txt instruments the shipped decoder on this
+    input: the largest table has 147 entries, not the 258 bzip2 permits, and
+    the scan touches 6.0 entries per symbol on average because the table is
+    sorted by code length and the short codes carry most of the symbols. What
+    the canonical decoder removes is therefore not a long walk but the scan
+    together with its repeated bit peeks - 341,601 snoopbits() calls for
+    148,271 symbols, which is exactly the call count cProfile reports.
+
+
 Correctness. scripts/local_check.py decompresses the input with both versions
 and compares the bytes: identical (399,360 bytes, md5
-afa004a630fe072901b1d9628b960974). The md5 check inside bench_pyflake() also
-passes in every run.
+afa004a630fe072901b1d9628b960974), and the same comparison is repeated on
+eight further bzip2 streams built on the spot - empty, one byte, 70 KB of a
+single byte, and a multi-block payload, at compression levels 1 and 9 - so the
+equivalence rests on more than the one input the benchmark ships. The md5 check
+inside bench_pyflake() also passes in every run.
 
 
 4. Performance comparison
@@ -225,30 +263,29 @@ passes in every run.
     Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
     -cpu host -accel kvm. Measured by script_pyflate.sh; raw files in results/pyflate/.
 
-      pyperformance run --bench pyflate     1.118 +- 0.011 s  (n=20)
-      pyperf, baseline (vendored copy)  1.128 +- 0.013 s  (n=30)
-      pyperf, optimized                 473.0 +- 4.1 ms  (n=30)
-      speedup  2.38x   (58.1% less time; the assignment asks for 7%)
+      pyperformance run --bench pyflate     1.118 +- 0.009 s  (n=20)
+      pyperf, baseline (vendored copy)  1.129 +- 0.013 s  (n=30)
+      pyperf, optimized                 477.2 +- 3.9 ms  (n=30)
+      speedup  2.37x   (57.7% less time; the assignment asks for 7%)
 
     pyperf compare_to:
       +-----------+--------------+----------------------+
       | Benchmark | pyflate_base | pyflate_opt          |
       +===========+==============+======================+
-      | pyflate   | 1.13 sec     | 473 ms: 2.38x faster |
+      | pyflate   | 1.13 sec     | 477 ms: 2.37x faster |
       +-----------+--------------+----------------------+
 
     perf stat (worker run):
     counter                       baseline           optimized    ratio
-    task-clock                    4,648.17            2,015.21     2.31
-    cycles                  11,056,654,547       4,790,345,756     2.31
-    instructions            28,646,550,250      12,655,519,379     2.26
-    branches                 5,694,681,877       2,403,226,429     2.37
-    branch-misses               19,425,555          10,355,026     1.88
-    IPC (baseline): 2.591
-    (IPC here is instructions/cycles of the three-run means printed above;
-     perf's own per-run 'insn per cycle' line in results/pyflate/perfstat_base.txt
-     averages the per-run ratios instead and so prints 2.62.)
-    IPC (optimized): 2.642
+    task-clock                    4,620.12            2,066.67     2.24
+    cycles                  10,983,976,618       4,907,996,375     2.24
+    instructions            28,772,901,917      12,786,725,263     2.25
+    branches                 5,726,695,387       2,427,491,378     2.36
+    branch-misses               19,444,360          10,338,084     1.88
+    IPC (baseline): 2.620
+    IPC (optimized): 2.605
+    (IPC above is instructions/cycles of the three-run means. perf's own
+     'insn per cycle' line averages the per-run ratios and prints base 2.62, opt 2.62.)
 
     Flame graphs:
       results/pyflate/flame_pyflate_base_focus.svg
@@ -281,11 +318,21 @@ passes in every run.
     of this repository: the tree was extracted into an empty directory in the
     same guest and the scripts run exactly as a grader would. Comparing it
     with the shipped set (scripts/compare_runs.py results
-    results/reproducibility): the optimized time differs by 0.19%
-    and the speedup by 0.07% (2.385x shipped against
-    2.383x rerun); the largest wall-clock difference across both
-    benchmarks is 0.26%. The ratio we report is stable to well inside 1%
-    between runs, which is smaller than the run-to-run spread pyperf prints.
+    results/reproducibility): the speedup is 2.365x shipped against
+    2.385x in the other run, a difference of 0.85%, and the largest
+    wall-clock difference across both benchmarks is 0.87%. The ratio we report
+    is stable to well inside 1% between runs, which is smaller than the
+    run-to-run spread pyperf prints.
+
+    A third run of the same scripts is deliberately not included. It reported
+    mdp at 2.33 s against 1.30 s while executing the same 31.5 billion
+    instructions and using only 2.5% more CPU time: the shared host was busy
+    and "CPUs utilized" had fallen from 1.00 to 0.58, so the wall clock
+    measured the host's load rather than this code. Both scripts now read that
+    figure from perf and refuse to let such a run pass as a measurement;
+    results/<benchmark>/contention.txt records it for the runs that are
+    shipped (0.99-1.00 throughout). It is the one measurement error that would
+    have been invisible in the numbers themselves.
 
 
 5. Hardware acceleration proposal
@@ -457,15 +504,15 @@ passes in every run.
     work twice. (An earlier draft of this report did exactly that and quoted
     ~62%; the number below is the corrected one.)
 
-    Take the optimized run measured in the VM, 473 ms, of which that part is
-    49.7% = ~235 ms. In the accelerator the same work is 148,272 cycles:
+    Take the optimized run measured in the VM, 477 ms, of which that part is
+    49.7% = ~237 ms. In the accelerator the same work is 148,272 cycles:
         at 200 MHz   0.74 ms
         at 400 MHz   0.37 ms
     Add data movement: 66 KB in and 148,271 x 2 bytes out over PCIe or an AXI
     DMA is well under 0.1 ms, and the ~1,000 table-write cycles over MMIO are a
     few microseconds. Call the accelerated part ~1.3 ms in total. The run
     becomes
-        473 - 235 + 1.3  =  ~239 ms     ->  ~2.0x over the optimized software,
+        477 - 237 + 1.3  =  ~241 ms     ->  ~2.0x over the optimized software,
                                           ~4.7x over the shipped benchmark.
     Per symbol the software spends 235 ms / 148,271 = ~1,585 ns, about 3,800
     cycles at 2.4 GHz, against one cycle in hardware - three orders of
@@ -540,7 +587,7 @@ The shipped benchmark spends about half of its time in find_next_symbol and the
 bit reads underneath it: a linear scan of the code table that a canonical Huffman
 decoder replaces with a handful of integer operations, on top of a bit reader and
 a move-to-front that were written for clarity rather than speed. Fixing those in
-pure Python gives 2.38x in the course VM (1.13 s to 473 ms, 58.1% less time), with
+pure Python gives 2.37x in the course VM (1.13 s to 477 ms, 57.7% less time), with
 output identical to the original byte for byte. What remains is split between bit-
 serial symbol decoding, which is exactly the kind of work a small datapath does in
 one clock, and a pointer-chasing inverse BWT, which is memory-bound and stays on

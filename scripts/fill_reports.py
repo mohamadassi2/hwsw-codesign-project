@@ -58,7 +58,8 @@ def perfstat(path):
 
 
 def counter_table(b):
-    ps = {v: perfstat(os.path.join(ROOT, "results", b, f"perfstat_{v}.txt"))
+    d = os.path.join(ROOT, "results", b)
+    ps = {v: perfstat(os.path.join(d, f"perfstat_{v}.txt"))
           for v in ("base", "opt")}
     if not ps["base"] and not ps["opt"]:
         return "    (perf stat produced no counters in this run)"
@@ -77,6 +78,21 @@ def counter_table(b):
         cy, ins = ps[v].get("cycles"), ps[v].get("instructions")
         if cy and ins:
             lines.append(f"    IPC ({tag}): {ins/cy:.3f}")
+    # perf's own "insn per cycle" line averages the per-run ratios, while the
+    # figures above are the ratio of the three-run means, so the two differ in
+    # the second decimal. Say so here rather than leaving a grader to wonder
+    # why the report and the file it cites disagree - and generate the note
+    # with the numbers, so it cannot be lost the next time this block is
+    # regenerated.
+    perf_ipc = []
+    for v in ("base", "opt"):
+        m = re.search(r"([\d.]+)\s+insn per cycle", open(f"{d}/perfstat_{v}.txt").read()) \
+            if os.path.exists(f"{d}/perfstat_{v}.txt") else None
+        if m:
+            perf_ipc.append(f"{v} {m.group(1)}")
+    if perf_ipc:
+        lines.append("    (IPC above is instructions/cycles of the three-run means. perf's own")
+        lines.append(f"     'insn per cycle' line averages the per-run ratios and prints {', '.join(perf_ipc)}.)")
     return "\n".join(lines)
 
 

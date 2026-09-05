@@ -1,0 +1,17 @@
+Linear table scan in the shipped pyflate decoder (benchmarks/pyflate/run_benchmark.py),
+measured on the benchmark input benchmarks/pyflate/data/interpreter.tar.bz2.
+The decoder is instrumented with counters only; its behaviour is unchanged.
+
+symbols decoded                       148,271
+distinct table sizes built            [147]
+largest table                         147 entries (bzip2 permits 258)
+table entries compared, total         883,623
+table entries compared, mean/symbol   6.0
+table entries compared, worst symbol  147
+snoopbits() calls, total              341,601
+snoopbits() calls, mean/symbol        2.3
+
+The scan is short on average because the table is sorted by code length and
+the short codes carry most of the symbols. What the canonical decoder removes
+is therefore not a long walk but the scan itself together with its repeated
+bit peeks: one peek and a handful of integer operations replace both.

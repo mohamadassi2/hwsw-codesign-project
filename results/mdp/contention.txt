@@ -1,0 +1,2 @@
+base: CPUs utilized 1.000 - the guest had the core
+opt: CPUs utilized 0.999 - the guest had the core

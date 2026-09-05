@@ -118,9 +118,21 @@ def _flat(t):
     """collapse whitespace so a line-wrapped sentence matches a one-line expectation"""
     return re.sub(r"\s+", " ", t)
 if _b and _o and _rb and _ro:
-    check("reproducibility: pyflate shipped speedup quoted", f"{_b/_o:.3f}x shipped" in _flat(_pf), f"{_b/_o:.3f}x")
+    # Both ratios must appear in the reproducibility subsection itself, rather
+    # than anywhere in the report: the point is that the section compares the
+    # two runs, and tying the check to one particular wording ("... rerun")
+    # meant rephrasing the sentence broke the gate.
+    def _section(text, head):
+        i = text.find(head)
+        if i < 0:
+            return ""
+        j = re.search(r"\n\n\n|\n\d\. ", text[i + len(head):])
+        return text[i:i + len(head) + (j.start() if j else 2000)]
+    _rep = _flat(_section(_pf, "4.3 Reproducibility"))
+    check("reproducibility: pyflate shipped speedup quoted",
+          f"{_b/_o:.3f}x" in _rep, f"{_b/_o:.3f}x, in section 4.3")
     check("reproducibility: pyflate rerun speedup quoted",
-          f"{_rb/_ro:.3f}x rerun" in _flat(_pf) or f"{_rb/_ro:.3f}x earlier" in _flat(_pf), f"{_rb/_ro:.3f}x")
+          f"{_rb/_ro:.3f}x" in _rep, f"{_rb/_ro:.3f}x, in section 4.3")
 _rmb = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_base.json"))
 _rmo = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_opt.json"))
 if _mb and _mo and _rmb and _rmo:
@@ -233,6 +245,30 @@ if os.path.exists(syn):
         for stale in ("52,952", "19.4 kbit"):
             check(f"the superseded synthesis figure {stale} is gone from the report",
                   stale not in txt, "it assumed a 20-read-port SRAM")
+
+# ---------------------------------------------------------------- ablation
+# Section 3.6 attributes the speedup to individual optimizations. Recompute the
+# quoted figures from the artifact rather than trusting the prose.
+_abl = os.path.join(ROOT, "results", "pyflate", "ablation.txt")
+if os.path.exists(_abl):
+    _a = open(_abl, encoding="utf-8").read()
+    _rows = dict((m.group(1).strip(), float(m.group(2)))
+                 for m in re.finditer(r"^  (.+?)\s{2,}([\d.]+)\s+[\d.]+\s+[\d.]+x$", _a, re.M))
+    check("ablation.txt has the baseline and full-optimized rows", len(_rows) >= 3,
+          f"parsed {len(_rows)} rows")
+    for _lbl, _v in _rows.items():
+        check(f"section 3.6 quotes the ablation figure for '{_lbl[:38]}' ({_v:,.1f} ms)",
+              f"{_v:,.1f}" in txt, "from results/pyflate/ablation.txt")
+
+_ts = os.path.join(ROOT, "results", "pyflate", "table_stats.txt")
+if os.path.exists(_ts):
+    _t = open(_ts, encoding="utf-8").read()
+    for _label, _rx in (("largest table", r"largest table\s+(\d+) entries"),
+                        ("mean compares", r"compared, mean/symbol\s+([\d.]+)"),
+                        ("snoopbits total", r"snoopbits\(\) calls, total\s+([\d,]+)")):
+        _m = re.search(_rx, _t)
+        check(f"the report quotes the measured {_label} ({_m.group(1) if _m else '?'})",
+              _m is not None and _m.group(1) in txt, "from results/pyflate/table_stats.txt")
 
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and

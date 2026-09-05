@@ -1,9 +1,13 @@
+probe target: ~3 s of CPU-bound Python (not an idle sleep)
 PMI/NMI before:
 NMI:          0   Non-maskable interrupts
 PMI:          0   Performance monitoring interrupts
-PMI/NMI after a cycles record:
+PMI/NMI after a cycles record over that workload:
 NMI:          0   Non-maskable interrupts
 PMI:          0   Performance monitoring interrupts
 samples in that cycles record: 0
 0
-dmesg PMU line: [    0.365323] Performance Events: Haswell events, full-width counters, Intel PMU driver.
+counting (not sampling) the same workload, to show the PMU is present:
+        9595324710      cycles                                                      
+       33717497233      instructions              #    3.51  insn per cycle         
+dmesg PMU line: [    0.348341] Performance Events: Haswell events, full-width counters, Intel PMU driver.

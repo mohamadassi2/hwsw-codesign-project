@@ -1,0 +1,21 @@
+Per-optimization ablation for pyflate (scripts/ablation.py).
+
+Each row is the optimized decoder with exactly one change reverted to the
+shipped implementation, so the gap to the full optimized row is what that
+change is worth. Every variant is checked against the benchmark's own md5
+before it is timed, so a row that decoded wrongly could not appear here.
+
+  variant                                          min (ms)     median   vs base
+  baseline (as pyperformance ships it)               1111.8     1115.5     1.00x
+  optimized (all of 3.1-3.5)                          475.3      476.3     2.34x
+  optimized, 3.1 reverted to the table scan           561.7      562.9     1.98x
+  optimized, 3.3 reverted to the slice rebuild        478.2      479.2     2.33x
+
+  contribution of each separable change (full optimized = 475.3 ms):
+    3.1    worth   86.4 ms, i.e. 1.18x of the overall 2.34x
+    3.3    worth    2.9 ms, i.e. 1.01x of the overall 2.34x
+
+  3.2 (bit reader) and 3.5 (local names, bytearray) are inside the decode
+  loop and cannot be reverted in isolation; they account for the remainder.
+
+  reps per variant: 5, minimum reported (medians in the table above).
