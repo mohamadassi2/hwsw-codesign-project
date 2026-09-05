@@ -47,40 +47,61 @@ module huffman_decoder #(
     input  logic [TSW-1:0]       tsel,        // active table this symbol
     input  logic [MAXBITS-1:0]   peek,        // next MAXBITS bits, MSB first
     input  logic                 peek_valid,
+    input  logic [6:0]           avail,       // bits really in the buffer
+    input  logic                 out_ready,   // symbol consumer can take one
     input  logic                 enable,      // decode a symbol this cycle
     output logic [4:0]           len,         // bits consumed (same cycle)
     output logic                 len_valid,
     output logic [SYMW-1:0]      sym,         // symbol (one cycle later)
     output logic                 sym_valid,
-    output logic                 err          // sticky: no code length matched
+    output logic                 err,         // sticky: no code length matched
+    output logic                 underrun     // sticky: a code ran past end of stream
 );
     // ---- per-length rows: limit[L], base[L] --------------------------------
-    logic [CW-1:0]        limit_r [NTAB][MAXBITS+1];
-    logic signed [BW-1:0] base_r  [NTAB][MAXBITS+1];
+    // These are REGISTER FILES, not SRAM, and are marked so that synthesis
+    // counts them as the flip-flops they are.  limit_r is read at all MAXBITS
+    // code lengths in the same cycle (that is the whole point of the parallel
+    // compare) and base_r is read asynchronously; no SRAM macro offers twenty
+    // read ports, so leaving them as inferred memories would hide their real
+    // cost.  Only symtab below is a genuine single-port SRAM.
+    (* mem2reg *) logic [CW-1:0]        limit_r [NTAB][MAXBITS+1];
+    (* mem2reg *) logic signed [BW-1:0] base_r  [NTAB][MAXBITS+1];
     // ---- symbol table -------------------------------------------------------
     logic [SYMW-1:0]      symtab  [NTAB][NSYM];
 
     always_ff @(posedge clk) begin
         if (tbl_we) begin
-            if (!tbl_kind) begin
+            // tbl_len is five bits but only 1..MAXBITS are real rows; ignore the
+            // rest rather than writing off the end of the array.
+            if (!tbl_kind && tbl_len <= MAXBITS[4:0]) begin
                 limit_r[tbl_sel][tbl_len] <= tbl_limit;
                 base_r [tbl_sel][tbl_len] <= tbl_base;
-            end else begin
+            end else if (tbl_kind) begin
                 symtab[tbl_sel][tbl_idx] <= tbl_sym;
             end
         end
     end
 
     // ---- parallel compare: one comparator per code length ------------------
-    logic [MAXBITS:1] hit;
+    // `fits` is the end-of-stream guard, folded in here rather than applied to
+    // the encoder's output. It only depends on `avail`, which is a register, so
+    // it is computed alongside the compares and costs nothing on the path from
+    // `peek` to `len`. Testing it after the priority encoder instead cost
+    // twenty gate levels for no benefit.
+    logic [MAXBITS:1] hit_raw, fits, hit;
     logic [CW-1:0]    code [MAXBITS+1];
     always_comb begin
         code[0] = '0;                                   // index used only when nothing matched
         for (int L = 1; L <= MAXBITS; L++) begin
-            code[L] = CW'(peek >> (MAXBITS - L));         // top L bits
-            hit[L]  = (code[L] < limit_r[tsel][L]);
+            code[L]    = CW'(peek >> (MAXBITS - L));      // top L bits
+            hit_raw[L] = (code[L] < limit_r[tsel][L]);
+            fits[L]    = (L <= avail);
+            hit[L]     = hit_raw[L] && fits[L];
         end
     end
+    // A code matched but did not fit: the stream ended part-way through it.
+    logic short_c;
+    assign short_c = (|hit_raw) && !(|hit);
 
     // ---- priority encode: the shortest matching length wins ----------------
     logic [4:0] len_c;
@@ -100,25 +121,49 @@ module huffman_decoder #(
     // A decode error is sticky and halts the engine. Without that the failing
     // symbol consumes no bits, so the same bits are presented again the next
     // cycle and the decoder livelocks on a corrupt stream.
-    logic err_q, fire;
-    assign fire      = enable && peek_valid && !err_q;
-    assign len       = fire && found ? len_c : 5'd0;
-    assign len_valid = fire && found;
+    // idx must land inside the symbol table. For a well-formed canonical table
+    // it always does; a corrupt one would otherwise return a wrong symbol
+    // silently instead of raising err.
+    logic idx_ok;
+    assign idx_ok = (idx_s >= 0) && (idx_s < BW'(NSYM));
+
+    // The symbol register is a one-deep output buffer. A new decode may only
+    // start when it is free - either empty, or being accepted this cycle - so a
+    // consumer that stalls holds the whole engine instead of losing symbols.
+    // With out_ready tied high this is always true and costs no throughput.
+    logic err_q, underrun_q, fire, take, out_free;
+    assign out_free  = !sym_valid || out_ready;
+    assign fire      = enable && peek_valid && out_free && !err_q && !underrun_q;
+    // `take` drives `len`, which the bit reader consumes in the SAME cycle, so
+    // it must stay on the short path: enable, the compare tree and the priority
+    // encoder, and nothing else. The index range check is
+    // deliberately NOT here - it sits after the base adder, and putting it in
+    // this path lengthened the critical path from 67 to 122 gate levels. It is
+    // applied one stage later instead, where there is a whole clock for it.
+    assign take      = fire && found;
+    assign len       = take ? len_c : 5'd0;
+    assign len_valid = take;
 
     // ---- stage 2: symbol SRAM read ------------------------------------------
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            sym <= '0; sym_valid <= 1'b0; err_q <= 1'b0;
+            sym <= '0; sym_valid <= 1'b0; err_q <= 1'b0; underrun_q <= 1'b0;
         end else begin
             // Read only on a real decode: idx is X while no length matched
             // (row 0 of base_r is never programmed), and latching that would
             // put X on a top-level output for no reason.
-            if (fire && found)
+            if (take && idx_ok)
                 sym <= symtab[tsel][idx];
-            sym_valid <= fire && found;
-            if (fire && !found)
+            // Hold the symbol until the consumer takes it. A decode whose index
+            // left the table produces no symbol and raises err instead.
+            if (take && idx_ok)  sym_valid <= 1'b1;
+            else if (out_ready)  sym_valid <= 1'b0;
+            if (fire && ((!found && !short_c) || (take && !idx_ok)))
                 err_q <= 1'b1;
+            if (fire && short_c)
+                underrun_q <= 1'b1;
         end
     end
-    assign err = err_q;
+    assign err      = err_q;
+    assign underrun = underrun_q;
 endmodule

@@ -8,7 +8,11 @@
 // buffer never starves for codes up to INW bits.
 //
 // `flush` marks end of input: from then on missing bits read as zero, which is
-// what the software decoder does too (it pads at EOF).
+// what the software decoder does too (it pads at EOF).  Padding is why `level`
+// is exported: after a flush the decoder must not emit a symbol whose code is
+// longer than the bits that are really left, or it manufactures a symbol out of
+// the zero padding.  `done` says the stream is finished and every bit consumed,
+// which is what tells the host the block is over rather than stuck.
 
 module bitreader #(
     parameter MAXBITS = 20,   // widest code the decoder may ask to see
@@ -26,8 +30,16 @@ module bitreader #(
     input  logic [4:0]         consume,     // bits to drop this cycle
     output logic [MAXBITS-1:0] peek,        // next MAXBITS bits, MSB first
     output logic               peek_valid,  // enough bits (or flushed)
-    output logic [$clog2(BUFW+1)-1:0] level // bits currently buffered
+    output logic [$clog2(BUFW+1)-1:0] level, // bits currently buffered
+    output logic               done         // flushed and the buffer is empty
 );
+`ifndef SYNTHESIS
+    // The refill assumes a whole word always fits beside a full peek window.
+    // Violating it makes (BUFW - INW - cnt_d) wrap and the refill silently
+    // shifts to zero, so fail loudly at elaboration instead.
+    initial if (BUFW < MAXBITS + INW)
+        $fatal(1, "bitreader: BUFW (%0d) must be >= MAXBITS + INW (%0d)", BUFW, MAXBITS + INW);
+`endif
     logic [BUFW-1:0]            buf_q, buf_d;
     logic [$clog2(BUFW+1)-1:0]  cnt_q, cnt_d, cnt_after;
     logic                       eof_q;
@@ -69,4 +81,8 @@ module bitreader #(
     assign peek       = buf_q[BUFW-1 -: MAXBITS];   // zeros beyond cnt_q
     assign peek_valid = (cnt_q >= MAXBITS) || (eof_q && cnt_q != 0);
     assign level      = cnt_q;
+    // Finished: the input said there is no more, and nothing is left to decode.
+    // Without this the engine simply stops driving sym_valid and the host cannot
+    // tell a completed block from a hang.
+    assign done       = eof_q && (cnt_q == 0);
 endmodule

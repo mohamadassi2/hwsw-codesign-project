@@ -1,17 +1,33 @@
-# Generic synthesis of the accelerator with Yosys, tables kept as memories.
+# Generic synthesis of the accelerator with Yosys.
 # Run from hw/:   yosys -q synth.ys      (or: make synth, which also writes docs/synthesis_yosys.txt)
-read_verilog -sv rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv
+#
+# Three configurations, because the tables are not all the same kind of thing:
+#
+#   1. as built   limit/base are register files (they are read at every code
+#                 length in the same cycle, so no SRAM macro can implement
+#                 them); the symbol table is a real single-port SRAM. This is
+#                 the honest area figure and the one the report quotes.
+#   2. all-logic  every table flattened into gates and flops.
+#
+# A third configuration - every table treated as a memory macro - would report a
+# much smaller cell count, but only because `stat` does not charge for memory
+# cells; it assumes a 20-read-port SRAM, which cannot be built. It is left out
+# rather than quoted with a caveat.
+
+# ---- 1. as built ------------------------------------------------------------
+read_verilog -DSYNTHESIS -sv rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv
 hierarchy -check -top huffman_accel_top
 proc; flatten; opt
-memory -nomap                       # limit/base/symbol tables stay as memory cells
+memory -nomap                       # the (* mem2reg *) tables become flops here
 techmap
 abc -g AND,NAND,OR,NOR,XOR,XNOR,ANDNOT,ORNOT,MUX   # generic 2-input gates + MUX
 opt_clean
-tee -o build/stat_nomap.txt stat
+tee -o build/stat_asbuilt.txt stat
 tee -o build/ltp.txt ltp -noff     # paths stop at flip-flops: the real combinational depth
-# ---- the alternative the report argues against: the same tables flattened into logic
+
+# ---- 2. every table flattened into logic ------------------------------------
 design -reset
-read_verilog -sv rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv
+read_verilog -DSYNTHESIS -sv rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv
 hierarchy -check -top huffman_accel_top
 proc; flatten; opt
 memory_map                          # tables become registers + muxes

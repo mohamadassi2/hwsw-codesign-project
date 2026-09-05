@@ -40,27 +40,53 @@ module huffman_accel_top #(
     // symbol output stream
     output logic [SYMW-1:0]    sym,
     output logic               sym_valid,
+    input  logic               out_ready,    // the symbol FIFO/DMA can take one
     output logic               err,
     // status, as exposed through the STATUS register (see docs/hw_sw_interface.md)
-    output logic               len_valid,   // a code was consumed this cycle
-    output logic [6:0]         level        // bits currently held in the bit buffer
+    output logic               len_valid,    // a code was consumed this cycle
+    output logic [6:0]         level,        // bits currently held in the bit buffer
+    output logic               busy,         // running, not finished, no error
+    output logic               done,         // input flushed and fully consumed
+    output logic               underrun,     // a code ran past the end of the stream
+    output logic [31:0]        sym_count     // symbols emitted since reset
 );
     logic [MAXBITS-1:0] peek;
     logic               peek_valid;
     logic [4:0]         len;
 
+    // `in_last` may be presented either together with the final beat or held
+    // high after the final beat has already been accepted. Honour both: a host
+    // that raises LAST as a level (which is how docs/hw_sw_interface.md
+    // describes it) would otherwise never flush, and the tail bits of the
+    // stream would be unreachable.
+    logic flush_c;
+    assign flush_c = in_last & ((in_valid & in_ready) | ~in_valid);
+
     bitreader #(.MAXBITS(MAXBITS), .INW(INW), .BUFW(64)) u_bits (
         .clk(clk), .rst_n(rst_n),
         .in_data(in_data), .in_valid(in_valid), .in_ready(in_ready),
-        .flush(in_last & in_valid & in_ready),
-        .consume(len), .peek(peek), .peek_valid(peek_valid), .level(level)
+        .flush(flush_c),
+        .consume(len), .peek(peek), .peek_valid(peek_valid), .level(level),
+        .done(done)
     );
 
     huffman_decoder #(.MAXBITS(MAXBITS), .NSYM(NSYM), .SYMW(SYMW), .NTAB(NTAB)) u_dec (
         .clk(clk), .rst_n(rst_n),
         .tbl_we(tbl_we), .tbl_sel(tbl_sel), .tbl_kind(tbl_kind), .tbl_len(tbl_len),
         .tbl_limit(tbl_limit), .tbl_base(tbl_base), .tbl_idx(tbl_idx), .tbl_sym(tbl_sym),
-        .tsel(tsel), .peek(peek), .peek_valid(peek_valid), .enable(run),
-        .len(len), .len_valid(len_valid), .sym(sym), .sym_valid(sym_valid), .err(err)
+        .tsel(tsel), .peek(peek), .peek_valid(peek_valid), .avail(level),
+        .out_ready(out_ready), .enable(run),
+        .len(len), .len_valid(len_valid), .sym(sym), .sym_valid(sym_valid),
+        .err(err), .underrun(underrun)
     );
+
+    // The host polls these instead of guessing from the absence of symbols.
+    assign busy = run & ~done & ~err & ~underrun;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        // Count accepted symbols, not cycles in which one was offered: under
+        // backpressure the same symbol is presented for several cycles.
+        if (!rst_n) sym_count <= 32'd0;
+        else if (sym_valid && out_ready) sym_count <= sym_count + 32'd1;
+    end
 endmodule
