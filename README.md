@@ -27,6 +27,7 @@ report_pyflate.txt, report_mdp.txt   the two reports the assignment asks for
 script_pyflate.sh,  script_mdp.sh    the two execution scripts (env setup, baseline,
                                      perf + flame graphs, optimized run, comparison)
 prompt.txt                           the AI prompts used during the project
+THIRD-PARTY.md                       what in here is not ours, and under what terms
 benchmarks/<b>/run_benchmark.py      the benchmark exactly as pyperformance ships it
 benchmarks/<b>/run_benchmark_opt.py  our optimized version, same pyperf runner
 benchmarks/pyflate/data/             the benchmark input (interpreter.tar.bz2)
@@ -61,7 +62,8 @@ shows no kernel symbols and empty call graphs), then runs:
 1. the baseline through `pyperformance run --bench <b>` itself,
 2. the baseline and the optimized version through the same pyperf runner
    (`benchmarks/<b>/run_benchmark*.py -o ….json`),
-3. `perf record -F 999 -g` + FlameGraph and `py-spy` on both,
+3. `py-spy` flame graphs on both (the scripts also attempt `perf record`, which
+   collects nothing in this guest - see report_pyflate.txt section 2),
 4. `pyperf compare_to` and `perf stat -r 3` for both.
 
 Outputs: `results/<b>/<b>_base.json`, `<b>_opt.json`, `compare_<b>.txt`,

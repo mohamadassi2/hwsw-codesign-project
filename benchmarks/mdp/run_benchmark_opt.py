@@ -1,3 +1,10 @@
+"""Our optimized version of pyperformance's bm_mdp benchmark.
+
+Derived from benchmarks/mdp/run_benchmark.py, which is vendored unmodified from
+pyperformance (MIT); this file is therefore a derivative work under the same
+terms. See THIRD-PARTY.md. The changes are described in report_mdp.txt
+section 3; the value stream is bit-identical to the original.
+"""
 import collections
 from collections import defaultdict
 from fractions import Fraction
