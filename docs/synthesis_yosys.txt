@@ -10,24 +10,24 @@
 # one synchronous read port, is a genuine SRAM candidate.
 
 === 1. as built: limit/base as register files, symbols in SRAM ===
-18787 cells: 5441 flip-flops, 13343 gates, 1 memory
-      173   $_ANDNOT_
-     5793   $_AND_
+18774 cells: 5441 flip-flops, 13330 gates, 1 memory
+      170   $_ANDNOT_
+     5798   $_AND_
        36   $_DFFE_PN0P_
      5334   $_DFFE_PP_
        71   $_DFF_PN0_
-      429   $_MUX_
-     5781   $_NAND_
-      583   $_NOR_
-       11   $_NOT_
-       69   $_ORNOT_
-      367   $_OR_
-       38   $_XNOR_
-       99   $_XOR_
+      431   $_MUX_
+     5766   $_NAND_
+      579   $_NOR_
+       13   $_NOT_
+       63   $_ORNOT_
+      371   $_OR_
+       36   $_XNOR_
+      103   $_XOR_
         1   $mem_v2
         2   $scopeinfo
 
-Longest combinational path (ltp -noff): length=100
+Longest combinational path (ltp -noff): length=102
 # The path ends at \u_dec.err_q, the sticky error flag. That flag is read once per
 # block, so it has a whole clock to settle; it is not what limits the symbol
 # rate. The path that does - peek, the parallel compare, the priority encoder,
@@ -40,20 +40,20 @@ Longest combinational path (ltp -noff): length=100
 
 
 === 2. every table flattened into logic (memory_map) ===
-49877 cells: 19382 flip-flops, 30493 gates
+49833 cells: 19382 flip-flops, 30449 gates
 # The other extreme: even the symbol table becomes gates and flops.
-      481   $_ANDNOT_
-     7960   $_AND_
+      515   $_ANDNOT_
+     7894   $_AND_
        45   $_DFFE_PN0P_
     19266   $_DFFE_PP_
        71   $_DFF_PN0_
-    13713   $_MUX_
-     6428   $_NAND_
-      647   $_NOR_
+    13683   $_MUX_
+     6400   $_NAND_
+      661   $_NOR_
        13   $_NOT_
       302   $_ORNOT_
-      813   $_OR_
-       43   $_XNOR_
-       93   $_XOR_
+      845   $_OR_
+       40   $_XNOR_
+       96   $_XOR_
         2   $scopeinfo
 
