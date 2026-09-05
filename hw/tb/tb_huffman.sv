@@ -39,6 +39,10 @@ module tb_huffman;
     // past the last good symbol on a purpose-built stream and require the
     // corresponding flag to come up.
     logic               want_err = 0, want_underrun = 0;
+    // +last_level drives LAST the way a register-mapped host would: set once,
+    // held, and therefore high across cycles in which the producer has nothing
+    // to hand over. The accelerator must not read that as end of input.
+    logic               last_level = 0;
     logic [15:0]        lfsr = 16'hACE1;
 
     huffman_accel_top #(.MAXBITS(MAXBITS), .NSYM(NSYM), .SYMW(SYMW), .NTAB(NTAB), .INW(INW)) dut (
@@ -83,12 +87,13 @@ module tb_huffman;
     // continuous assignment over SystemVerilog int variables (vvp aborts with
     // "recv_real not implemented"). Listing the scalar inputs explicitly avoids
     // both; the behaviour is the same as an @* block.
-    always @(widx, nwords, run, bp_mode, lfsr) begin
+    always @(widx, nwords, run, bp_mode, lfsr, last_level) begin
         in_valid = (widx < nwords) && run && (!bp_mode || lfsr[7]);
         in_data  = words[widx];
-        // Held from the final word onwards, so the flush also fires for a host
-        // that presents LAST as a level after the last beat was accepted.
-        in_last  = (widx >= nwords - 1);
+        // LAST accompanies the final beat. Held as a level from the final word
+        // onwards it would flush during table programming, when run is low and
+        // in_valid is therefore low, for any stream short enough to be one word.
+        in_last  = last_level ? (widx >= nwords - 1) : ((widx == nwords - 1) && in_valid);
     end
     always @(posedge clk) if (in_valid && in_ready) widx <= widx + 1;
 
@@ -168,6 +173,15 @@ module tb_huffman;
                     $display("PROTOCOL: a stalled symbol was dropped or changed at symbol %0d", nchk);
             end
         end
+        // DONE means the block is finished. It must not assert while symbols
+        // are still expected: the previous flush condition set end-of-input
+        // during table programming, and every test still passed because none
+        // of them looked at done.
+        if (done && nchk < nsym && !want_err && !want_underrun) begin
+            errors++;
+            if (errors < 10)
+                $display("PROTOCOL: done asserted with %0d of %0d symbols still to come", nchk, nsym);
+        end
         err_d      <= err;
         underrun_d <= underrun;
         if (err && !err_d) begin
@@ -198,6 +212,8 @@ module tb_huffman;
         bp_mode       = $test$plusargs("bp");
         want_err      = $test$plusargs("expect_err");
         want_underrun = $test$plusargs("expect_underrun");
+        last_level    = $test$plusargs("last_level");
+        if (last_level) $display("host style: LAST held as a level, with bubbles from the producer");
         if (bp_mode) $display("backpressure mode: out_ready and in_valid are gated pseudo-randomly");
         if (want_err) $display("directed mode: the stream ends in a code that matches nothing; err must assert");
         if (want_underrun) $display("directed mode: the stream ends short of a whole code; underrun must assert");

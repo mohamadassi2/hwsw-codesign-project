@@ -168,8 +168,14 @@ perf_probe(){
              "-e task-clock -F 997" \
              "-F 999 -g"; do
     # shellcheck disable=SC2086
+    # The workload has to run long enough for the sampler to fire. An earlier
+    # version used 3,000,000 iterations, roughly a tenth of a second, and every
+    # candidate came back empty - which is how this script concluded "no
+    # sampling event works" while the standalone probe above, over a three-second
+    # workload, was recording thousands of samples for cpu-clock. Same target as
+    # that probe now, so the two cannot disagree.
     perf record -q $opt -o "$probe" -- "$PY" -c 'x=0
-for i in range(3000000): x+=i' >/dev/null 2>&1 || true
+for i in range(30000000): x+=i' >/dev/null 2>&1 || true
     if [ -s "$probe" ] && perf script -i "$probe" 2>/dev/null | head -1 | grep -q .; then
       PERF_OPT="$opt"; echo "sampling event: $opt"; rm -f "$probe"; return 0
     fi

@@ -78,10 +78,10 @@ getCritDist being called 3,659 times with only THREE distinct argument tuples,
 recomputing the same exact distributions over and over.
 
 Hardware counters in the VM (results/mdp/perfstat_base.txt, perf stat -r 3
-over four loops of the worker): the baseline retires 118,398,887,823
+over four loops of the worker): the baseline retires 118,254,711,426
 instructions in 47,932,903,155 cycles, an IPC of 2.47, with
-24,923,650,707 branches. The IPC is healthy and the branch-miss rate is
-0.52%, so this is not a stalled or badly predicted workload - it is simply
+24,871,859,041 branches. The IPC is healthy and the branch-miss rate is
+0.53%, so this is not a stalled or badly predicted workload - it is simply
 executing far more instructions than the problem needs, which is what section 3
 removes.
 
@@ -195,8 +195,9 @@ Correctness. scripts/local_check.py runs both versions:
     reason is worth stating: it put mdp at 2.33 s against 1.30 s while
     executing the same 31.5 billion instructions, because "CPUs utilized" had
     fallen from 1.00 to 0.58. Instruction and cycle counts were unaffected; only
-    the wall clock moved. script_mdp.sh now checks that figure and says so
-    rather than letting the run be quoted (results/mdp/contention.txt).
+    the wall clock moved. script_mdp.sh now records that figure for every run
+    in results/mdp/contention.txt and warns below 0.95, so the reader can see
+    the guest had the core rather than take it on trust.
 
 
 5. Hardware acceleration proposal

@@ -12,7 +12,7 @@ YOSYS ?= yosys
 RTL   = rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv
 TB    = tb/tb_huffman.sv
 
-.PHONY: sim sim_all sim_bp vectors synth_vectors clean
+.PHONY: sim sim_all sim_bp sim_last_level vectors synth_vectors clean
 sim: build/tb tb/vectors/expected.txt
 	@$(VVP) build/tb > build/sim.log 2>&1; rc=$$?; cat build/sim.log; \
 	if [ $$rc -ne 0 ]; then echo "make sim: simulator exited $$rc"; exit $$rc; fi; \

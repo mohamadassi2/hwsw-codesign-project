@@ -54,21 +54,33 @@ module huffman_accel_top #(
     logic               peek_valid;
     logic [4:0]         len;
 
-    // `in_last` may be presented either together with the final beat or held
-    // high after the final beat has already been accepted. Honour both: a host
-    // that raises LAST as a level (which is how docs/hw_sw_interface.md
-    // describes it) would otherwise never flush, and the tail bits of the
-    // stream would be unreachable.
+    // `in_last` accompanies the final beat, AXI-stream style, and the flush is
+    // the handshake on that beat.
+    //
+    // An earlier version also flushed on `in_last & ~in_valid`, to support a
+    // host that holds LAST as a level after the last beat. That cannot work:
+    // the hardware cannot tell "LAST held after the final beat" from "LAST
+    // presented for a final beat the producer has not delivered yet", and a
+    // single bubble cycle then sets `eof_q` for good. With the stream still
+    // arriving, the decoder ran on a short buffer, raised `underrun` and
+    // halted. It also fired during table programming for the small directed
+    // vector sets, where the stream is one word and LAST is high from reset
+    // while `run` is still low - so `done` asserted before a single input word
+    // had been accepted.
     logic flush_c;
-    assign flush_c = in_last & ((in_valid & in_ready) | ~in_valid);
+    assign flush_c = in_last & in_valid & in_ready;
 
+    logic bits_done;
     bitreader #(.MAXBITS(MAXBITS), .INW(INW), .BUFW(64)) u_bits (
         .clk(clk), .rst_n(rst_n),
         .in_data(in_data), .in_valid(in_valid), .in_ready(in_ready),
         .flush(flush_c),
         .consume(len), .peek(peek), .peek_valid(peek_valid), .level(level),
-        .done(done)
+        .done(bits_done)
     );
+    // Not done while a decoded symbol is still waiting to be taken: a host that
+    // tears down the DMA on DONE would lose the last symbol of the block.
+    assign done = bits_done & ~sym_valid;
 
     huffman_decoder #(.MAXBITS(MAXBITS), .NSYM(NSYM), .SYMW(SYMW), .NTAB(NTAB)) u_dec (
         .clk(clk), .rst_n(rst_n),

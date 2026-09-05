@@ -329,7 +329,9 @@ inside bench_pyflake() also passes in every run.
     instructions and using only 2.5% more CPU time: the shared host was busy
     and "CPUs utilized" had fallen from 1.00 to 0.58, so the wall clock
     measured the host's load rather than this code. Both scripts now read that
-    figure from perf and refuse to let such a run pass as a measurement;
+    figure from perf, print a warning below 0.95 and record the value in
+    results/<benchmark>/contention.txt, so a contended run is visible in the
+    evidence rather than only in the wall clock;
     results/<benchmark>/contention.txt records it for the runs that are
     shipped (0.99-1.00 throughout). It is the one measurement error that would
     have been invisible in the numbers themselves.
@@ -514,7 +516,7 @@ inside bench_pyflake() also passes in every run.
     becomes
         477 - 237 + 1.3  =  ~241 ms     ->  ~2.0x over the optimized software,
                                           ~4.7x over the shipped benchmark.
-    Per symbol the software spends 235 ms / 148,271 = ~1,585 ns, about 3,800
+    Per symbol the software spends 237 ms / 148,271 = ~1,585 ns, about 3,800
     cycles at 2.4 GHz, against one cycle in hardware - three orders of
     magnitude on the accelerated part alone. The whole-program gain is bounded
     by Amdahl's law: the inverse BWT and the Python glue around the symbol

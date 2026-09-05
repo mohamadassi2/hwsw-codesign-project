@@ -11,7 +11,7 @@ compressed block.
 
 | | baseline | optimized | improvement | output |
 |---|---|---|---|---|
-| pyflate | 1.129 s | 473.0 ms | **2.37× — 57.7% less time** | byte-identical, md5 `afa004a6…` |
+| pyflate | 1.129 s | 477.2 ms | **2.37× — 57.7% less time** | byte-identical, md5 `afa004a6…` |
 | mdp     | 4.997 s | 1.303 s | **3.83× — 73.9% less time** | bit-identical result |
 
 Measured inside the course QEMU/KVM guest (Ubuntu 22.04, one vCPU, Xeon
