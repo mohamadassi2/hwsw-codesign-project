@@ -125,11 +125,19 @@ BITS = 531571
 check("hw: average bits per symbol", abs(BITS / SYMBOLS - 3.59) < 0.01,
       f"{BITS/SYMBOLS:.3f}")
 
+# 62% may appear only in the sentence that records the earlier double count;
+# anywhere else it would mean the corrected share had been lost again.
+_flat_pf = re.sub(r"\s+", " ", _pf)
+check("the corrected share is used, not the double-counted 62%",
+      "49.7%" in _pf and _flat_pf.count("62%") == _flat_pf.count("earlier draft of this report did exactly that and quoted ~62%"),
+      f"{_flat_pf.count('62%')} mention(s) of 62%, "
+      f"{_flat_pf.count('earlier draft of this report did exactly that and quoted ~62%')} in the sentence that records the mistake")
+
 # ---------------------------------------------------------------- derived: Amdahl
-m = re.search(r"Take the optimized run [^,]*, ([\d.]+) ms, of which the\s+"
-              r"Huffman-and-bit-extraction part is ~(\d+)% = ~([\d.]+) ms", txt)
+m = re.search(r"Take the optimized run measured in the VM, ([\d.]+) ms, of which that part is\s+"
+              r"([\d.]+)% = ~([\d.]+) ms", txt)
 if m:
-    total, frac, part = float(m.group(1)), int(m.group(2)), float(m.group(3))
+    total, frac, part = float(m.group(1)), float(m.group(2)), float(m.group(3))
     check("amdahl: the stated fraction matches the stated milliseconds",
           abs(total * frac / 100 - part) < max(2.0, 0.03 * part),
           f"{total} ms x {frac}% = {total*frac/100:.1f} ms, report says {part}")

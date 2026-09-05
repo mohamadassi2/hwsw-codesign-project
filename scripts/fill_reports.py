@@ -166,7 +166,9 @@ def main():
     if "pyflate" in vm and not args.dry_run:
         base_s, opt_s = vm["pyflate"]
         opt_ms = opt_s * 1e3
-        frac = 62
+        # find_next_symbol's CUMULATIVE share: it already contains the bit
+        # reads it makes, so snoopbits/readbits must not be added again.
+        frac = 49.7
         part = opt_ms * frac / 100
         accel = 148272 / 200e6 * 1e3 + 0.6      # decode at 200 MHz + DMA/MMIO
         newtot = opt_ms - part + accel
@@ -175,7 +177,7 @@ def main():
         t = re.sub(r"Take the optimized run [^,]*, [\d.]+ ms, of which the",
                    f"Take the optimized run measured in the VM, {opt_ms:.0f} ms, of which the", t)
         t = re.sub(r"Huffman-and-bit-extraction part is ~\d+% = ~[\d.]+ ms",
-                   f"Huffman-and-bit-extraction part is ~{frac}% = ~{part:.0f} ms", t)
+                   f"that part is\n    {frac}% = ~{part:.0f} ms", t)
         t = re.sub(r"[\d.]+ - [\d.]+ \+ [\d.]+\s+=\s+~?[\d.]+ ms",
                    f"{opt_ms:.0f} - {part:.0f} + {accel:.1f}  =  ~{newtot:.0f} ms", t)
         t = re.sub(r"~[\d.]+x over the optimized software",

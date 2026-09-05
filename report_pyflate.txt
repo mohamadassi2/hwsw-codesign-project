@@ -400,27 +400,39 @@ passes in every run.
     lecture 5's first rule, do not make users change their code.
 
 5.6 Expected performance (with the assumptions spelled out)
-    Take the optimized run measured in the VM, 473 ms, of which the
-    Huffman-and-bit-extraction part is ~62% = ~293 ms (section 4.3). In the
-    accelerator that work is 148,272 cycles:
+    What the accelerator replaces is find_next_symbol and the bit reads it
+    makes. In the optimized profile (section 4.2) find_next_symbol is 27.0% of
+    the run by itself and 49.7% cumulatively, and the difference between those
+    two - 22.7% - is almost exactly snoopbits (10.7%) plus readbits (12.6%),
+    because in the optimized decoder those two are called from nowhere else.
+    So the cumulative figure already contains the bit extraction: the share to
+    use is 49.7%, and adding snoopbits and readbits to it would count the same
+    work twice. (An earlier draft of this report did exactly that and quoted
+    ~62%; the number below is the corrected one.)
+
+    Take the optimized run measured in the VM, 473 ms, of which that part is
+    49.7% = ~235 ms. In the accelerator the same work is 148,272 cycles:
         at 200 MHz   0.74 ms
         at 400 MHz   0.37 ms
     Add data movement: 66 KB in and 148,271 x 2 bytes out over PCIe or an AXI
     DMA is well under 0.1 ms, and the ~1,000 table-write cycles over MMIO are a
-    few microseconds.
-    Call the accelerated part ~1.3 ms in total. The run becomes
-        473 - 293 + 1.3  =  ~181 ms     ->  ~2.6x over the optimized software,
-                                          ~6.2x over the shipped benchmark.
-    Per symbol, the software spends ~99 ms / 148k = ~670 ns, i.e. about 1,600
-    cycles at 2.4 GHz, against one cycle in hardware, so on the accelerated
-    part alone the gain is three orders of magnitude; the whole-program gain
-    is bounded by Amdahl's law because the inverse BWT and the Python glue
-    around the symbol stream remain. Assumptions: the host-side loop that
-    consumes the symbol buffer (MTF, appends) costs about what it costs today;
-    DMA and MMIO latencies as above; no overlap between CPU and accelerator
-    (with overlap the accelerator time hides completely).
-    The VM run will replace the 160 ms / 99 ms starting point with the Xeon
-    numbers; the fraction, not the absolute time, is what the estimate uses.
+    few microseconds. Call the accelerated part ~1.3 ms in total. The run
+    becomes
+        473 - 235 + 1.3  =  ~239 ms     ->  ~2.0x over the optimized software,
+                                          ~4.7x over the shipped benchmark.
+    Per symbol the software spends 235 ms / 148,271 = ~1,585 ns, about 3,800
+    cycles at 2.4 GHz, against one cycle in hardware - three orders of
+    magnitude on the accelerated part alone. The whole-program gain is bounded
+    by Amdahl's law: the inverse BWT and the Python glue around the symbol
+    stream stay where they are, and they are what the remaining 239 ms is.
+
+    Assumptions, stated so they can be argued with: the host-side loop that
+    consumes the symbol buffer (move-to-front, the appends) costs what it costs
+    today; DMA and MMIO latencies as above; no overlap between CPU and
+    accelerator, so the accelerator's own time is added rather than hidden -
+    with overlap it disappears entirely and the bound becomes 473 - 235 = 238
+    ms. The selector list is assumed already in the accelerator (section 5.5
+    explains that it is not, in this version, and what that would cost).
 
 5.7 Performance / area / power trade-offs
     Area (docs/synthesis_yosys.txt, Yosys 0.68, generic 2-input gates, the

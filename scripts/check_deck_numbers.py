@@ -111,10 +111,12 @@ def main():
 
     # ---- Amdahl (from the VM optimized time, as in report_pyflate.txt 5.6) ----
     opt_ms = po * 1e3
-    part = opt_ms * 0.62
+    # find_next_symbol's cumulative share. Its self share plus the bit-reading
+    # helpers it calls would double-count, which an earlier draft did as 62%.
+    part = opt_ms * 0.497
     accel = decode_ms + 0.6
     new = opt_ms - part + accel
-    want("Amdahl: 62% of optimized (ms)", part, "{:.0f}")
+    want("Amdahl: accelerated part (ms)", part, "{:.0f}")
     want("Amdahl: result (ms)", new, "{:.0f}")
     want("Amdahl: vs optimized", opt_ms / new, "{:.1f}")
     want("Amdahl: vs shipped", pb * 1e3 / new, "{:.1f}")
