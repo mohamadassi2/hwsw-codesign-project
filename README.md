@@ -65,7 +65,7 @@ results/reproducibility/             an independent from-scratch rerun in the gu
 Inside the course QEMU/KVM guest, as root, with network:
 
 ```bash
-cd hwsw-project          # the submitted archive, unpacked
+git clone https://github.com/mohamadassi2/hwsw-codesign-project.git && cd hwsw-codesign-project
 ./script_pyflate.sh      # ~10 min
 ./script_mdp.sh          # ~10 min
 ```
