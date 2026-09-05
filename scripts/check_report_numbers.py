@@ -325,6 +325,62 @@ if _pb and _po:
         check("the overlap bound starts from the measured optimized time",
               _mov.group(1) == _round, f"expected {_round}")
 
+# ---------------------------------------------------------------- measured times
+# A local gate-mutation sweep found that the raw wall-clock means were not
+# checked at all: only the ratios derived from them were. Perturbing "1.303" or
+# "1.129" in a 4.1 table therefore passed. Check each measured mean where its
+# section prints it, for both benchmarks.
+for _b, _rep in (("pyflate", _pf), ("mdp", _md)):
+    _bs = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_base.json"))
+    _os_ = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_opt.json"))
+    if not (_bs and _os_):
+        continue
+    _s41 = _sect(_rep, "4.1 Course VM")
+    check(f"{_b}: section 4.1 prints the measured baseline ({_bs:.3f} s)",
+          f"{_bs:.3f}" in _s41, f"from results/{_b}/{_b}_base.json")
+    _optstr = f"{_os_ * 1e3:.1f}" if _os_ < 1 else f"{_os_:.3f}"
+    check(f"{_b}: section 4.1 prints the measured optimized time ({_optstr})",
+          _optstr in _s41, f"from results/{_b}/{_b}_opt.json")
+
+# ---------------------------------------------------------------- simulation
+# The symbol and cycle counts are quoted throughout section 5 and come from the
+# testbench run recorded in results/rtl_sim_guest.log.
+_simlog = os.path.join(ROOT, "results", "rtl_sim_guest.log")
+if os.path.exists(_simlog):
+    _sl = open(_simlog, encoding="utf-8").read()
+    _msim = re.search(r"decoded (\d+) symbols in (\d+) cycles", _sl)
+    if _msim:
+        _sym, _cyc = int(_msim.group(1)), int(_msim.group(2))
+        check(f"the report quotes the simulated symbol count ({_sym:,})", f"{_sym:,}" in txt,
+              "from results/rtl_sim_guest.log")
+        check(f"the report quotes the simulated cycle count ({_cyc:,})", f"{_cyc:,}" in txt,
+              "from results/rtl_sim_guest.log")
+        # Presence is not enough: these counts are written a dozen times, so one
+        # of them can be wrong while the others keep a presence test happy. Every
+        # number of this shape in the report must be one of the two real ones.
+        _seen = set(re.findall(r"\b148,\d{3}\b", txt))
+        _wrong = sorted(_seen - {f"{_sym:,}", f"{_cyc:,}"})
+        check("no other 148,xxx figure appears in the report", not _wrong,
+              f"found {_wrong}, but the only real values are {_sym:,} and {_cyc:,}")
+        # per-symbol CPU cost: the accelerated share of the optimized run,
+        # divided by the symbols, at the guest's 2.4 GHz.
+        if _po:
+            _cps = _po * 0.497 / _sym * 2.4e9
+            _want_cps = f"{round(_cps, -2):,.0f}"
+            check(f"the per-symbol CPU cost recomputes ({_want_cps} cycles)",
+                  _want_cps in txt,
+                  f"{_po * 1e3:.0f} ms x 49.7% / {_sym:,} at 2.4 GHz")
+            # Same reasoning: check every place the report states a per-symbol
+            # cycle cost, not merely that the right number occurs once.
+            # Only the CPU-cost sentences, not every "cycles per symbol" in the
+            # report: section 5.7 legitimately quotes 3.6 cycles/symbol for a
+            # bit-serial alternative and 1 for this design.
+            _states = set(re.findall(r"~([\d,]+) cycles of a 2\.4 GHz", txt)) | \
+                      set(re.findall(r"~([\d,]+) CPU cycles per symbol", txt))
+            _bad = sorted(v for v in _states if v != _want_cps)
+            check("every per-symbol cycle figure in the report is the computed one",
+                  not _bad, f"found {_bad}, expected {_want_cps}")
+
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and
 # hw/tb/MUTATIONS.md is where it is recorded. Recount it from that table rather
