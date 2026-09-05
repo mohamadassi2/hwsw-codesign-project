@@ -618,7 +618,7 @@ inside bench_pyflake() also passes in every run.
     register files and have to be counted as flip-flops. Only the symbol
     table, one synchronous read port, is an SRAM candidate. Counting them that
     way:
-        18,774 cells: 5,441 flip-flops, 13,330 gates, and one memory of
+        18,796 cells: 5,441 flip-flops, 13,352 gates, and one memory of
         13,932 bits (~13.9 kbit, 1.7 KB) for the symbol table. The register
         files are 6 x 21 x 21 = 2,646 bits of limit and 6 x 21 x 22 = 2,772
         bits of base, which is most of those flip-flops.
@@ -630,9 +630,9 @@ inside bench_pyflake() also passes in every run.
     The logic itself is a 64-bit barrel shifter, twenty 21-bit comparators, a
     20-to-5 priority encoder and one 22-bit adder; the rest is table storage
     and its read muxes. Flattening even the symbol table into logic gives
-    49,833 cells (the second run in docs/synthesis_yosys.txt), so keeping that
+    49,804 cells (the second run in docs/synthesis_yosys.txt), so keeping that
     one table as SRAM is worth about 31,000 cells.
-    Frequency: the longest combinational path is 102 gate levels, and Yosys
+    Frequency: the longest combinational path is 98 gate levels, and Yosys
     reports it ending at the sticky error flag - a status bit the host reads
     once per block, not per symbol. What has to close at the symbol rate is
     peek -> the parallel compare -> the priority encoder -> the bit-buffer

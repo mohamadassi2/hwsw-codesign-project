@@ -40,9 +40,9 @@ Accelerator (about 7 min)
     function that changes in the software; users' code unchanged.
 12. Verification: golden vectors from the real block, testbench result:
     148,271/148,271, 0 errors, 148,272 cycles, 1.000 symbol/cycle.
-13. Cost: yosys figures, 18,774 cells (5,441 flops) + 13.9 kbit of symbol SRAM;
-    102-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
-    49,833-cell version as the "why SRAM" argument.
+13. Cost: yosys figures, 18,796 cells (5,441 flops) + 13.9 kbit of symbol SRAM;
+    98-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
+    49,804-cell version as the "why SRAM" argument.
 14. Expected gain: Amdahl with the numbers. ~3,900 CPU cycles per symbol vs
     1; accelerated part ~1.3 ms; whole run ~2.0x over optimized, ~4.8x over
     shipped [VM ratio]. Trade-offs: direct-lookup table vs bit-serial FSM vs
