@@ -31,15 +31,32 @@ export DEBIAN_FRONTEND=noninteractive
 # When the host runs systemd-resolved (Ubuntu 24.04, as on the course VM hosts)
 # that resolver is the 127.0.0.53 stub, which the NAT cannot reach: names fail
 # in the guest while plain TCP works, so apt and pip silently die.  Point the
-# guest at the real upstream servers (Technion's) instead; harmless elsewhere.
+# guest at the real upstream servers (Technion's) instead.
+#
+# This REWRITES /etc/resolv.conf, which is not harmless on a normal machine, so
+# it only happens when name resolution is already broken, the previous file is
+# kept as /etc/resolv.conf.bak, and the change is announced.
 if ! getent hosts pypi.org >/dev/null 2>&1; then
+  echo "dns: pypi.org does not resolve - rewriting /etc/resolv.conf (previous file saved as /etc/resolv.conf.bak)"
+  cp -f /etc/resolv.conf /etc/resolv.conf.bak 2>/dev/null || true
   rm -f /etc/resolv.conf 2>/dev/null || true
   printf 'nameserver 132.68.39.127\nnameserver 132.68.32.5\nnameserver 8.8.8.8\n' > /etc/resolv.conf 2>/dev/null || true
 fi
 if getent hosts pypi.org >/dev/null 2>&1 && timeout 15 curl -fsI https://pypi.org/simple/ >/dev/null 2>&1; then
   ONLINE=1; echo "network: online"
 else
-  ONLINE=0; echo "network: offline - using the bundled wheels/ and flamegraph.tgz"
+  ONLINE=0
+  # The offline path needs a wheels/ directory and a flamegraph.tgz beside this
+  # script. They are not in the repository (too large, and the VM has network),
+  # so say plainly whether they are actually there rather than implying they are.
+  if [ -d wheels ] && [ -f flamegraph.tgz ]; then
+    echo "network: offline - using the wheels/ and flamegraph.tgz found beside this script"
+  else
+    echo "network: offline, and no wheels/ + flamegraph.tgz to fall back on."
+    echo "         This script needs network the first time it runs (pyperf, pyperformance,"
+    echo "         py-spy, FlameGraph). See README.md for the guest DNS fix."
+    exit 1
+  fi
 fi
 if [ "$ONLINE" = 1 ]; then
   apt-get update -qq >/dev/null 2>&1 || true
@@ -84,18 +101,36 @@ perf --version; venv/bin/python --version
 # Does the PMU overflow interrupt actually reach the guest? If the PMI line in
 # /proc/interrupts does not move across a hardware-event record, the counter is
 # emulated but never overflows, which is exactly the failure described in the report.
-{ echo "PMI/NMI before:"; grep -E "^\s*(NMI|PMI)" /proc/interrupts || true
-  perf record -q -e cycles -F 999 -o /tmp/probe.data -- sleep 3 >/dev/null 2>&1 || true
-  echo "PMI/NMI after a cycles record:"; grep -E "^\s*(NMI|PMI)" /proc/interrupts || true
+#
+# The probe target has to BURN CPU. An earlier version of this script recorded
+# against `sleep 3`, which retires almost no instructions: a per-task cycles
+# counter then never overflows and no PMI fires even on bare metal, so that
+# probe could not distinguish a broken PMU from a healthy one. The probe now
+# records over a few seconds of pure Python arithmetic instead.
+{ echo "probe target: ~3 s of CPU-bound Python (not an idle sleep)"
+  echo "PMI/NMI before:"; grep -E "^\s*(NMI|PMI)" /proc/interrupts || true
+  perf record -q -e cycles -F 999 -o /tmp/probe.data -- \
+      python3 -c 'x=0
+for i in range(30000000): x+=i' >/dev/null 2>&1 || true
+  echo "PMI/NMI after a cycles record over that workload:"; grep -E "^\s*(NMI|PMI)" /proc/interrupts || true
   echo "samples in that cycles record: $(perf script -i /tmp/probe.data 2>/dev/null | grep -c . || echo 0)"
+  echo "counting (not sampling) the same workload, to show the PMU is present:"
+  perf stat -e cycles,instructions -- python3 -c 'x=0
+for i in range(30000000): x+=i' 2>&1 | grep -E "cycles|instructions" || true
   echo "dmesg PMU line: $(dmesg 2>/dev/null | grep -i 'Performance Events' | tail -1)"
 } > "$OUT/pmu_diagnosis.txt" 2>&1
 cat "$OUT/pmu_diagnosis.txt"
-echo "--- sampling events available in this guest:"
+# Same correction here: probe each event against the CPU-bound workload, not
+# against `true`, which exits in about a millisecond and yields zero samples
+# for any event on any machine.
+echo "--- sampling events available in this guest (probed over ~3 s of CPU-bound Python):"
 for e in cycles cpu-clock task-clock; do
-  if perf record -q -e $e -F 999 -o /tmp/probe.data -- true >/dev/null 2>&1 && \
+  if perf record -q -e $e -F 999 -o /tmp/probe.data -- \
+       python3 -c 'x=0
+for i in range(30000000): x+=i' >/dev/null 2>&1 && \
      [ "$(perf script -i /tmp/probe.data 2>/dev/null | grep -c . || echo 0)" -gt 0 ]; then
-    echo "    $e: works"; else echo "    $e: no samples"; fi
+    echo "    $e: works ($(perf script -i /tmp/probe.data 2>/dev/null | grep -c .) samples)"
+  else echo "    $e: no samples"; fi
 done | tee "$OUT/perf_events_probe.txt"
 rm -f /tmp/probe.data
 
@@ -129,6 +164,8 @@ perf_probe(){
              "-e cpu-clock -F 997 --call-graph dwarf,16384" \
              "-e cpu-clock -F 997 --call-graph fp" \
              "-e cpu-clock -F 997" \
+             "-e task-clock -F 997 --call-graph dwarf,16384" \
+             "-e task-clock -F 997" \
              "-F 999 -g"; do
     # shellcheck disable=SC2086
     perf record -q $opt -o "$probe" -- "$PY" -c 'x=0
@@ -212,6 +249,38 @@ flame "$OUT/pyspy_opt.folded" "$OUT/flame_${B}_opt_pyspy.svg" "$B optimized: Pyt
 python3 scripts/focus_folded.py bench_mdp < "$OUT/pyspy_opt.folded" > "$OUT/pyspy_opt_focus.folded" 2>>"$OUT/focus.log" || true
 flame "$OUT/pyspy_opt_focus.folded" "$OUT/flame_${B}_opt_focus.svg" "$B optimized: Python frames below bench_mdp (py-spy)" --colors js
 
+# ---------------------------------------------------------------- 3b. cProfile
+# The reports quote per-function self and cumulative shares, and the whole
+# Amdahl argument for the accelerator rests on them. py-spy's flame graphs are
+# a sampled cross-check; these tables are the deterministic measurement, so
+# write them out as evidence rather than quoting numbers with no artifact.
+# cProfile inflates absolute times (it traces every call), which is why it is
+# used only for the SHARES and never for the wall-clock figures.
+for v in base opt; do
+  f=$([ $v = base ] && echo "$BASE" || echo "$OPT")
+  log "cProfile ($v) - per-function shares, cumulative and self"
+  $PY -c "
+import cProfile, pstats, runpy, sys, io
+sys.argv = [sys.argv[1], '--worker', '--loops', '1', '-n', '1', '-w', '0']
+pr = cProfile.Profile()
+pr.enable()
+try:
+    runpy.run_path(sys.argv[0], run_name='__main__')
+except SystemExit:
+    pass
+finally:
+    pr.disable()
+buf = io.StringIO()
+st = pstats.Stats(pr, stream=buf)
+buf.write('=== by cumulative time ===\\n')
+st.sort_stats('cumulative').print_stats(25)
+buf.write('\\n=== by self (tottime) ===\\n')
+st.sort_stats('tottime').print_stats(25)
+sys.stdout.write(buf.getvalue())
+" "$f" > "$OUT/cprofile_${v}.txt" 2>&1 || echo "cProfile failed on $v"
+  head -12 "$OUT/cprofile_${v}.txt" | sed "s/^/  $v: /"
+done
+
 # ---------------------------------------------------------------- 4. compare + hardware counters
 log "before/after (pyperf compare_to)"
 $PY -m pyperf compare_to "$OUT/${B}_base.json" "$OUT/${B}_opt.json" --table | tee "$OUT/compare_${B}.txt"
@@ -222,5 +291,26 @@ for v in base opt; do
       $PY "$f" --worker --loops 4 -n 1 -w 0 >/dev/null 2>&1 || true
   grep -E 'task-clock|cycles|instructions|branch' "$OUT/perfstat_${v}.txt" | sed "s/^/  $v: /"
 done
+# ---------------------------------------------------------------- 4b. contention
+# Wall-clock only means something if the guest actually had the CPU. This VM is
+# one vCPU on a host shared with the rest of the class, and a rerun of this very
+# script once produced mdp at 2.33 s instead of 1.31 s while executing the same
+# 31.5 billion instructions - the host was taking 40% of the core. perf prints
+# "CPUs utilized" for exactly this, so check it rather than trusting the clock.
+for v in base opt; do
+  u=$(grep -m1 'CPUs utilized' "$OUT/perfstat_${v}.txt" 2>/dev/null | sed -E 's/.*# *([0-9.]+) CPUs utilized.*/\1/')
+  [ -n "$u" ] || continue
+  if [ "$(awk -v u="$u" 'BEGIN{print (u < 0.95) ? 1 : 0}')" = 1 ]; then
+    echo "WARNING: only $u CPUs utilized during the $v run."
+    echo "         The host was busy, so the wall-clock times above understate this"
+    echo "         machine and must not be quoted. Instruction and cycle counts are"
+    echo "         unaffected. Re-run when the host is idle."
+    echo "$v: CPUs utilized $u - wall clock NOT trustworthy" >> "$OUT/contention.txt"
+  else
+    echo "$v: CPUs utilized $u - the guest had the core" >> "$OUT/contention.txt"
+  fi
+done
+cat "$OUT/contention.txt" 2>/dev/null
+
 rm -f "$OUT"/scratch*.json "$OUT"/*.data
 log "done -> $OUT"

@@ -14,7 +14,7 @@ Numbers marked [VM] come from results/ after the guest runs.
    headroom, hardware story. pyflate and mdp are the two whose algorithm is in
    the benchmark file and whose hotspot is one identifiable thing; nbody and
    raytrace are the crowd's picks. (1.5 min)
-3. Method. perf record -F 999 -g + FlameGraph for "where", py-spy for Python
+3. Method. py-spy record + FlameGraph for "where" (perf record collects no samples in this guest), py-spy for Python
    frames, cProfile for exact counts, perf stat for "why". The two sysctls
    the guest needs. (1 min)
 
@@ -27,7 +27,7 @@ pyflate (about 9 min)
 7. The fix: limit[] / base[] tables, one peek, <=15 compares. Plus the bit
    reader (one read, 8-byte refill), MTF pop/insert, regex RLE.
 8. Before / after [VM]: pyperf compare_to table, perf stat counters
-   (instructions, IPC). Output byte-identical, md5. Dev machine: 2.19x.
+   (instructions, IPC). Output byte-identical, md5.
 9. What is left (optimized flame graph [VM]): Huffman + bits ~60%, inverse
    BWT ~30%. Say: the first is bit-serial work, the second is a pointer
    chase; only the first is a datapath problem.
@@ -40,11 +40,11 @@ Accelerator (about 7 min)
     function that changes in the software; users' code unchanged.
 12. Verification: golden vectors from the real block, testbench result:
     148,271/148,271, 0 errors, 148,272 cycles, 1.000 symbol/cycle.
-13. Cost: yosys figures, 2,768 cells (74 flops) + 19.4 kbit of tables;
+13. Cost: yosys figures, 18,787 cells (5,441 flops) + 13.9 kbit of symbol SRAM;
     67-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
     52k-cell version as the "why SRAM" argument.
-14. Expected gain: Amdahl with the numbers. ~1,600 CPU cycles per symbol vs
-    1; accelerated part ~1.3 ms; whole run ~2.6x over optimized, ~5.7x over
+14. Expected gain: Amdahl with the numbers. ~3,800 CPU cycles per symbol vs
+    1; accelerated part ~1.3 ms; whole run ~2.0x over optimized, ~4.7x over
     shipped [VM ratio]. Trade-offs: direct-lookup table vs bit-serial FSM vs
     ours; MTF as the next thing to move; BWT stays.
 
@@ -54,7 +54,7 @@ mdp (about 4 min)
     keyed by nested namedtuples inside the sweep; Fractions recomputed.
 17. The fix: integer index once, sweep on flat lists with identical
     operation order; memoized getCritDist. Result bit-identical.
-18. Before / after [VM]. Dev machine: 3.92x.
+18. Before / after [VM].
 
 19. Conclusions (1 min). Algorithm first, then interpreter overhead, then
     hardware for what is bit-serial; memory-bound parts stay where the

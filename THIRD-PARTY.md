@@ -15,8 +15,9 @@ own. The files below are not, and are redistributed here under their own terms.
    pyperformance installs, which can be checked directly:
 
        benchmarks/pyflate/run_benchmark.py   md5 71491b1c3bdfef2ce281a7cb4d583303
-       benchmarks/mdp/run_benchmark.py       md5 b92d737d20a2bd81d360de1c666b2ed0 pyperformance is distributed under the MIT
-   licence, reproduced in full below.
+       benchmarks/mdp/run_benchmark.py       md5 b92d737d20a2bd81d360de1c666b2ed0
+
+   pyperformance is distributed under the MIT licence, reproduced in full below.
 
    benchmarks/pyflate/run_benchmark_opt.py and benchmarks/mdp/run_benchmark_opt.py
    are our modifications of those files and are therefore derivative works
@@ -54,11 +55,15 @@ own. The files below are not, and are redistributed here under their own terms.
        You may use and distribute this code under any DFSG-compatible
        license (eg. BSD, GNU GPLv2).
 
-3. FlameGraph - not vendored
+3. FlameGraph - not vendored as source, but its JavaScript ships in the SVGs
    ------------------------------------------------------------------
    script_pyflate.sh and script_mdp.sh clone Brendan Gregg's FlameGraph tools
-   at run time to render the .folded stack files; no FlameGraph code is stored
-   in this repository. Those tools are distributed under the CDDL.
+   at run time to render the .folded stack files; the flamegraph.pl source is
+   not stored here. The rendered flame graphs under results/ are another
+   matter: flamegraph.pl embeds its own interactive search/zoom JavaScript in
+   every SVG it writes, so each results/*/flame_*.svg contains roughly 11 kB of
+   Brendan Gregg's code. That code is his, under the CDDL, and is present here
+   only as the output of running his tool.
    https://github.com/brendangregg/FlameGraph
 
 4. Prior art the accelerator draws on - no code copied

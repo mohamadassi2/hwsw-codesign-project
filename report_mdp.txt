@@ -9,7 +9,9 @@ Files that belong to this report
   benchmarks/mdp/run_benchmark_opt.py   our optimized version (same pyperf runner, same result)
   script_mdp.sh                         environment, baseline, flame graphs, optimized run, comparison
   scripts/local_check.py                in-process correctness check used in section 3
-  results/mdp/                          everything script_mdp.sh wrote in the course VM
+  scripts/compare_runs.py               drift between two independent runs (section 4.3)
+  results/reproducibility/              the independent from-scratch rerun in the guest
+  results/mdp/                          what script_mdp.sh wrote in the course VM
 
 
 1. Overview
@@ -116,6 +118,18 @@ be faster still, but it changes the probabilities at the last bits and we
 preferred a version whose result is provably identical to the original
 rather than one that merely stays inside the tolerance.
 
+One caveat on that identity, found by re-running the comparison on a newer
+interpreter than the VM's. The original accumulates each successor sum with
+sum(); the optimized sweep keeps a running total in a loop, which is where a
+good part of the speedup comes from. CPython 3.12 changed sum() to use
+compensated (Neumaier) summation for floats, so on 3.12 and later the
+ORIGINAL's value moves by about one ulp and the two results differ in the last
+bit - by 1.1e-16 at tolerance 0.192, against the benchmark's own 1e-6 gate.
+The course VM runs CPython 3.10.12, where sum() is a plain loop and the two are
+bit-identical, and every number in this report comes from that VM.
+scripts/local_check.py checks the two against each other rather than against a
+constant, and says which of the two situations it is in.
+
 Correctness. scripts/local_check.py runs both versions:
     baseline  0.8987358988699915
     optimized 0.8987358988699915        difference 0.0
@@ -176,6 +190,7 @@ Correctness. scripts/local_check.py runs both versions:
     3.804x against the shipped 3.820x, a difference of
     0.42%; the optimized time differs by 0.17%.
 
+
 5. Hardware acceleration proposal
 ----------------------------------------------------------------------------------
 Not applicable to this benchmark: the project's single accelerator targets
@@ -191,16 +206,17 @@ probability) pairs of each row through a multiply-accumulate unit, read V
 from a small local memory, write V back), and the graph here is small enough
 (a few thousand states, a few tens of thousands of edges) to sit entirely in
 on-chip memory. We did not design it; after the software fix the sweep is
-~37% of a 0.4 s run, and the exact-Fraction graph construction that remains
+~37% of a 1.3 s run, and the exact-Fraction graph construction that remains
 is not a datapath problem.
 
 
 6. Conclusion
 ----------------------------------------------------------------------------------
 The benchmark's cost was not the value iteration itself but the way it was
-indexed: dictionary lookups keyed by nested tuples inside the hottest loop,
-plus exact-arithmetic distributions recomputed thousands of times. Indexing
-the graph once and memoizing the distributions gives 3.82x in the course VM
-(4.99 s to 1.31 s, 73.8% less time), and a result identical to the original to
-the last bit, which is the kind of
-change we would be comfortable shipping to the benchmark suite itself.
+indexed: dictionary lookups keyed by nested tuples inside the hottest loop, plus
+exact-arithmetic distributions recomputed thousands of times. Indexing the graph
+once and memoizing the distributions gives 3.82x in the course VM (4.99 s to 1.31
+s, 73.8% less time), and a result identical to the original to the last bit on the
+VM's interpreter, which
+is the kind of change we would be comfortable shipping to the benchmark suite
+itself.

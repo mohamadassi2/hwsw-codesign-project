@@ -7,7 +7,7 @@ the slides state from the measured data and fails if the slide disagrees.
 
   python3 scripts/check_deck_numbers.py
 """
-import json, os, re, statistics, sys
+import base64, json, os, re, statistics, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DECK = os.path.join(ROOT, "docs", "presentation.html")
@@ -49,7 +49,12 @@ def main():
         """The slide must contain `value` printed as `fmt` (a format string)."""
         s = fmt.format(value)
         key = s.replace(",", "")
-        (oks if key in present else fails).append(f"{label}: slide should say {s}")
+        # On a passing line the expected value is the value the slide already
+        # shows, so spelling out "should say" there reads like a complaint.
+        if key in present:
+            oks.append(f"{label} ({s})")
+        else:
+            fails.append(f"{label}: slide should say {s}")
 
     # ---- measured times and speedups --------------------------------------
     pb, npb = mean(f"{ROOT}/results/pyflate/pyflate_base.json")
@@ -99,13 +104,18 @@ def main():
     want("symbols/clock", SYM / CYC, "{:.3f}")      # 1.000
     want("bits/symbol", BITS / SYM, "{:.2f}")
     syn = open(f"{ROOT}/docs/synthesis_yosys.txt").read()
-    allcells = [int(x) for x in re.findall(r"^(\d+) cells$", syn, re.M)]
-    want("yosys cells", allcells[0], "{:,}")
-    want("flip-flops", int(re.search(r"^(\d+) flip-flops", syn, re.M).group(1)), "{:d}")
+    cfg = re.findall(r"^(\d+) cells: (\d+) flip-flops, (\d+) gates", syn, re.M)
+    (oks if len(cfg) >= 2 else fails).append(f"synthesis file lists both configurations ({len(cfg)})")
+    if len(cfg) >= 2:
+        want("yosys cells", int(cfg[0][0]), "{:,}")
+        want("flip-flops", int(cfg[0][1]), "{:,}")
+        want("all-logic variant cells", int(cfg[1][0]), "{:,}")
     levels = int(re.search(r"length=(\d+)", syn).group(1))
     want("gate levels", levels, "{:d}")
-    want("table bits (kbit)", 19.4, "{:.1f}")
-    want("flattened variant cells", allcells[1], "{:,}")
+    want("symbol table (kbit)", 13.9, "{:.1f}")
+    for stale in ("2,768", "52,952", "19.4"):
+        (oks if stale not in txt else fails).append(
+            f"the superseded synthesis figure {stale} is gone from the slides")
     decode_ms = CYC / 200e6 * 1e3
     want("decode at 200 MHz (ms)", decode_ms, "{:.2f}")
 
@@ -134,10 +144,43 @@ def main():
     (oks if "15.7%" in rep and "48.2%" in rep else fails).append("those figures are the report's section 2 numbers")
 
     # ---- the block diagram is a graded deliverable; gate its figures too -------
-    dia = open(os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg"), encoding="utf-8").read()
+    dia_path = os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg")
+    dia = open(dia_path, encoding="utf-8").read()
     for label, needle in (("diagram: symbols", f"{SYM:,}"), ("diagram: cycles", f"{CYC:,}"),
                           ("diagram: symbols/cycle", "1.00")):
         (oks if needle in dia else fails).append(f"{label} ({needle})")
+
+    # The deck carries its own base64 copy of that diagram. A slide showing a
+    # stale copy is worse than a stale file, because it is what the room sees,
+    # so require the embed to be the committed file byte for byte.
+    raw = open(DECK, encoding="utf-8").read()
+    embedded = re.findall(r"data:image/svg\+xml;base64,([A-Za-z0-9+/=]+)", raw)
+    want_b64 = base64.b64encode(open(dia_path, "rb").read()).decode("ascii")
+    (oks if want_b64 in raw else fails).append(
+        "the deck embeds docs/huffman_accel_block_diagram.svg byte-identically")
+    stale = []
+    for b in embedded:
+        try:
+            d = base64.b64decode(b).decode("utf-8", "replace")
+        except Exception:
+            continue
+        for n in set(re.findall(r"\b148,\d{3}\b", d)):
+            if n not in (f"{SYM:,}", f"{CYC:,}"):
+                stale.append(n)
+    (oks if not stale else fails).append(
+        "no embedded slide image quotes a stale cycle count" + (f" (found {sorted(set(stale))})" if stale else ""))
+
+    # ---- per-symbol CPU cost: 235 ms / 148,271 symbols at 2.4 GHz -------------
+    cyc_per_sym = 0.235 / SYM * 2.4e9
+    for label, path in (("deck", DECK),
+                        ("docs/presentation_outline.md", os.path.join(ROOT, "docs", "presentation_outline.md")),
+                        ("report_pyflate.txt", os.path.join(ROOT, "report_pyflate.txt"))):
+        body = open(path, encoding="utf-8").read()
+        rounded = f"{round(cyc_per_sym, -2):,.0f}"        # 3,800
+        (oks if rounded in body else fails).append(
+            f"{label}: CPU cycles per symbol says {rounded}")
+        (oks if "1,600 CPU cycles" not in body and "~1,600 cycles" not in body else fails).append(
+            f"{label}: the 1,585 ns figure is not restated as 1,600 cycles")
 
     # ---- README headline table must match too ---------------------------------
     rd = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()

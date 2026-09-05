@@ -3,15 +3,16 @@
 This describes how the accelerator in `hw/rtl/` plugs into pyflate. The
 software side is the optimized decoder in `benchmarks/pyflate/run_benchmark_opt.py`;
 the hardware replaces exactly one call site, `HuffmanTable.find_next_symbol`,
-which the profile shows is still ~50% of the optimized run on its own, and ~62%
-together with the bit-extraction helpers it calls.
+which the profile shows is 27.0% of the optimized run on its own and 49.7%
+cumulatively, i.e. including the bit-extraction helpers it calls. (Those two
+shares must not be added together; report_pyflate.txt section 5.6 explains why.)
 
 ## What moves to hardware, what stays
 
 | Stage of `decode_huffman_block` | Where | Why |
 |---|---|---|
 | Parse block header, selectors, code lengths (`compute_used`, `compute_selectors_list`, `compute_tables`) | software | once per 900 KB block, negligible |
-| Canonical-Huffman symbol decode (`find_next_symbol` + `snoopbits`/`readbits`) | **hardware** | ~62% of remaining time; bit-serial work, one symbol per clock in hardware |
+| Canonical-Huffman symbol decode (`find_next_symbol` + `snoopbits`/`readbits`) | **hardware** | 49.7% of the optimized run, cumulative; bit-serial work, one symbol per clock in hardware |
 | Move-to-front, RUNA/RUNB run expansion | software | cheap after the decode fix (`pop`/`insert`, ~4% of the profile) |
 | Inverse BWT (`bwt_transform`, `bwt_reverse`) | software | a 400 KB pointer chase; memory-latency bound, no datapath helps it |
 | Final RLE, output assembly | software | one regex pass |
@@ -22,18 +23,35 @@ The interface is therefore: *tables in, bytes in, symbols out*.
 
 | Offset | Name | R/W | Meaning |
 |---|---|---|---|
-| 0x00 | `CTRL` | RW | bit0 `RUN` decode enabled; bit1 `RESET` soft reset; bit2 `LAST` the current DMA buffer is the end of the stream |
-| 0x04 | `STATUS` | R | bit0 `BUSY`; bit1 `ERR` (no code length matched); bits[15:8] bit-buffer level |
+| 0x00 | `CTRL` | RW | bit0 `RUN` decode enabled (drives `run`); bit2 `LAST` the current DMA buffer is the end of the stream (drives `in_last`, and may be held as a level after the final beat) |
+| 0x04 | `STATUS` | R | bit0 `BUSY` (`run & ~done & ~err & ~underrun`); bit1 `ERR` (no code length matched, or the table index left the symbol table); bit2 `DONE` (input flushed and the buffer empty); bit3 `UNDERRUN` (the stream ended part-way through a code); bits[15:8] bit-buffer level |
 | 0x08 | `TSEL` | RW | active table 0..5 (software writes it every 50 symbols, mirroring the bzip2 selector list) |
 | 0x0C | `TBL_ADDR` | W | `{bank[2:0], kind, index[8:0]}`: kind 0: length row `index`=L (1..20); kind 1: symbol entry |
 | 0x10 | `TBL_DATA` | W | kind 0: `{base[21:0], limit[20:0]}` packed over two writes; kind 1: 9-bit symbol. A write to `TBL_DATA` pulses `tbl_we`. |
 | 0x14 | `IN_ADDR` / `IN_LEN` | W | DMA source (compressed bytes): the accelerator pulls 32-bit words |
 | 0x1C | `OUT_ADDR` / `OUT_LEN` | W | DMA destination for the 9-bit symbols (stored as `uint16`) |
-| 0x24 | `SYM_COUNT` | R | symbols emitted so far |
+| 0x24 | `SYM_COUNT` | R | symbols *accepted* by the output so far (a symbol held while the consumer is not ready is counted once) |
+
+There is deliberately no soft-reset bit: the block is reset by `rst_n` with the
+rest of the design. `RUN` low is enough to hold it.
+
+The symbol port is a valid/ready stream. `sym_valid` may be asserted while the
+DMA is not ready; the symbol is then held unchanged until it is taken, and the
+decoder stalls rather than dropping it. `hw/tb` runs the whole benchmark block
+with that ready line gated pseudo-randomly (`make sim_bp`) precisely so this is
+tested and not merely asserted.
 
 Table programming for one block is at most 6 × (20 rows + 258 symbols) ≈ 1,700
 register writes, done once per 900 KB block: microseconds against a decode
-that the software spends tens of milliseconds on.
+that the software spends tens of milliseconds on. For the benchmark's block the
+tables are sparser than the worst case: `gen_vectors.py` emits 120 length rows
+and 882 symbol entries, so 1,002 `tbl_we` pulses. (The ~1,700 figure counts
+MMIO writes at the maximum table size; the 1,002 counts the pulses actually
+issued for this input. Both appear in the report and mean different things.)
+
+The host must write all twenty length rows of a bank before selecting it. The
+table arrays are not reset, so a row left over from a previous block would
+otherwise still be compared against.
 
 ## Data flow for one bzip2 block
 
@@ -50,7 +68,9 @@ CTRL.RUN = 1                           --> one symbol per clock:
                                            -> symbol SRAM -> DMA out
 write TSEL every 50 symbols            --> (or: hand the selector list to the
                                             accelerator and let a counter do it)
-wait for STATUS.BUSY == 0
+poll STATUS: BUSY drops on DONE, ERR or UNDERRUN
+                                           (for bzip2 the host also knows the block
+                                            is over when it decodes the EOB symbol)
 MTF / run expansion / BWT / RLE on the symbol buffer (unchanged code)
 ```
 

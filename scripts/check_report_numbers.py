@@ -20,7 +20,12 @@ OK = []
 
 
 def check(name, cond, detail=""):
-    (OK if cond else FAIL).append(f"{name}{('  ' + detail) if detail else ''}")
+    # `detail` explains what went wrong, so it belongs only on a failing line;
+    # appending it to a passing line makes the report read like a contradiction.
+    if cond:
+        OK.append(name)
+    else:
+        FAIL.append(f"{name}{('  ' + detail) if detail else ''}")
 
 
 def mean_of(path):
@@ -150,6 +155,33 @@ check("the corrected share is used, not the double-counted 62%",
       f"{_flat_pf.count('62%')} mention(s) of 62%, "
       f"{_flat_pf.count('earlier draft of this report did exactly that and quoted ~62%')} in the sentence that records the mistake")
 
+# The same retracted share used to live in the supporting documents, where the
+# guard above could not see it. Nothing outside that one sentence may say 62%.
+for _rel in ("docs/hw_sw_interface.md", "docs/presentation_outline.md", "README.md", "docs/presentation.html"):
+    _p = os.path.join(ROOT, _rel)
+    if os.path.exists(_p):
+        _t = re.sub(r"\s+", " ", open(_p, encoding="utf-8").read())
+        check(f"{_rel} does not quote the retracted 62%", "62%" not in _t,
+              "the corrected cumulative share is 49.7%")
+
+# The conclusion must quote the ratios section 5.6 actually computes, not the
+# ones an earlier draft reached from the double count.
+_m56 = re.search(r"=\s*~(\d+) ms\s*->\s*~([\d.]+)x over the optimized software,\s*"
+                 r"~([\d.]+)x over the shipped benchmark", _pf)
+check("section 5.6 states the Amdahl result and both ratios", _m56 is not None)
+if _m56:
+    _ms, _vs_opt, _vs_base = _m56.group(1), _m56.group(2), _m56.group(3)
+    _concl = _pf[_pf.rindex("6. Conclusion"):] if "6. Conclusion" in _pf else ""
+    check("the conclusion quotes 5.6's ratio over the optimized code",
+          f"{_vs_opt}x" in _concl, f"5.6 computes {_vs_opt}x")
+    check("the conclusion quotes 5.6's ratio over the shipped benchmark",
+          f"{_vs_base}x" in _concl, f"5.6 computes {_vs_base}x")
+    _out = os.path.join(ROOT, "docs", "presentation_outline.md")
+    if os.path.exists(_out):
+        _o = open(_out, encoding="utf-8").read()
+        check("the outline quotes the same two ratios",
+              f"{_vs_opt}x" in _o and f"{_vs_base}x" in _o, f"expected {_vs_opt}x / {_vs_base}x")
+
 # ---------------------------------------------------------------- derived: Amdahl
 m = re.search(r"Take the optimized run measured in the VM, ([\d.]+) ms, of which that part is\s+"
               r"([\d.]+)% = ~([\d.]+) ms", txt)
@@ -177,10 +209,47 @@ syn = os.path.join(ROOT, "docs", "synthesis_yosys.txt")
 if os.path.exists(syn):
     s = open(syn).read()
     txt_n = nums(txt)
-    _cells = re.findall(r"^(\d+) cells$", s, re.M); _d = re.search(r"length=(\d+)", s); _ff = re.search(r"^(\d+) flip-flops", s, re.M)
-    for label, tok in (("cells", _cells[0] if _cells else None), ("flattened cells", _cells[1] if len(_cells) > 1 else None),
-                       ("depth", _d.group(1) if _d else None), ("flip-flops", _ff.group(1) if _ff else None), ("kbit", "19.4")):
-        check(f"synthesis {label} ({tok}) quoted in the report", tok is not None and tok in txt_n, "from docs/synthesis_yosys.txt")
+    # Each configuration line is "<cells> cells: <ff> flip-flops, <gates> gates[, ...]".
+    _cfg = re.findall(r"^(\d+) cells: (\d+) flip-flops, (\d+) gates", s, re.M)
+    _d = re.search(r"length=(\d+)", s)
+    check("docs/synthesis_yosys.txt reports both configurations", len(_cfg) >= 2,
+          f"found {len(_cfg)}")
+    if len(_cfg) >= 2:
+        (_c, _f, _g), (_cf, _ff2, _gf) = _cfg[0], _cfg[1]
+        for label, tok in (("cells", _c), ("flip-flops", _f), ("gates", _g),
+                           ("all-logic cells", _cf),
+                           ("depth", _d.group(1) if _d else None)):
+            pretty = f"{int(tok):,}" if tok else None
+            check(f"synthesis {label} ({tok}) quoted in the report",
+                  tok is not None and (tok in txt_n or (pretty and pretty in txt)),
+                  "from docs/synthesis_yosys.txt")
+        # The superseded memory-macro figures must not come back. 2,768 may
+        # appear only in the sentence that records why it was withdrawn, the
+        # same rule the retracted 62% share is held to above.
+        _flat_txt = re.sub(r"\s+", " ", txt)
+        check("the superseded 2,768-cell figure appears only where it is retracted",
+              _flat_txt.count("2,768") == _flat_txt.count("An earlier draft quoted 2,768 cells"),
+              f"{_flat_txt.count('2,768')} mention(s)")
+        for stale in ("52,952", "19.4 kbit"):
+            check(f"the superseded synthesis figure {stale} is gone from the report",
+                  stale not in txt, "it assumed a 20-read-port SRAM")
+
+# ---------------------------------------------------------------- mutations
+# The mutation score is a headline claim in both the report and the slides, and
+# hw/tb/MUTATIONS.md is where it is recorded. Recount it from that table rather
+# than trusting three documents to be edited together.
+_mut = os.path.join(ROOT, "hw", "tb", "MUTATIONS.md")
+if os.path.exists(_mut):
+    _m = open(_mut, encoding="utf-8").read()
+    _killed = len(re.findall(r"\|\s*KILLED", _m))
+    _escaped = len(re.findall(r"\*\*escapes", _m))
+    _total = _killed + _escaped
+    check(f"MUTATIONS.md lists {_total} mutations, {_killed} killed", _total > 0 and _killed > 0)
+    for _rel in ("report_pyflate.txt", "docs/presentation.html"):
+        _t = re.sub(r"\s+", " ", open(os.path.join(ROOT, _rel), encoding="utf-8").read())
+        check(f"{_rel} quotes the mutation score {_killed} of {_total}",
+              f"{_killed} of {_total}" in _t or f"{_killed} of the {_total}" in _t,
+              f"MUTATIONS.md records {_killed}/{_total}")
 
 # ---------------------------------------------------------------- report
 print(f"PASS {len(OK)}   FAIL {len(FAIL)}\n")
