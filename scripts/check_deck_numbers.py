@@ -127,6 +127,12 @@ def main():
                           ("output bytes", "399,360")):
         (oks if needle.replace(",", "") in present or needle in txt else fails).append(label)
 
+    # ---- the baseline slide must carry the BASELINE cProfile figures ----------
+    rep = open(os.path.join(ROOT, "report_pyflate.txt"), encoding="utf-8").read()
+    base_slide = "15.7% self and 48.2%" in re.sub(r"\s+", " ", txt)
+    (oks if base_slide else fails).append("slide 6 quotes the baseline cProfile figures (15.7 / 48.2)")
+    (oks if "15.7%" in rep and "48.2%" in rep else fails).append("those figures are the report's section 2 numbers")
+
     # ---- the block diagram is a graded deliverable; gate its figures too -------
     dia = open(os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg"), encoding="utf-8").read()
     for label, needle in (("diagram: symbols", f"{SYM:,}"), ("diagram: cycles", f"{CYC:,}"),
