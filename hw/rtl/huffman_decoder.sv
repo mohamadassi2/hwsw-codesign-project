@@ -20,14 +20,14 @@
 // selected per 50-symbol group by `tsel`, mirroring bzip2's selector list).
 
 module huffman_decoder #(
-    parameter int MAXBITS = 20,    // bzip2 = 20, DEFLATE would be 15
-    parameter int NSYM    = 258,   // bzip2 alphabet: 256 MTF values + RUNA/RUNB (EOB included)
-    parameter int SYMW    = 9,
-    parameter int NTAB    = 6,
-    localparam int TSW    = $clog2(NTAB),
-    localparam int IDXW   = $clog2(NSYM),
-    localparam int CW     = MAXBITS + 1,   // code / limit width (limit can be 2^L)
-    localparam int BW     = MAXBITS + 2    // signed base width
+    parameter MAXBITS = 20,    // bzip2 = 20, DEFLATE would be 15
+    parameter NSYM    = 258,   // bzip2 alphabet: 256 MTF values + RUNA/RUNB (EOB included)
+    parameter SYMW    = 9,
+    parameter NTAB    = 6,
+    localparam TSW    = $clog2(NTAB),
+    localparam IDXW   = $clog2(NSYM),
+    localparam CW     = MAXBITS + 1,   // code / limit width (limit can be 2^L)
+    localparam BW     = MAXBITS + 2    // signed base width
 )(
     input  logic                 clk,
     input  logic                 rst_n,

@@ -11,9 +11,9 @@
 // what the software decoder does too (it pads at EOF).
 
 module bitreader #(
-    parameter int MAXBITS = 20,   // widest code the decoder may ask to see
-    parameter int INW     = 32,   // refill width
-    parameter int BUFW    = 64    // must be >= MAXBITS + INW
+    parameter MAXBITS = 20,   // widest code the decoder may ask to see
+    parameter INW     = 32,   // refill width
+    parameter BUFW    = 64    // must be >= MAXBITS + INW
 )(
     input  logic               clk,
     input  logic               rst_n,

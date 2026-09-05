@@ -1,9 +1,3 @@
-"""Vendored from the pyperformance benchmark suite (bm_mdp), unmodified.
-
-pyperformance is distributed under the MIT licence; see THIRD-PARTY.md at the
-root of this repository for the notice and for everything else in here that is
-not ours.
-"""
 import collections
 from collections import defaultdict
 from fractions import Fraction

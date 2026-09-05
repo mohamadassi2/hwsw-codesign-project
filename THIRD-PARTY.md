@@ -11,7 +11,11 @@ own. The files below are not, and are redistributed here under their own terms.
    ------------------------------------------------------------------
    Vendored unmodified from the pyperformance benchmark suite (bm_pyflate and
    bm_mdp) so that the optimized versions beside them can be compared against
-   exactly what the suite ships. pyperformance is distributed under the MIT
+   exactly what the suite ships. They are byte-identical to the files
+   pyperformance installs, which can be checked directly:
+
+       benchmarks/pyflate/run_benchmark.py   md5 71491b1c3bdfef2ce281a7cb4d583303
+       benchmarks/mdp/run_benchmark.py       md5 b92d737d20a2bd81d360de1c666b2ed0 pyperformance is distributed under the MIT
    licence, reproduced in full below.
 
    benchmarks/pyflate/run_benchmark_opt.py and benchmarks/mdp/run_benchmark_opt.py

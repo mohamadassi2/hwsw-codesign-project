@@ -10,13 +10,13 @@
 // chase that gains nothing from a datapath.
 
 module huffman_accel_top #(
-    parameter int MAXBITS = 20,
-    parameter int NSYM    = 258,
-    parameter int SYMW    = 9,
-    parameter int NTAB    = 6,
-    parameter int INW     = 32,
-    localparam int TSW    = $clog2(NTAB),
-    localparam int IDXW   = $clog2(NSYM)
+    parameter MAXBITS = 20,
+    parameter NSYM    = 258,
+    parameter SYMW    = 9,
+    parameter NTAB    = 6,
+    parameter INW     = 32,
+    localparam TSW    = $clog2(NTAB),
+    localparam IDXW   = $clog2(NSYM)
 )(
     input  logic               clk,
     input  logic               rst_n,
