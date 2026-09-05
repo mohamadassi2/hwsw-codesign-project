@@ -47,6 +47,9 @@ module huffman_decoder #(
     input  logic [TSW-1:0]       tsel,        // active table this symbol
     input  logic [MAXBITS-1:0]   peek,        // next MAXBITS bits, MSB first
     input  logic                 peek_valid,
+    // 7 bits is $clog2(BUFW+1) for the BUFW=64 the top instantiates. It is
+    // written literally rather than derived because the decoder does not take
+    // BUFW as a parameter; a larger buffer would need this widened with it.
     input  logic [6:0]           avail,       // bits really in the buffer
     input  logic                 out_ready,   // symbol consumer can take one
     input  logic                 enable,      // decode a symbol this cycle

@@ -111,11 +111,39 @@ Presentation
     code dump, with the measured VM numbers and the flame graphs." Then:
     "make it look better" - twice.
 
+Auditing the work against itself
+  Late in the project we stopped adding and started attacking what we had,
+  in parallel VMs on the course server:
+  - "Attack the verification chain: change one number at a time and check
+    that the checkers reject the tree." Seventeen perturbations, fifteen
+    caught, two through - both because a check asked whether a value appears
+    anywhere in a report rather than where it is quoted. The gates now check
+    by shape: every 148,xxx figure must be the symbol or the cycle count,
+    every per-symbol cost must be the one recomputed from the measurement.
+  - "Re-review the RTL changes we just made, looking for what we broke."
+    We had rewritten the end-of-input condition to accept a host that holds
+    LAST as a level; it cannot distinguish that from LAST raised before the
+    final beat arrives, so one producer bubble ended the stream for good. It
+    is back to the AXI form, make sim_last_level drives the level style with
+    bubbles, and the testbench now fails if DONE asserts early.
+  - "Check the reports against their own artifacts." Three claims did not
+    survive: the per-function shares were from a profiling run that had been
+    replaced (51.1%, not 49.7%), the mdp counters were quoted from the run
+    the report says it does not use, and the ablation reverted move-to-front
+    by patching a function the optimized decoder never calls - so it reverted
+    3% of the work and reported the change as worth nothing.
+
+  That last one is the one worth remembering. A revert that does not revert
+  reads exactly like a measurement, and we believed it until it was rebuilt
+  to substitute source. Measured properly, the change we had called the main
+  algorithmic fix is the smallest of the three separable ones.
+
 What we did with all of this
   Every change suggested by the assistant was read, and the ones that
   changed behaviour were run against the original before being kept: the
   benchmark outputs are compared byte for byte, the mdp values bit for bit,
   and the RTL against a golden trace of the real block. The explanations in
-  the reports are ours; where the assistant's first explanation was wrong
-  (the perf sampling mechanism) the report says what the evidence shows and
-  no more.
+  the reports are ours. Where the assistant's first explanation was wrong we
+  say so in the report rather than quietly replacing it - the perf sampling
+  mechanism twice, the accelerator's area once, and the attribution of the
+  software speedup once.
