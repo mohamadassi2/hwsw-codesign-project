@@ -41,13 +41,19 @@ endef
 synth_vectors:
 	@$(PY) tb/gen_synth_vectors.py
 
-sim_all: sim sim_bp synth_vectors build/tb
+# The directed sets run FIRST: they are milliseconds each, and a broken decoder
+# usually fails one of them, so the expensive 148,271-symbol runs are only
+# reached by a design that already passed the cheap checks. That ordering is
+# what makes an eighteen-mutation sweep affordable on one vCPU.
+sim_all: synth_vectors build/tb
 	@echo "directed vector sets:"
 	$(call run_one,lengths,)
 	$(call run_one,eof,)
 	$(call run_one,err,+expect_err)
 	$(call run_one,badidx,+expect_err)
 	$(call run_one,underrun,+expect_underrun)
+	@$(MAKE) --no-print-directory sim
+	@$(MAKE) --no-print-directory sim_bp
 	@echo "all simulations passed"
 
 build/tb: $(RTL) $(TB)

@@ -342,12 +342,18 @@ module tb_huffman;
     endfunction
 
     // watchdog
-    initial begin
-        #200_000_000;   // 200 ms sim time = 20M cycles
-        // A hang is a failure. Without this the run ends quietly with exit 0,
-        // so a decoder that stalls (or an X on sym_valid) looks like success.
-        $display("TIMEOUT: decoded %0d/%0d symbols", nchk, nsym);
-        $display("FAIL (timeout)");
-        $fatal(1);
+    // Cycle-based, and proportional to the work: a stalled decoder must fail,
+    // but a 20-million-cycle absolute limit made every directed test - some of
+    // which decode four symbols - run for twenty million cycles before giving
+    // up, which is most of the cost of a mutation sweep. Four cycles per
+    // expected symbol plus a fixed margin is far more than the one cycle per
+    // symbol the design achieves, and fails a stall almost immediately on the
+    // small sets.
+    always @(posedge clk) begin
+        if (run_en && cycles > (longint'(nsym) * 4 + 20000)) begin
+            $display("TIMEOUT: decoded %0d/%0d symbols in %0d cycles", nchk, nsym, cycles);
+            $display("FAIL (timeout)");
+            $fatal(1);
+        end
     end
 endmodule

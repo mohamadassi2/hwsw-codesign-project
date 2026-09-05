@@ -43,7 +43,7 @@ run() {   # run NAME 'sed-expression' FILE
 echo "suite: make $SUITE"
 echo "control (no mutation): $( (rm -rf build; make $SUITE 2>&1) | grep -E 'all simulations passed|FAILED' | tail -1)"
 run "symbol output driven to X"         's/sym <= symtab\[tsel\]\[idx\];/sym <= '"'"'x;/'                          rtl/huffman_decoder.sv
-run "sym_valid stuck low"               's/if (take)           sym_valid <= 1.b1;/if (1'"'"'b0)          sym_valid <= 1'"'"'b1;/' rtl/huffman_decoder.sv
+run "sym_valid stuck low"               's/if (take \&\& idx_ok)  sym_valid <= 1.b1;/if (1'"'"'b0)               sym_valid <= 1'"'"'b1;/' rtl/huffman_decoder.sv
 run "hit compare < changed to <="       's/code\[L\] < limit_r\[tsel\]\[L\]/code[L] <= limit_r[tsel][L]/'       rtl/huffman_decoder.sv
 run "base adder off by one"             's/idx_s = base_r\[tsel\]\[len_c\] + /idx_s = base_r[tsel][len_c] + 1 + /' rtl/huffman_decoder.sv
 run "priority encoder direction"        's/for (int L = MAXBITS; L >= 1; L--)/for (int L = 1; L <= MAXBITS; L++)/' rtl/huffman_decoder.sv
@@ -67,5 +67,5 @@ run "comparators only for lengths 2..15"        's/for (int L = 1; L <= MAXBITS;
 run "consume driven ungated"                    's/assign len       = take ? len_c : 5.d0;/assign len       = len_c;/' rtl/huffman_decoder.sv
 run "output backpressure ignored"               's/assign out_free  = !sym_valid || out_ready;/assign out_free  = 1'"'"'b1;/' rtl/huffman_decoder.sv
 run "symbol counter counts offers not takes"    's/else if (sym_valid \&\& out_ready) sym_count/else if (sym_valid) sym_count/' rtl/huffman_accel_top.sv
-run "short-code guard removed at end of stream" 's/assign take      = fire \&\& found \&\& enough \&\& idx_ok;/assign take      = fire \&\& found \&\& idx_ok;/' rtl/huffman_decoder.sv
-run "symbol index range check removed"          's/assign take      = fire \&\& found \&\& enough \&\& idx_ok;/assign take      = fire \&\& found \&\& enough;/' rtl/huffman_decoder.sv
+run "short-code guard removed at end of stream" 's/hit\[L\]     = hit_raw\[L\] \&\& fits\[L\];/hit[L]     = hit_raw[L];/' rtl/huffman_decoder.sv
+run "symbol index range check removed"          's/take \&\& idx_ok/take/g'                                     rtl/huffman_decoder.sv

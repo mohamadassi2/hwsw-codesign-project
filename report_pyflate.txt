@@ -420,13 +420,13 @@ passes in every run.
     reruns the real block with the input and output handshakes gated
     pseudo-randomly. `make sim_all` runs all six.
 
-    Against that suite 16 of the 18 mutations are caught. The two survivors are
+    Against that suite 17 of the 18 mutations are caught. The one survivor is
     reported rather than removed: the bit reader's saturating bit-count guard
     is unreachable, because the decoder now refuses to consume more bits than
-    the buffer holds, and gating the enable on the sticky error flag is an
-    equivalent mutation, because a decode error leaves the code length at zero
-    so no bits are consumed either way. Unreachable and equivalent mutants
-    cannot be killed by any test; saying so is the honest report.
+    the buffer holds, so nothing can drive the counter below zero. Unreachable
+    code cannot be killed by any test, and deleting the guard to improve the
+    score would be the wrong trade - it costs nothing and protects the reader's
+    interface against a consumer that does not make the same promise.
 
 5.5 Hardware/software interface (docs/hw_sw_interface.md has the full map)
     Memory-mapped registers: CTRL (run / reset / last), STATUS (busy, error,

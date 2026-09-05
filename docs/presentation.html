@@ -227,8 +227,8 @@ for the code lengths this input happens to use. Not a weakness of the design &md
 one well-formed stimulus.</p>
 <p>So the stimulus grew: four directed streams (every code length 1&ndash;20, a stream ending on a
 code boundary, an unmatchable code, a corrupt table, a stream one bit short) plus a run with both
-handshakes throttled. Now <span class="num">16 of 18</span> are caught. The two survivors are
-unreachable and equivalent mutants &mdash; reported, not removed.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>14/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; cost</span><span class="kick">15</span></div><div class="body"><h2>What it costs in silicon</h2>
+handshakes throttled. Now <span class="num">17 of 18</span> are caught. The one survivor is an
+unreachable guard &mdash; reported, not removed.</p></div></div></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>14/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; cost</span><span class="kick">15</span></div><div class="body"><h2>What it costs in silicon</h2>
 <div class="grid g3">
 <div class="stat alt"><div class="k">logic</div><div class="v">18,787</div><div class="s2">cells, 5,441 of them flip-flops (yosys)</div></div>
 <div class="stat alt"><div class="k">symbol table</div><div class="v">13.9<span style="font-size:.42em"> kbit</span></div><div class="s2">1.7 KB of SRAM; limit/base are registers</div></div>

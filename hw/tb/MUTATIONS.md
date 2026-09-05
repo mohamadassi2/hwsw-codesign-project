@@ -28,7 +28,7 @@ streams that reach the corners the benchmark cannot:
 `make sim_bp` reruns the real block with `out_ready` and `in_valid` gated
 pseudo-randomly, which is what makes the handshakes testable at all.
 
-## Result: 16 of 18 killed, 2 equivalent
+## Result: 17 of 18 killed, 1 unreachable
 
 | # | mutation | verdict |
 |---|---|---|
@@ -41,7 +41,7 @@ pseudo-randomly, which is what makes the handshakes testable at all.
 | 7 | end-of-input term dropped from `peek_valid` | KILLED (timeout) |
 | 8 | bit-count underflow guard removed | **escapes - unreachable, see below** |
 | 9 | `flush` tied low in the top | KILLED (timeout) |
-| 10 | decode error no longer halts the engine | **escapes - equivalent, see below** |
+| 10 | decode error no longer halts the engine | KILLED (the engine kept going after err) |
 | 11 | refill decided from the stale bit count | KILLED (throughput 148,275 > 148,273) |
 | 12 | `level` output stuck at zero | KILLED (timeout) |
 | 13 | comparators built only for lengths 2..15 | KILLED (timeout on `vectors_lengths`) |
@@ -51,7 +51,7 @@ pseudo-randomly, which is what makes the handshakes testable at all.
 | 17 | short-code guard removed at end of stream | KILLED (consumed more bits than the buffer held) |
 | 18 | symbol index range check removed | KILLED (a corrupt table returned a symbol) |
 
-## The two that survive, and why that is the right answer
+## The one that survives, and why that is the right answer
 
 **8 - the bit reader's saturating `cnt_after`.** The decoder only emits a
 symbol when its whole code is in the buffer (`enough` in
@@ -61,13 +61,13 @@ reader's own interface, for any other consumer that does not make that
 promise. Unreachable code cannot be killed by any test, and listing it here is
 the honest way to say so rather than deleting the guard to improve a score.
 
-**10 - gating `fire` on the sticky error flag.** When no code length matches,
-`found` is low, so `len` is zero and no bits are consumed. The decoder
-therefore cannot advance past the offending bits whether or not the sticky
-flag gates the enable, and `err_q` itself is set and never cleared in both
-versions. The mutation is *equivalent*: it changes the text, not the
-observable behaviour. The gate is kept because it states the halt explicitly
-instead of leaving it to emerge from `found` being low.
+It is recorded rather than removed. A mutation score is only meaningful if the
+survivors are explained, and deleting an unreachable guard to make the number
+look better would be the wrong trade: the guard costs nothing and protects the
+reader's own interface against a future consumer that does not make the same
+promise.
 
-Both are recorded rather than removed. A mutation score is only meaningful if
-the survivors are explained.
+The halt-on-error mutation (10) used to survive too. It is caught now because
+the directed error test keeps the engine enabled after `err` asserts and
+requires that no further symbols or bits appear in the next hundred cycles -
+without that, "a decode error halts the decoder" was a claim no test made.
