@@ -451,6 +451,28 @@ if os.path.exists(_syn):
               _stamp.group(1) == _h.hexdigest(),
               f"the file was generated from different RTL; run `make synth` in hw/")
 
+# ---------------------------------------------------------------- headline ratios
+# Both headline speedups appear three times in their report: the 4.1 table, the
+# compare_to table beside it, and the conclusion. Checking that the right value
+# appears SOMEWHERE lets any one of the three be wrong, which a gate-mutation
+# run demonstrated by changing only the first. Every occurrence of the shape has
+# to be the measured value.
+for _b, _rep, _name in (("pyflate", _pf, "report_pyflate.txt"), ("mdp", _md, "report_mdp.txt")):
+    _bs = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_base.json"))
+    _os2 = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_opt.json"))
+    if not (_bs and _os2):
+        continue
+    _want = f"{_bs / _os2:.2f}x"
+    # Sections 3.6 and 4.3 exist to compare runs and variants, so the other
+    # ratios in them are legitimate; everywhere else the only ratio of this
+    # shape is the headline one.
+    _body = _rep.replace(_sect(_rep, "4.3 Reproducibility", 3200), "")
+    _body = _body.replace(_sect(_body, "3.6 Which of those five actually earned the speedup", 3000), "")
+    _found = re.findall(r"(?<![\d.])(\d\.\d\d)x(?![\d.])", _body)
+    _bad = sorted({v + "x" for v in _found} - {_want, "2.00x", "1.95x", "4.80x"})
+    check(f"{_name}: every headline ratio outside 4.3 is the measured {_want}",
+          not _bad, f"also found {_bad}")
+
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and
 # hw/tb/MUTATIONS.md is where it is recorded. Recount it from that table rather

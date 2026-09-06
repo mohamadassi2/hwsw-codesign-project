@@ -25,6 +25,15 @@ sim_bp: build/tb tb/vectors/expected.txt
 	if [ $$rc -ne 0 ]; then echo "make sim_bp: simulator exited $$rc"; exit $$rc; fi; \
 	grep -q '^PASS' build/sim_bp.log || { echo "make sim_bp: FAILED (see build/sim_bp.log)"; exit 1; }
 
+# LAST held as a level, with producer bubbles, on the real block: the
+# register-mapped host style. Declared .PHONY once without a recipe, which make
+# reports as "Nothing to be done" and reports as success - so this run silently
+# did not exist while three documents cited it.
+sim_last_level: build/tb tb/vectors/expected.txt
+	@$(VVP) build/tb +bp +last_level > build/sim_last.log 2>&1; rc=$$?; tail -3 build/sim_last.log; \
+	if [ $$rc -ne 0 ]; then echo "make sim_last_level: simulator exited $$rc"; exit $$rc; fi; \
+	grep -q '^PASS' build/sim_last.log || { echo "make sim_last_level: FAILED (see build/sim_last.log)"; exit 1; }
+
 # The directed sets. tb_huffman.sv always reads tb/vectors/, so each set is run
 # from its own directory with tb/vectors pointing at it - no path handling in
 # the Verilog, which the course VM's Icarus 11 is fussy about.
@@ -56,6 +65,7 @@ sim_all: synth_vectors build/tb
 	$(call run_one,drain,+last_level +bubble)
 	@$(MAKE) --no-print-directory sim
 	@$(MAKE) --no-print-directory sim_bp
+	@$(MAKE) --no-print-directory sim_last_level
 	@echo "all simulations passed"
 
 build/tb: $(RTL) $(TB)
