@@ -107,7 +107,7 @@ most max_bits comparisons, and the table is already canonical.
 Two smaller things sit underneath it: the bit reader refills one byte at a time
 through the io stack (67,562 calls to f.read(1)), and move_to_front builds three
 slices and a concatenation for every decoded byte. Finally the inverse BWT
-(bwt_reverse, 10.0% cumulative, of which bwt_transform is 5.0%) is a loop over 400
+(bwt_reverse, 11.6% cumulative, of which bwt_transform is 4.7%) is a loop over 400
 KB doing pointer chasing through a Python list; it is memory-latency bound by
 nature.
 
@@ -148,7 +148,7 @@ loop a tenth of a second long - too short for a 997 Hz sampler to say much. Both
 reported "no samples", and the report repeated it.
 
 Recorded properly, over three seconds of CPU-bound Python, cpu-clock and
-task-clock do sample: 5,125 and 3,604 samples, in
+task-clock do sample: 5,125 and 3,765 samples, in
 results/pyflate/perf_events_probe.txt. So the blanket claim was wrong.
 
 What actually blocked the capture is narrower and we isolated it by bisecting

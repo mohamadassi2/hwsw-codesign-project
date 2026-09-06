@@ -521,6 +521,22 @@ for _b, _rep, _name, _rows in (
             check(f"{_name}: the {_tag} cProfile table's {_fn} cumulative share ({_cum:.1f}%)",
                   f"{_cum:.1f}%" in _rep, f"from results/{_b}/cprofile_{_tag}.txt")
 
+# ---------------------------------------------------------------- perf probe
+# Section 2 quotes the sample counts out of results/<b>/perf_events_probe.txt.
+# One of them was a figure from an earlier run that the file no longer contained.
+for _b, _rep, _name in (("pyflate", _pf, "report_pyflate.txt"), ("mdp", _md, "report_mdp.txt")):
+    _pp = os.path.join(ROOT, "results", _b, "perf_events_probe.txt")
+    if not os.path.exists(_pp):
+        continue
+    for _ev, _n in re.findall(r"(cpu-clock|task-clock): works \((\d+) samples\)", open(_pp, encoding="utf-8").read()):
+        _pretty = f"{int(_n):,}"
+        if _pretty in _rep or _n in _rep:
+            check(f"{_name}: the {_ev} sample count it quotes ({_pretty})", True)
+        else:
+            check(f"{_name}: the {_ev} sample count it quotes ({_pretty})",
+                  # only required where the report actually discusses that event
+                  _ev not in _rep, f"from results/{_b}/perf_events_probe.txt")
+
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and
 # hw/tb/MUTATIONS.md is where it is recorded. Recount it from that table rather

@@ -43,7 +43,15 @@ finishes with 45 bits left. The hardware cannot tell padding from data; only the
 decoder's caller knows the block ended, because it recognises the EOB symbol.
 So the host stops on EOB (or on the symbol count it already tracks for `TSEL`),
 and reads `DONE` only to distinguish "input exhausted" from "still running".
-`ERR` and `UNDERRUN` are the two conditions worth polling for.
+`ERR` is the fault worth polling for.
+
+`UNDERRUN` needs the same care as `DONE`. It means a code was longer than the
+bits left, which on a corrupt or truncated stream is a fault - but a bzip2 block
+is byte-padded, so a host that leaves `RUN` high past the EOB symbol will decode
+the padding and then hit `UNDERRUN` as the *normal* end of the block. Read it as
+"the stream stopped part-way through a code", not as "something went wrong": on a
+well-formed block reached through EOB it never asserts, and `hw/tb` asserts
+exactly that (`make sim` fails if `underrun` rises on the benchmark block).
 
 `LAST` may be presented either with the final beat or held as a level; the
 accelerator flushes on the handshake of the final beat either way. It must not
