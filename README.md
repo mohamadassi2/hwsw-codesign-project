@@ -118,7 +118,7 @@ tb/mutate.sh     # injects 20 bugs one at a time and reports which the suite cat
 ```
 
 `make sim_all` is the one to run if you only run one: `sim` alone passes on
-eight of those twenty injected bugs, because a single well-formed stream never
+twelve of those twenty injected bugs, because a single well-formed stream never
 reaches end-of-input, an unmatchable code, a stalled consumer or the extreme
 code lengths. `hw/tb/MUTATIONS.md` records the whole table.
 

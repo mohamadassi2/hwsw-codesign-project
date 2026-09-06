@@ -66,4 +66,4 @@ mdp (about 4 min)
     - why not accelerate BWT: one dependent memory access per byte;
     - what happens on a corrupt stream: err, no length matched;
     - how the selector switch is handled: TSEL register or selector SRAM;
-    - clock and pipeline depth: 100 levels, can split the compare tree.
+    - clock and pipeline depth: 98 levels, can split the compare tree.

@@ -46,28 +46,34 @@ Data structures and algorithm.
 2. Initial analysis
 ----------------------------------------------------------------------------------
 Tools as for pyflate: py-spy for Python-level frames, rendered with the
-FlameGraph scripts, and cProfile for exact call counts. perf record collected
-no samples here either, for any event we tried - results/mdp/perf_event_chosen.txt
-records "none" and results/mdp/perf_base.folded is empty - so the flame graphs
-in results/mdp/ are py-spy's. report_pyflate.txt section 2 has the evidence on
+FlameGraph scripts, and cProfile for exact call counts. perf record behaves here
+exactly as it does for pyflate, and the same care applies to describing it:
+hardware `cycles` collects nothing, while cpu-clock and task-clock do sample
+when recorded properly - 3,910 and 3,625 samples in
+results/mdp/perf_events_probe.txt. What failed was our capture of the benchmark,
+which ran the virtual environment's interpreter; results/mdp/perf_event_chosen.txt
+records "none" and results/mdp/perf_base.folded is empty. So the flame graphs in
+results/mdp/ are py-spy's. report_pyflate.txt section 2 has the evidence on
 why sampling does not work in this guest.
 
-Where the time goes (cProfile, one evaluate(), baseline):
+Where the time goes (cProfile, one evaluate(), baseline). Recomputed from
+results/mdp/cprofile_base.txt by scripts/cprofile_shares.py; shares are of
+bench_mdp's cumulative time, 8.912 s under the profiler:
                                        self     cum       calls
-  Battle.evaluate                      18.6%   98.0%           1
-  <genexpr> sum(dmin[sp2]*p ...)       14.8%   14.8%   2,018,493
-  <genexpr> sum(dmax[sp2]*p ...)       14.0%   14.0%   2,018,493
-  Fraction.__new__                      6.8%    9.0%     489,683
-  builtins.sum                          6.8%   35.6%     521,459
-  Fraction._add                         6.4%   15.4%     360,473
-  Battle.getSuccessors                  6.3%   37.0%     784,243
-  Fraction forward()                    2.5%   19.4%     378,892
-  builtins.max                          2.3%    6.2%     312,568
-  getCritDist                           2.0%   18.4%       3,659
+  Battle.evaluate                      16.6%  100.0%           1
+  <genexpr> sum(dmin[sp2]*p ...)       12.8%   12.8%   2,018,493
+  <genexpr> sum(dmax[sp2]*p ...)       12.0%   12.0%   2,018,493
+  Fraction._add                        10.6%   19.9%     360,472
+  builtins.sum                          8.8%   33.6%     521,459
+  Fraction.__new__                      6.4%    7.4%     489,681
+  Battle.getSuccessors                  5.4%   42.9%     784,243
+  Fraction forward()                    2.9%   24.8%     378,891
+  getCritDist                           2.5%   23.3%       3,659
+  builtins.max                          2.4%    6.2%     312,640
 
-Reading it: about two thirds of the run is the value-iteration sweep itself
-(evaluate's own body, the two generator expressions and sum/max), and about a
-fifth is Fraction arithmetic while the successor graph is built. The sweep is
+Reading it: a little over half the run is the value-iteration sweep itself
+(evaluate's own body, the two generator expressions and sum/max come to 52.6%),
+and about a fifth is Fraction arithmetic while the successor graph is built. The sweep is
 slow for a reason the flame graph does not show but the code does: dmin, dmax
 and frozen are dictionaries keyed by the state tuples, and every update does
 several lookups of a key that is a tuple of namedtuples - each lookup hashes
@@ -173,13 +179,17 @@ Correctness. scripts/local_check.py runs both versions:
       results/mdp/flame_mdp_opt_pyspy.svg
 
 4.2 After the optimization (cProfile, optimized)
-                                       self     cum
-  Battle.evaluate (the sweep)          37.4%   96.1%
-  Fraction.__new__                      7.7%   10.0%
-  _applyActionSide1                     5.9%   30.9%
-  Fraction._add                         5.6%   13.5%
-  builtins.max                          3.5%
-  applyHPChange / namedtuple._replace   5.4%
+    Recomputed from results/mdp/cprofile_opt.txt, shares of bench_mdp's 2.377 s
+    under the profiler:
+                                       self     cum       calls
+  Battle.evaluate (the sweep)          34.8%   99.9%           1
+  Fraction._add                         8.5%   16.2%      75,304
+  Fraction.__new__                      7.2%    8.5%     137,825
+  _applyActionSide1                     6.2%   34.0%       5,983
+  applyHPChange                         3.2%   10.5%      54,430
+  builtins.max                          3.2%    3.2%     312,640
+  namedtuple._replace                   2.1%    5.9%      54,486
+  Battle.getSuccessors                  1.1%   56.1%       9,642
     The sweep is now the honest cost of the algorithm - a few million
     multiply-adds and maxes in the interpreter. The next third is building
     the successor graph with exact Fractions (each state is built once, so
@@ -187,16 +197,27 @@ Correctness. scripts/local_check.py runs both versions:
     updates.
 
 4.3 Reproducibility
-    An independent second run in the same guest (results/reproducibility/,
-    compared with scripts/compare_runs.py) gives 3.820x against the shipped
-    3.834x, a difference of 0.36%; the optimized time differs by 0.14%.
+    Three independent runs in the same guest, each made by extracting the tree
+    into an empty directory and running the scripts as a grader would. The
+    shipped set is one; the others are results/reproducibility/ and
+    results/reproducibility/run3/.
 
-    A third run, made while the shared host was busy, is excluded: it put mdp at 2.33 s against 1.30 s while
-    executing the same 31.4 billion instructions, because "CPUs utilized" had
-    fallen from 1.00 to 0.58: the wall clock moved and the instruction count did
-    not. script_mdp.sh now records that figure for every run
-    in results/mdp/contention.txt and warns below 0.95, so the reader can see
-    the guest had the core rather than take it on trust.
+        run          speedup   optimized
+        shipped      3.834x    1.303 s
+        second       3.820x    1.305 s
+        third        3.822x    1.308 s
+
+    The ratio holds to 0.4% across the three, which is inside pyperf's own
+    spread on this benchmark. (pyflate is less stable - 3.0% across the same
+    three runs; report_pyflate.txt section 4.3 says so.) Compare any two with
+    scripts/compare_runs.py.
+
+    A fourth run, made while the shared host was busy, is excluded: it put mdp
+    at 2.33 s against 1.30 s while executing the same 31.4 billion instructions,
+    because "CPUs utilized" had fallen from 1.00 to 0.58 - the wall clock moved
+    and the instruction count did not. script_mdp.sh records that figure for
+    every run in results/mdp/contention.txt and warns below 0.95, so the reader
+    can see the guest had the core rather than take it on trust.
 
 
 5. Hardware acceleration proposal

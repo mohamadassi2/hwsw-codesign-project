@@ -180,8 +180,18 @@ if _b and _o and _rb and _ro:
 _rmb = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_base.json"))
 _rmo = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_opt.json"))
 if _mb and _mo and _rmb and _rmo:
-    check("reproducibility: mdp both speedups quoted",
-          f"{_rmb/_rmo:.3f}x against the shipped {_mb/_mo:.3f}x" in _flat(_md), f"{_rmb/_rmo:.3f} / {_mb/_mo:.3f}")
+    # Section 4.3 lists the runs as a table now, so check both ratios appear in
+    # it rather than pinning one sentence's wording.
+    _mrep = _flat(_sect(_md, "4.3 Reproducibility", 3200))
+    check("reproducibility: mdp quotes the shipped ratio",
+          f"{_mb/_mo:.3f}x" in _mrep, f"{_mb/_mo:.3f}x, in section 4.3")
+    check("reproducibility: mdp quotes the second run's ratio",
+          f"{_rmb/_rmo:.3f}x" in _mrep, f"{_rmb/_rmo:.3f}x, in section 4.3")
+    _3mb = mean_of(os.path.join(ROOT, "results", "reproducibility", "run3", "mdp", "mdp_base.json"))
+    _3mo = mean_of(os.path.join(ROOT, "results", "reproducibility", "run3", "mdp", "mdp_opt.json"))
+    if _3mb and _3mo:
+        check("reproducibility: mdp quotes the third run's ratio",
+              f"{_3mb/_3mo:.3f}x" in _mrep, f"{_3mb/_3mo:.3f}x, in section 4.3")
 
 # every flame graph a report names must exist
 for _rep, _txt in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
@@ -472,6 +482,44 @@ for _b, _rep, _name in (("pyflate", _pf, "report_pyflate.txt"), ("mdp", _md, "re
     _bad = sorted({v + "x" for v in _found} - {_want, "2.00x", "1.95x", "4.80x"})
     check(f"{_name}: every headline ratio outside 4.3 is the measured {_want}",
           not _bad, f"also found {_bad}")
+
+# ---------------------------------------------------------------- cProfile tables
+# Both reports quote per-function shares. pyflate's were regenerated from the
+# artifacts; mdp's were not, and nothing noticed for weeks because no check ever
+# opened results/<b>/cprofile_*.txt. Recompute a few load-bearing rows here so a
+# table that drifts from its artifact fails.
+def _cprof(path, want):
+    """(self%, cum%, calls) for one row, as shares of the benchmark function"""
+    if not os.path.exists(path):
+        return None
+    txt = open(path, encoding="utf-8").read()
+    rows, den = [], None
+    for m in re.finditer(r"^\s+(\d+(?:/\d+)?)\s+([\d.]+)\s+[\d.]+\s+([\d.]+)\s+[\d.]+\s+(.+)$", txt, re.M):
+        rows.append((m.group(1), float(m.group(2)), float(m.group(3)), m.group(4).strip()))
+    for _, _, cum, lbl in rows:
+        if "(bench_mdp)" in lbl or "(bench_pyflake)" in lbl:
+            den = cum
+            break
+    if not den:
+        return None
+    for calls, tot, cum, lbl in rows:
+        if lbl.endswith("(" + want + ")"):
+            return (tot / den * 100, cum / den * 100, calls)
+    return None
+
+for _b, _rep, _name, _rows in (
+        ("pyflate", _pf, "report_pyflate.txt", ["find_next_symbol", "decode_huffman_block"]),
+        ("mdp", _md, "report_mdp.txt", ["evaluate", "getSuccessors", "getCritDist"])):
+    for _tag in ("base", "opt"):
+        for _fn in _rows:
+            _r = _cprof(os.path.join(ROOT, "results", _b, f"cprofile_{_tag}.txt"), _fn)
+            if not _r:
+                continue
+            _self, _cum, _calls = _r
+            check(f"{_name}: the {_tag} cProfile table's {_fn} self share ({_self:.1f}%)",
+                  f"{_self:.1f}%" in _rep, f"from results/{_b}/cprofile_{_tag}.txt")
+            check(f"{_name}: the {_tag} cProfile table's {_fn} cumulative share ({_cum:.1f}%)",
+                  f"{_cum:.1f}%" in _rep, f"from results/{_b}/cprofile_{_tag}.txt")
 
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and

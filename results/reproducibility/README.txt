@@ -11,10 +11,11 @@ the contention record. The set here is the earlier run, of commit 195dcd8,
 made by extracting that commit into an empty directory and running
 script_pyflate.sh and script_mdp.sh exactly as a grader would.
 
-Largest wall-clock drift between them: under 1%.
+A third run of the whole submission is kept under run3/. Across the three, the
+mdp ratio holds to 0.4% and pyflate spreads 3.0%; the reports' section 4.3
+gives the table.
 
-A third run of the same scripts, made while the shared host was busy, is not
-included and must not be: it reported mdp at 2.33 s against 1.30 s while
+A further run, made while the shared host was busy, is not included and must not be: it reported mdp at 2.33 s against 1.30 s while
 executing the same 31.5 billion instructions, because "CPUs utilized" had
 fallen to 0.58. That is what the contention check in both scripts now catches,
 and results/<benchmark>/contention.txt records the figure for the runs that

@@ -206,6 +206,33 @@ def main():
             (oks if "60%" not in txt and "~30%" not in txt else fails).append(
                 "the retracted 60/30 double count is gone from the slides")
 
+    # ---- the embedded figures must be the shipped ones ---------------------------
+    # Three of the four flame graphs on the slides were the second run's, not the
+    # run every number beside them comes from. Nothing noticed, because the
+    # pictures are base64 and no check had ever looked inside them.
+    import base64 as _b64, hashlib as _hl
+    _idx = {}
+    for _root, _dirs, _fs in os.walk(ROOT):
+        _dirs[:] = [d for d in _dirs if d not in (".git", "venv", "FlameGraph", "reproducibility")]
+        for _f in _fs:
+            if _f.endswith(".svg"):
+                _p = os.path.join(_root, _f)
+                try:
+                    _idx[_hl.md5(open(_p, "rb").read()).hexdigest()] = os.path.relpath(_p, ROOT)
+                except OSError:
+                    pass
+    _stray = []
+    for _b in re.findall(r"data:image/svg\+xml;base64,([A-Za-z0-9+/=]+)", raw_deck):
+        try:
+            _h = _hl.md5(_b64.b64decode(_b)).hexdigest()
+        except Exception:
+            continue
+        if _h not in _idx:
+            _stray.append(_h[:8])
+    (oks if not _stray else fails).append(
+        "every embedded figure is a file in the shipped tree"
+        + (f" (unmatched: {_stray})" if _stray else ""))
+
     # ---- the block diagram is a graded deliverable; gate its figures too -------
     dia_path = os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg")
     dia = open(dia_path, encoding="utf-8").read()

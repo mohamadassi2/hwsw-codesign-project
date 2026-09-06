@@ -46,7 +46,19 @@ FP
   fi
 fi
 echo "== 1/3 optimizations vs originals"; $PY scripts/local_check.py all "${REPS:-3}"
-echo "== 2/3 report numbers";            $PY scripts/check_report_numbers.py | head -1
-echo "== 3/3 slide numbers";             $PY scripts/check_deck_numbers.py   | head -1
+# `| head -1` keeps the summary line short, but on a failure it also hides which
+# checks failed - the one moment the detail matters. Show the summary on success
+# and everything on failure.
+run_gate() {
+  local label=$1 script=$2 out
+  if out=$("$PY" "$script" 2>&1); then
+    echo "$label"; echo "$out" | head -1
+  else
+    echo "$label"; echo "$out" | grep -E "^PASS|FAIL " || echo "$out" | tail -20
+    return 1
+  fi
+}
+run_gate "== 2/3 report numbers" scripts/check_report_numbers.py
+run_gate "== 3/3 slide numbers"  scripts/check_deck_numbers.py
 echo "== drift against the independent run"; $PY scripts/compare_runs.py results results/reproducibility | tail -1
 echo "all checks passed"
