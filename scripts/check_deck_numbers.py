@@ -123,7 +123,7 @@ def main():
     opt_ms = po * 1e3
     # find_next_symbol's cumulative share. Its self share plus the bit-reading
     # helpers it calls would double-count, which an earlier draft did as 62%.
-    part = opt_ms * 0.511
+    part = opt_ms * 0.510
     accel = decode_ms + 0.6
     new = opt_ms - part + accel
     want("Amdahl: accelerated part (ms)", part, "{:.0f}")
@@ -178,9 +178,9 @@ def main():
 
     # ---- the baseline slide must carry the BASELINE cProfile figures ----------
     rep = open(os.path.join(ROOT, "report_pyflate.txt"), encoding="utf-8").read()
-    base_slide = "15.4% self and 49.1%" in re.sub(r"\s+", " ", txt)
+    base_slide = "15.7% self and 49.3%" in re.sub(r"\s+", " ", txt)
     (oks if base_slide else fails).append("slide 6 quotes the baseline cProfile figures (15.7 / 48.2)")
-    (oks if "15.4%" in rep and "49.1%" in rep else fails).append("those figures are the report's section 2 numbers")
+    (oks if "15.7%" in rep and "49.3%" in rep else fails).append("those figures are the report's section 2 numbers")
 
     # ---- the shares on the "what remains" slide come from the folded stacks ----
     # They used to read ~60% / ~30%, which is the double count section 5.6 of the
@@ -263,7 +263,7 @@ def main():
     # ---- per-symbol CPU cost: 235 ms / 148,271 symbols at 2.4 GHz -------------
     # Derived, not hardcoded: the accelerated share of the measured optimized
     # run, spread over the symbols, at the guest's 2.4 GHz.
-    cyc_per_sym = po * 0.511 / SYM * 2.4e9
+    cyc_per_sym = po * 0.510 / SYM * 2.4e9
     for label, path in (("deck", DECK),
                         ("docs/presentation_outline.md", os.path.join(ROOT, "docs", "presentation_outline.md")),
                         ("report_pyflate.txt", os.path.join(ROOT, "report_pyflate.txt"))):

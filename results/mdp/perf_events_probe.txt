@@ -1,3 +1,3 @@
     cycles: no samples
-    cpu-clock: works (3910 samples)
-    task-clock: works (3625 samples)
+    cpu-clock: works (3649 samples)
+    task-clock: works (3912 samples)

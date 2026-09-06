@@ -3,7 +3,7 @@
 This describes how the accelerator in `hw/rtl/` plugs into pyflate. The
 software side is the optimized decoder in `benchmarks/pyflate/run_benchmark_opt.py`;
 the hardware replaces exactly one call site, `HuffmanTable.find_next_symbol`,
-which the profile shows is 28.5% of the optimized run on its own and 51.1%
+which the profile shows is 28.5% of the optimized run on its own and 51.0%
 cumulatively, i.e. including the bit-extraction helpers it calls. (Those two
 shares must not be added together; report_pyflate.txt section 5.6 explains why.)
 
@@ -12,7 +12,7 @@ shares must not be added together; report_pyflate.txt section 5.6 explains why.)
 | Stage of `decode_huffman_block` | Where | Why |
 |---|---|---|
 | Parse block header, selectors, code lengths (`compute_used`, `compute_selectors_list`, `compute_tables`) | software | once per 900 KB block, negligible |
-| Canonical-Huffman symbol decode (`find_next_symbol` + `snoopbits`/`readbits`) | **hardware** | 51.1% of the optimized run, cumulative; bit-serial work, one symbol per clock in hardware |
+| Canonical-Huffman symbol decode (`find_next_symbol` + `snoopbits`/`readbits`) | **hardware** | 51.0% of the optimized run, cumulative; bit-serial work, one symbol per clock in hardware |
 | Move-to-front, RUNA/RUNB run expansion | software | cheap after the decode fix (`pop`/`insert`, ~4% of the profile) |
 | Inverse BWT (`bwt_transform`, `bwt_reverse`) | software | a 400 KB pointer chase; memory-latency bound, no datapath helps it |
 | Final RLE, output assembly | software | one regex pass |

@@ -1,0 +1,11 @@
+# Fingerprint of the benchmark code and the scripts that produced results/.
+# scripts/check_report_numbers.py recomputes it; if it differs, the code has
+# changed since these measurements were taken and they should be re-run in the
+# course VM before the reports quote them.
+#   benchmarks/pyflate/run_benchmark.py
+#   benchmarks/pyflate/run_benchmark_opt.py
+#   benchmarks/mdp/run_benchmark.py
+#   benchmarks/mdp/run_benchmark_opt.py
+#   script_pyflate.sh
+#   script_mdp.sh
+0244110b2ff68fc91ed1be9aaf84329f

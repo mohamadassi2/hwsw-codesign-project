@@ -43,8 +43,8 @@ Accelerator (about 7 min)
 13. Cost: yosys figures, 18,796 cells (5,441 flops) + 13.9 kbit of symbol SRAM;
     98-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
     49,804-cell version as the "why SRAM" argument.
-14. Expected gain: Amdahl with the numbers. ~3,900 CPU cycles per symbol vs
-    1; accelerated part ~1.3 ms; whole run ~2.0x over optimized, ~4.8x over
+14. Expected gain: Amdahl with the numbers. ~4,000 CPU cycles per symbol vs
+    1; accelerated part ~1.3 ms; whole run ~2.0x over optimized, ~4.7x over
     shipped [VM ratio]. Trade-offs: direct-lookup table vs bit-serial FSM vs
     ours; MTF as the next thing to move; BWT stays.
 

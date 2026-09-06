@@ -8,6 +8,6 @@ PMI:          0   Performance monitoring interrupts
 samples in that cycles record: 0
 0
 counting (not sampling) the same workload, to show the PMU is present:
-        8670269852      cycles                                                      
-       30688870246      instructions              #    3.54  insn per cycle         
-dmesg PMU line: [    0.348341] Performance Events: Haswell events, full-width counters, Intel PMU driver.
+       10066589168      cycles                                                      
+       33957911564      instructions              #    3.37  insn per cycle         
+dmesg PMU line: [    0.302496] Performance Events: Haswell events, full-width counters, Intel PMU driver.

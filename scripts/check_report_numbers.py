@@ -217,7 +217,7 @@ check("hw: average bits per symbol", abs(BITS / SYMBOLS - 3.59) < 0.01,
 # anywhere else it would mean the corrected share had been lost again.
 _flat_pf = re.sub(r"\s+", " ", _pf)
 check("the corrected share is used, not the double-counted 62%",
-      "51.1%" in _pf and _flat_pf.count("62%") == _flat_pf.count("earlier draft of this report did exactly that and quoted ~62%"),
+      "51.0%" in _pf and _flat_pf.count("62%") == _flat_pf.count("earlier draft of this report did exactly that and quoted ~62%"),
       f"{_flat_pf.count('62%')} mention(s) of 62%, "
       f"{_flat_pf.count('earlier draft of this report did exactly that and quoted ~62%')} in the sentence that records the mistake")
 
@@ -411,11 +411,11 @@ if os.path.exists(_simlog):
         # per-symbol CPU cost: the accelerated share of the optimized run,
         # divided by the symbols, at the guest's 2.4 GHz.
         if _po:
-            _cps = _po * 0.511 / _sym * 2.4e9
+            _cps = _po * 0.510 / _sym * 2.4e9
             _want_cps = f"{round(_cps, -2):,.0f}"
             check(f"the per-symbol CPU cost recomputes ({_want_cps} cycles)",
                   _want_cps in txt,
-                  f"{_po * 1e3:.0f} ms x 51.1% / {_sym:,} at 2.4 GHz")
+                  f"{_po * 1e3:.0f} ms x 51.0% / {_sym:,} at 2.4 GHz")
             # Same reasoning: check every place the report states a per-symbol
             # cycle cost, not merely that the right number occurs once.
             # Only the CPU-cost sentences, not every "cycles per symbol" in the
@@ -536,6 +536,34 @@ for _b, _rep, _name in (("pyflate", _pf, "report_pyflate.txt"), ("mdp", _md, "re
             check(f"{_name}: the {_ev} sample count it quotes ({_pretty})",
                   # only required where the report actually discusses that event
                   _ev not in _rep, f"from results/{_b}/perf_events_probe.txt")
+
+# ---------------------------------------------------------------- evidence age
+# The measurements describe a particular version of the benchmark code and of
+# the scripts that ran it. Both changed after results/ was captured once - by
+# eight unreachable lines, so the numbers survived, but nothing would have said
+# so if the change had mattered. results/CODE_ID.txt stamps what was measured.
+_code_id = os.path.join(ROOT, "results", "CODE_ID.txt")
+_measured_files = ["benchmarks/pyflate/run_benchmark.py", "benchmarks/pyflate/run_benchmark_opt.py",
+                   "benchmarks/mdp/run_benchmark.py", "benchmarks/mdp/run_benchmark_opt.py",
+                   "script_pyflate.sh", "script_mdp.sh"]
+import hashlib as _hh
+_h = _hh.md5()
+_ok = True
+for _f in _measured_files:
+    _fp = os.path.join(ROOT, _f)
+    if not os.path.exists(_fp):
+        _ok = False
+        break
+    _h.update(_hh.md5(open(_fp, "rb").read()).hexdigest().encode())
+if _ok and os.path.exists(_code_id):
+    _stamp = re.search(r"([0-9a-f]{32})", open(_code_id, encoding="utf-8").read())
+    check("results/ was measured from the benchmark code now in the tree",
+          _stamp is not None and _stamp.group(1) == _h.hexdigest(),
+          "the benchmarks or their scripts changed after the measurements; re-run them in the VM "
+          "and refresh results/CODE_ID.txt")
+elif _ok:
+    check("results/CODE_ID.txt records the code the measurements describe", False,
+          "missing; write it when results/ is captured")
 
 # ---------------------------------------------------------------- mutations
 # The mutation score is a headline claim in both the report and the slides, and
