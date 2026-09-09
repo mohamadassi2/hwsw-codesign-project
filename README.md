@@ -4,10 +4,11 @@ Final project for *HW/SW Co-design* (00460882, Technion).
 Mohamad Assi (212343594), Ido Sefi (208008698).
 
 Two benchmarks from the pyperformance suite, **pyflate** and **mdp**, profiled
-with `perf`/flame graphs, optimized in pure Python with byte-identical output,
-and, for pyflate, a hardware accelerator for the canonical-Huffman symbol
-decoder, written in SystemVerilog and verified against the benchmark's real
-compressed block.
+with py-spy flame graphs and `perf stat` counters (`perf record` collects no
+samples in this guest -- section 2 of each report says why), optimized in pure
+Python with byte-identical output, and, for pyflate, a hardware accelerator for
+the canonical-Huffman symbol decoder, written in SystemVerilog and verified
+against the benchmark's real compressed block.
 
 | | baseline | optimized | improvement | output |
 |---|---|---|---|---|
