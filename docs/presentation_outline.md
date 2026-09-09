@@ -1,69 +1,188 @@
-# Presentation outline (20-25 min + 5-10 min questions)
+# Speaker guide
 
-The deck built from this outline is docs/presentation.html (arrow keys or
-scroll; Cmd-P prints one slide per page). Every "[VM]" below is now a measured
-number in results/ and on the slides; scripts/check_deck_numbers.py recomputes
-them.
+The deck is `docs/presentation.html` — arrow keys or scroll, Cmd-P prints one
+slide per page. This file is the talk track, not a spec: for each slide, why
+it is there and the one sentence that has to land. Everything numeric on the
+slides is recomputed by `scripts/check_deck_numbers.py` (85 gates), so nothing
+here needs to be defended from memory.
 
-Structure follows the project flow, as the brief recommends: analysis ->
-optimization -> hardware. Slides are numbered; "say" is the talk track.
-Numbers marked [VM] come from results/ after the guest runs.
+## Shape
 
-1. Title. Two benchmarks, one accelerator. (30 s)
-2. What we chose and why. The 13 candidates in one table: hotspot, software
-   headroom, hardware story. pyflate and mdp are the two whose algorithm is in
-   the benchmark file and whose hotspot is one identifiable thing; nbody and
-   raytrace are the crowd's picks. (1.5 min)
-3. Method. py-spy record + FlameGraph for "where" (perf record collects no samples in this guest), py-spy for Python
-   frames, cProfile for exact counts, perf stat for "why". The two sysctls
-   the guest needs. (1 min)
+Three acts. Each benchmark is finished before the next one starts, and the
+hardware arrives only after the software has run out of room.
 
-pyflate (about 9 min)
-4. What pyflate does: bzip2 block -> header -> Huffman symbols -> MTF ->
-   inverse BWT -> RLE. One block, 148,271 symbols, 6 tables, codes 2..15 bits.
-5. Baseline flame graph [VM]. Point at the find_next_symbol tower.
-6. The code: the linear scan. Say: it walks the whole sorted table per
-   symbol; canonical codes make one compare per length enough.
-7. The fix: limit[] / base[] tables, one peek, <=15 compares. Plus the bit
-   reader (one read, 8-byte refill), MTF pop/insert, regex RLE.
-8. Before / after [VM]: pyperf compare_to table, perf stat counters
-   (instructions, IPC). Output byte-identical, md5.
-9. What is left (optimized flame graph [VM]): Huffman + bits ~53%, inverse
-   BWT ~25% (py-spy samples; cProfile says 51% and 18%). Say: the first is bit-serial work, the second is a pointer
-   chase; only the first is a datapath problem.
+| slides | act | minutes |
+|---|---|---|
+| 1-3 | setup: what we chose, how we measured | 3 |
+| 4-9 | **pyflate** | 6 |
+| 10-14 | **mdp** | 4 |
+| 15 | what is left to accelerate — the hinge | 1 |
+| 16-21 | **the accelerator** | 6 |
+| 22 | conclusions | 1 |
+| 23 | questions — backup, do not narrate | — |
 
-Accelerator (about 7 min)
-10. Block diagram (docs/huffman_accel_block_diagram.svg). Walk left to right:
-    tables in, bytes in, 20 parallel compares, priority encoder, base+code,
-    symbol memory, symbols out; len feeds the barrel shifter the same cycle.
-11. Interface: what moves, what stays; register map in one slide; the one
-    function that changes in the software; users' code unchanged.
-12. Verification: golden vectors from the real block, testbench result:
-    148,271/148,271, 0 errors, 148,272 cycles, 1.000 symbol/cycle.
-13. Cost: yosys figures, 18,796 cells (5,441 flops) + 13.9 kbit of symbol SRAM;
-    98-level longest path -> ~200 MHz FPGA / ~400 MHz ASIC; the flattened
-    49,804-cell version as the "why SRAM" argument.
-14. Expected gain: Amdahl with the numbers. ~4,000 CPU cycles per symbol vs
-    1; accelerated part ~1.3 ms; whole run ~2.0x over optimized, ~4.7x over
-    shipped [VM ratio]. Trade-offs: direct-lookup table vs bit-serial FSM vs
-    ours; MTF as the next thing to move; BWT stays.
+About 1,900 narrated words plus ten code blocks and tables that are pointed
+at, not read. Realistically 15-20 minutes in a 20-25 minute slot, which
+leaves room to be interrupted. Do not rush slide 15; it is the shortest
+slide and the one that makes the second half legitimate.
 
-mdp (about 4 min)
-15. What mdp does: state graph, value iteration with bounds, tolerance.
-16. Baseline flame graph [VM] + the reason it does not show: dict lookups
-    keyed by nested namedtuples inside the sweep; Fractions recomputed.
-17. The fix: integer index once, sweep on flat lists with identical
-    operation order; memoized getCritDist. Result bit-identical.
-18. Before / after [VM].
+If you are running long, the compressible slides are 3 (method), 8 (the
+ablation table can be one sentence) and 20 (cost — the SRAM argument can
+become "ask me why only the symbol table is SRAM"). Do not compress 7, 15
+or 19.
 
-19. Conclusions (1 min). Algorithm first, then interpreter overhead, then
-    hardware for what is bit-serial; memory-bound parts stay where the
-    memory is. Repository layout, how to reproduce.
-20. Questions we expect (keep answers ready):
-    - why not a C extension / the bz2 module: changes the benchmark, not the
-      code under test;
-    - why the result is bit-identical in mdp: same order of float additions;
-    - why not accelerate BWT: one dependent memory access per byte;
-    - what happens on a corrupt stream: err, no length matched;
-    - how the selector switch is handled: TSEL register or selector SRAM;
-    - clock and pipeline depth: 98 levels, can split the compare tree.
+## Act 0 — setup
+
+**1. Title.** Say the two verbs: profile and optimize two benchmarks, then
+design hardware for the one part that earns it. *Land:* every number in this
+talk was measured inside the course VM.
+
+**2. Choosing the benchmarks.** The table is 13 candidates; do not read it.
+*Land:* we needed the hot code to be the benchmark's own, so that an
+optimization is ours and not a library swap — and the output had to stay
+identical, byte-for-byte in pyflate and bit-for-bit in mdp. That constraint is
+what makes the speedups mean anything.
+
+**3. Method.** py-spy for the flame graphs, cProfile for exact counts, perf
+stat for why. *Land:* `perf record` collected no samples in this guest and
+Python 3.10 has no perf trampoline, so perf could only ever have shown
+interpreter C frames — py-spy was the better tool anyway. Saying what did not
+work here costs ten seconds and buys credibility for the rest.
+
+## Act 1 — pyflate (slides 4-9)
+
+**4. Divider.** One line: a bzip2 block decoded in pure Python — 148,271
+Huffman symbols, six tables, codes 2 to 15 bits.
+
+**5. The workload.** Five stages, all of them spelled out in the benchmark
+file. *Land:* the algorithm is what we measure and what we are allowed to
+change; the gate is the same 399,360 bytes, md5-checked on every run.
+
+**6. Baseline profile.** Point at the `find_next_symbol` tower. *Land:* 15.7%
+self, 49.3% cumulative — nearly half the run inside one function.
+
+**7. The problem.** This is the slide the whole talk turns on. The decoder
+walked the whole sorted table for every symbol, so the work scaled with table
+size — which has nothing to do with how much information a symbol carries.
+*Land:* but these are **canonical** Huffman codes: within one length the codes
+are consecutive integers, so an entire length collapses to two numbers.
+
+**8. The fix.** `limit[L]` and `base[L]`: one compare per length instead of
+one per entry. Then the ablation — each of the five changes reverted in turn,
+md5-checked, re-timed in the VM. *Land:* the algorithmic change is the
+*smallest* of the three that matter (+77 ms, against +161 ms for
+move-to-front and +168 ms for the RLE regex). That is the honest reading, and
+it is also the setup for the hardware: what justifies an accelerator is the
+half of the run that is still interpreter work after all five fixes.
+
+**9. Result.** 1.127 s → 483.5 ms, 2.33×, n=30, ±0.9%. *Land:* IPC barely
+moved, 2.62 → 2.60. The processor was already running well — it was running
+too much. We removed 15.9 billion instructions, not stalls and not cache
+misses.
+
+## Act 2 — mdp (slides 10-14)
+
+**10. Divider.** Value iteration over a battle state graph — where the cost
+turned out not to be the mathematics.
+
+**11. The workload.** Upper and lower bounds iterated to convergence over
+4,823 states, damage distributions built from `Fraction` so the arithmetic is
+exact. *Land:* that sets a hard bar — preserve not just the answer but the
+exact sequence of floating-point additions that produced it.
+
+**12. Baseline profile.** *Land:* the two tallest towers are generator
+expressions inside the sweep. Every successor lookup went through a dict keyed
+by a nested namedtuple, re-hashing the same keys millions of times; and
+`getCritDist` ran 3,659 times with three distinct arguments.
+
+**13. The fix.** Index the graph once, then sweep flat arrays; memoize
+`getCritDist`. *Land:* the additions still happen in the original order, which
+is what makes bit-identity possible — both versions run in one process and
+their results are compared directly: same double, 0.8987358988699915,
+difference exactly zero.
+
+**14. Result.** 4.975 s → 1.308 s, 3.80×. *Land:* same story as pyflate — IPC
+flat, instruction count down 3.8×. And say the negative result out loud: no
+hardware for mdp. One accelerator for one benchmark per the TA's ruling, and
+nothing here is bit-serial enough to earn it.
+
+## The hinge (slide 15)
+
+**15. What is left to accelerate.** Short slide, slow delivery. Two things
+remain in the optimized pyflate run: 52% is Huffman decode and bit extraction
+— a peek, a few integer compares, a shift, still paying a Python call per
+symbol. 25% is the inverse BWT — one dependent memory access per byte through
+400 KB. *Land:* only the first is a datapath problem. That sentence is what
+chooses the accelerator, and it is also the answer to "why not the BWT?"
+before anyone asks.
+
+## Act 3 — the accelerator (slides 16-21)
+
+**16. Divider.** Twenty comparators, a priority encoder, one symbol per clock.
+
+**17. Datapath.** Walk the diagram left to right, once. *Land:* the matched
+length drives the barrel shifter in the *same* cycle, which is why the next
+symbol is ready on the next clock — one symbol per clock by construction, not
+by luck.
+
+**18. Interface.** Memory-mapped registers; one function changes,
+`find_next_symbol` becomes a call into the driver, and `bzip2_main` and every
+caller are untouched — lecture 5's first rule, do not make users change their
+code. *Land:* then the limit, volunteered: the selector list is supplied by
+the host on TSEL rather than sequenced in hardware, and a production version
+puts a mod-50 counter and a small FIFO inside the block. Saying where you
+stopped is worth more than implying you did not stop.
+
+**19. Verification.** 148,271 / 148,271 symbols, 0 errors, 148,272 cycles,
+1.000 symbol/clock. Then the part that is actually interesting: *the testbench
+used to pass on a decoder that emitted nothing but X.* Mutation testing found
+it — twenty bugs injected one at a time, and against the benchmark block alone
+twelve went unnoticed. *Land:* that was a weakness of one well-formed
+stimulus, not of the design; the stimulus grew to six directed streams plus
+three throttled runs, and 19 of 20 are now caught. The survivor is an
+unreachable guard — reported, not removed.
+
+**20. Cost.** 18,796 cells (5,441 flops) plus 13.9 kbit of symbol SRAM.
+*Land, if asked or if time allows:* `limit` is compared at all twenty lengths
+in one cycle, so it would need twenty read ports — no SRAM macro has those,
+and it is counted as the register file it is. Flattening the symbol table into
+logic costs 49,804 cells; a comparator-free flat table would need 2^20 entries
+per bank. Say the caveat: frequency is inferred from a 98-level topological
+path, not static timing — no cell library, no place-and-route.
+
+**21. Expected gain.** Walk the subtraction, do not just show it: 483 ms
+optimized, 247 ms of it in `find_next_symbol`, the same work at 200 MHz is
+0.74 ms plus about 0.6 ms of DMA and table writes — so about 238 ms. 2.0× over
+the optimized run, 4.7× over the shipped benchmark, and ~4,000 CPU cycles per
+symbol become one clock. *Land:* Amdahl sets the ceiling — the inverse BWT and
+the remaining interpreter overhead are the floor. That is a bound, not a
+headline.
+
+## Close
+
+**22. Conclusions.** Four lines, in order: algorithm first (both speedups came
+from removing work, IPC never moved); then interpreter overhead; then hardware
+only for what is bit-serial; and not for what is memory-bound. *Land the
+fifth:* measure in the environment you claim — including the things that did
+not work there.
+
+**23. Questions.** Backup slide. Do not narrate it; leave it up while taking
+questions. It already answers: why not `bz2`, why mdp is bit-identical, why
+not the BWT, corrupt streams, the table switch, and what sets the clock.
+
+## Questions the slide does not cover
+
+- **"Is 200 MHz realistic?"** It is inferred from path length, not timing —
+  say so first. The 98-level path is twenty comparators, a priority encoder,
+  an adder and the symbol memory; it splits cleanly if a target demands it.
+- **"Why one accelerator and not one per benchmark?"** The TA's ruling, and
+  slide 14 gives the technical reason mdp would not have earned one anyway.
+- **"How do you know the optimized pyflate is still correct?"** md5 of all
+  399,360 output bytes on every run, and the ablation runs are md5-checked
+  individually too.
+- **"Did you try PyPy / a C extension / Cython?"** That replaces the benchmark
+  instead of optimizing the code under test.
+- **"How much of this is reproducible?"** `scripts/check_all.sh` — 122 report
+  figures and 85 slide figures recomputed from `results/`, plus a RUN_ID that
+  ties the documents to the measurement files and a CODE_ID that ties the
+  measurements to the code that produced them.

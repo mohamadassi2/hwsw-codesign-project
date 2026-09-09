@@ -244,7 +244,9 @@ if _m56:
           f"{_vs_base}x" in _concl, f"5.6 computes {_vs_base}x")
     _out = os.path.join(ROOT, "docs", "presentation_outline.md")
     if os.path.exists(_out):
-        _o = open(_out, encoding="utf-8").read()
+        # The glyph is incidental: prose may render the ratio as 2.0x or 2.0\u00d7.
+        # Normalise before testing so the gate checks the number, not the typography.
+        _o = open(_out, encoding="utf-8").read().replace("\u00d7", "x")
         check("the outline quotes the same two ratios",
               f"{_vs_opt}x" in _o and f"{_vs_base}x" in _o, f"expected {_vs_opt}x / {_vs_base}x")
 
