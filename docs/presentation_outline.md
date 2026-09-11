@@ -31,13 +31,61 @@ ablation table can be one sentence) and 20 (cost — the SRAM argument can
 become "ask me why only the symbol table is SRAM"). Do not compress 7, 15
 or 19.
 
+## Live demo (two commands, about twenty seconds)
+
+Have a terminal open in the repository before the talk. Neither command needs
+the venv; the second needs Icarus Verilog (`brew install icarus-verilog` /
+`apt install iverilog`). Both write only to ignored directories, so nothing in
+the tree changes.
+
+**On slide 13 or 14 — both benchmarks still produce the original answer, about
+10 s:**
+
+    python3 scripts/local_check.py all 2
+
+Point at two lines: `pyflate: output identical to baseline (399360 bytes, md5
+afa004a6…)` and `mdp: optimized result is bit-identical to the baseline`. The
+line between them — baseline and optimized agreeing on eight further bzip2
+streams — is the answer to "did you test more than one input?". The speedup it
+prints is this laptop's, not the VM's; say so before anyone asks, because the
+slides quote the VM. On CPython 3.12 or newer the mdp line instead reports a
+last-bit (about one ulp) difference and names report_mdp.txt section 3 — that
+is the sum() caveat we documented, not a failure.
+
+**On slide 19 — the accelerator on the real block, about 8 s:**
+
+    cd hw && make vectors && make sim
+
+`make vectors` comes first because the vectors are generated from the optimized
+decoder, not committed. The run ends with `decoded 148271 symbols in 148272
+cycles (1.000 symbols/cycle), 0 errors`, then the bits-per-symbol line, then
+`PASS` (a `$finish` line follows it). Then open `hw/tb/MUTATIONS.md` for the
+table; do not run `tb/mutate.sh` live — it re-runs the whole `sim_all` suite
+once per mutation on a scratch copy and will not finish inside the slot. If the
+laptop has no simulator, `cat results/rtl_sim_guest.log` is the same run inside
+the course VM.
+
+**On slide 22 — the slides recompute themselves, instantly:**
+
+    python3 scripts/check_deck_numbers.py | head -1
+
+prints `PASS 85   FAIL 0` (`head`, not `tail`: the summary is the first line).
+`scripts/check_report_numbers.py | head -1` does the same for the reports. Do
+not run `scripts/check_all.sh` live — it re-runs both benchmarks and takes
+minutes; keep it for the reproducibility question at the end.
+
+If asked for the profile, open `results/pyflate/flame_pyflate_base_focus.svg`
+in the browser and click `find_next_symbol` — the SVG zooms.
+
 ## Act 0 — setup
 
 **1. Title.** Say the two verbs: profile and optimize two benchmarks, then
 design hardware for the one part that earns it. *Land:* every number in this
 talk was measured inside the course VM.
 
-**2. Choosing the benchmarks.** The table is 13 candidates; do not read it.
+**2. Choosing the benchmarks.** The table is three rows — pyflate, mdp, and
+the kind we rejected (nbody, raytrace); point at the last column, the hardware
+story, and do not read the rows.
 *Land:* we needed the hot code to be the benchmark's own, so that an
 optimization is ours and not a library swap — and the output had to stay
 identical, byte-for-byte in pyflate and bit-for-bit in mdp. That constraint is
@@ -75,6 +123,8 @@ move-to-front and +168 ms for the RLE regex). That is the honest reading, and
 it is also the setup for the hardware: what justifies an accelerator is the
 half of the run that is still interpreter work after all five fixes.
 
+*If asked to see the code:* `benchmarks/pyflate/run_benchmark_opt.py` line 312, `find_next_symbol`, next to `benchmarks/pyflate/run_benchmark.py` line 224; the `limit`/`base` arrays it reads are built in `_build_canonical` at line 278. These files are frozen, so the line numbers do not move.
+
 **9. Result.** 1.127 s → 483.5 ms, 2.33×, n=30, ±0.9%. *Land:* IPC barely
 moved, 2.62 → 2.60. The processor was already running well — it was running
 too much. We removed 15.9 billion instructions, not stalls and not cache
@@ -101,6 +151,8 @@ is what makes bit-identity possible — both versions run in one process and
 their results are compared directly: same double, 0.8987358988699915,
 difference exactly zero.
 
+*If asked to see the code:* `benchmarks/mdp/run_benchmark_opt.py` line 313, the sweep, next to `benchmarks/mdp/run_benchmark.py` line 224 — the same loop with `dmin[sp]` replaced by `vmin[i]`; the cache is `getCritDist` at line 55. `python3 scripts/local_check.py all 1` runs both correctness gates in a few seconds (no venv needed). On CPython 3.12+ the mdp line reports a one-ulp difference and says why; the VM's 3.10 is bit-identical — report_mdp.txt section 3.
+
 **14. Result.** 4.975 s → 1.308 s, 3.80×. *Land:* same story as pyflate — IPC
 flat, instruction count down 3.8×. And say the negative result out loud: no
 hardware for mdp. One accelerator for one benchmark per the TA's ruling, and
@@ -120,10 +172,20 @@ before anyone asks.
 
 **16. Divider.** Twenty comparators, a priority encoder, one symbol per clock.
 
-**17. Datapath.** Walk the diagram left to right, once. *Land:* the matched
-length drives the barrel shifter in the *same* cycle, which is why the next
-symbol is ready on the next clock — one symbol per clock by construction, not
-by luck.
+**17. Datapath.** Walk the diagram left to right, once, in the RTL's own
+names. (1) `bitreader` holds up to 64 bits left-aligned and presents the top
+20 as `peek` every cycle. (2) Twenty comparators test the top L bits of `peek`
+against `limit_r[tsel][L]`, every length at the same time — `hit[20:1]`. (3)
+The priority encoder picks the shortest hit, `len_c`, and that is `len`; the
+same `len` goes straight back to the bit reader as `consume` (`.consume(len)`
+in `huffman_accel_top.sv`). (4) `base_r[tsel][len_c] + code[len_c]` indexes
+the symbol table, and `sym` comes out one clock later with `sym_valid`.
+*Land:* the matched length drives the barrel shifter in the *same* cycle,
+which is why the next symbol is ready on the next clock — one symbol per clock
+by construction, not by luck.
+*If asked to show it:* `cd hw && make sim` prints `decoded 148271 symbols in
+148272 cycles (1.000 symbols/cycle), 0 errors` and `PASS` — the same lines as
+`results/rtl_sim_guest.log`.
 
 **18. Interface.** Memory-mapped registers; one function changes,
 `find_next_symbol` becomes a call into the driver, and `bzip2_main` and every
@@ -182,7 +244,12 @@ not the BWT, corrupt streams, the table switch, and what sets the clock.
   individually too.
 - **"Did you try PyPy / a C extension / Cython?"** That replaces the benchmark
   instead of optimizing the code under test.
-- **"How much of this is reproducible?"** `scripts/check_all.sh` — 122 report
+- **"How much of this is reproducible?"** `scripts/check_all.sh` — 123 report
   figures and 85 slide figures recomputed from `results/`, plus a RUN_ID that
   ties the documents to the measurement files and a CODE_ID that ties the
   measurements to the code that produced them.
+- **"Did any perf sampling work?"** Software events (`task-clock`) do sample —
+  under the system interpreter, not under the venv one every capture in our
+  scripts used: 3,845 samples against 0 in `results/pyflate/perf_isolate.txt`.
+  So the empty capture was how we drove perf, not the guest; report section 2
+  has the bisect.
