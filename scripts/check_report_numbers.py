@@ -99,12 +99,10 @@ _o = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_opt.json"))
 if _b and _o:
     check("pyflate conclusion quotes the measured speedup", f"gives {_b/_o:.2f}x in the" in _pf, f"{_b/_o:.2f}x")
     check("pyflate conclusion quotes the measured percentage", f"{100*(1-_o/_b):.1f}% less time" in _pf)
-    ps_b = perfstat_counts = None
-    import re as _re
     def _ps(p):
         r = {}
         for line in open(p):
-            m = _re.match(r"\s*([\d,\.]+)\s+(?:msec\s+)?([a-z-]+)", line)
+            m = re.match(r"\s*([\d,\.]+)\s+(?:msec\s+)?([a-z-]+)", line)
             if m: r[m.group(2)] = float(m.group(1).replace(",", ""))
         return r
     pb = _ps(os.path.join(ROOT, "results", "pyflate", "perfstat_base.txt"))
@@ -141,12 +139,6 @@ if _b and _o and _rb and _ro:
     # than anywhere in the report: the point is that the section compares the
     # two runs, and tying the check to one particular wording ("... rerun")
     # meant rephrasing the sentence broke the gate.
-    def _section(text, head):
-        i = text.find(head)
-        if i < 0:
-            return ""
-        j = re.search(r"\n\n\n|\n\d\. ", text[i + len(head):])
-        return text[i:i + len(head) + (j.start() if j else 2000)]
     _rep = _flat(_sect(_pf, "4.3 Reproducibility", 3200))
     # A third run is now kept; its ratios must be quoted too, and the spread the
     # section claims must be the spread the three runs actually show.
@@ -345,8 +337,8 @@ if os.path.exists(_ts):
 _pb = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_base.json"))
 _po = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_opt.json"))
 if _pb and _po:
-    _exact = f"{_po * 1e3:.1f}"        # 477.2, as printed in the 4.1 table
-    _round = f"{_po * 1e3:.0f}"        # 477,  as used in the prose
+    _exact = f"{_po * 1e3:.1f}"        # one decimal, as printed in the 4.1 table
+    _round = f"{_po * 1e3:.0f}"        # rounded, as used in the prose
     check("section 4.1 prints the measured optimized time",
           _exact in _sect(txt, "4.1 Course VM"), f"expected {_exact} ms")
     check("section 5.6 uses the same optimized time",
@@ -481,7 +473,7 @@ for _b, _rep, _name in (("pyflate", _pf, "report_pyflate.txt"), ("mdp", _md, "re
     _body = _rep.replace(_sect(_rep, "4.3 Reproducibility", 3200), "")
     _body = _body.replace(_sect(_body, "3.6 Which of those five actually earned the speedup", 3000), "")
     _found = re.findall(r"(?<![\d.])(\d\.\d\d)x(?![\d.])", _body)
-    _bad = sorted({v + "x" for v in _found} - {_want, "2.00x", "1.95x", "4.80x"})
+    _bad = sorted({v + "x" for v in _found} - {_want})
     check(f"{_name}: every headline ratio outside 4.3 is the measured {_want}",
           not _bad, f"also found {_bad}")
 
@@ -522,6 +514,17 @@ for _b, _rep, _name, _rows in (
                   f"{_self:.1f}%" in _rep, f"from results/{_b}/cprofile_{_tag}.txt")
             check(f"{_name}: the {_tag} cProfile table's {_fn} cumulative share ({_cum:.1f}%)",
                   f"{_cum:.1f}%" in _rep, f"from results/{_b}/cprofile_{_tag}.txt")
+
+# ---------------------------------------------------------------- state count
+# Section 1 of report_mdp.txt gives the number of nodes topoSort visits. That is
+# the getSuccessorsList call count in the baseline profile (once per visited
+# node, win and loss included) and the figure slide 11 quotes as "4,823 states".
+_r = _cprof(os.path.join(ROOT, "results", "mdp", "cprofile_base.txt"), "getSuccessorsList")
+if _r:
+    _nodes = int(_r[2].split("/")[0])
+    check(f"report_mdp.txt: section 1 gives the measured node count ({_nodes:,})",
+          f"{_nodes:,}" in _sect(_md, "Data structures and algorithm."),
+          "from results/mdp/cprofile_base.txt")
 
 # ---------------------------------------------------------------- perf probe
 # Section 2 quotes the sample counts out of results/<b>/perf_events_probe.txt.
