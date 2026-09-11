@@ -54,15 +54,6 @@ def variant_from_source(tag, *replacements):
     return mod
 
 
-def timed(fn, reps):
-    ts = []
-    for _ in range(reps):
-        t0 = time.perf_counter()
-        fn()
-        ts.append(time.perf_counter() - t0)
-    return min(ts), statistics.median(ts)
-
-
 def variant_full():
     return fresh("opt")
 

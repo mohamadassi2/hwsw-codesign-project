@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Per-function shares, recomputed from the committed cProfile artifacts.
 
-The tables in the reports were written by hand from an earlier profiling run and
-did not recompute from results/<b>/cprofile_*.txt once the evidence was replaced.
-This prints the shares the artifacts actually support, so the tables can be
-regenerated from them and gated.
+Prints the per-function self and cumulative shares that the cProfile tables in
+sections 2 and 4 of each report quote, as percentages of the benchmark
+function's cumulative time, recomputed from results/<b>/cprofile_{base,opt}.txt.
+scripts/check_report_numbers.py gates the load-bearing rows against the same
+files.
 
     python3 scripts/cprofile_shares.py [benchmark ...]
 """

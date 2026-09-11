@@ -4,7 +4,8 @@
 Prints, per benchmark: the pyperformance-framework baseline, the pyperf
 baseline and optimized runs (mean +- std, number of values), the speedup,
 the pyperf compare_to table, and the perf stat counters for both builds.
-Used to fill the performance sections of the reports.
+Read-only: the quickest way to see what the course VM measured.
+scripts/fill_reports.py is what writes these figures into the reports.
 """
 import json, os, re, statistics, sys
 

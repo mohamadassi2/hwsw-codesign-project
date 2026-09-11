@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # One command that re-verifies the whole submission from the shipped files:
 #   1. both optimizations still produce the original output (pyflate byte-for-byte,
-#      mdp to the last bit) and still show their speedup,
+#      mdp to the last bit) and still show a speedup - timed on THIS machine, so the
+#      ratio will differ from the VM figures the documents quote,
 #   2. every derived number in the two reports recomputes from results/,
-#   3. every number on the slides recomputes from results/ and the docs.
-# Exit status is non-zero if anything fails.
+#   3. every number on the slides recomputes from results/ and the docs,
+#   4. how far the shipped run drifts from the independent rerun in
+#      results/reproducibility/ (printed for the reader; compare_runs.py does not fail on it).
+# Exit status is non-zero if any of steps 1-3 fails.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # Prefer the venv the benchmark scripts create; fall back to the system python3
-# (steps 2 and 3 need only the standard library, step 1 needs pyperf).
+# (every step runs on the standard library alone: local_check.py stubs pyperf when it is absent).
 if [ -z "${PY:-}" ]; then
   if [ -x venv/bin/python ]; then PY=venv/bin/python; else PY=python3; fi
 fi
@@ -45,7 +48,7 @@ FP
     echo "                                           then update the slides to match."
   fi
 fi
-echo "== 1/3 optimizations vs originals"; $PY scripts/local_check.py all "${REPS:-3}"
+echo "== 1/4 optimizations vs originals (speedup timed on this machine; the shipped VM figures are in results/)"; $PY scripts/local_check.py all "${REPS:-3}"
 # `| head -1` keeps the summary line short, but on a failure it also hides which
 # checks failed - the one moment the detail matters. Show the summary on success
 # and everything on failure.
@@ -58,7 +61,7 @@ run_gate() {
     return 1
   fi
 }
-run_gate "== 2/3 report numbers" scripts/check_report_numbers.py
-run_gate "== 3/3 slide numbers"  scripts/check_deck_numbers.py
-echo "== drift against the independent run"; $PY scripts/compare_runs.py results results/reproducibility | tail -1
+run_gate "== 2/4 report numbers" scripts/check_report_numbers.py
+run_gate "== 3/4 slide numbers"  scripts/check_deck_numbers.py
+echo "== 4/4 drift against the independent rerun (reported, not gated)"; $PY scripts/compare_runs.py results results/reproducibility | tail -1
 echo "all checks passed"

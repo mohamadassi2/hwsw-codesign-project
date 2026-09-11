@@ -179,7 +179,7 @@ def main():
     # ---- the baseline slide must carry the BASELINE cProfile figures ----------
     rep = open(os.path.join(ROOT, "report_pyflate.txt"), encoding="utf-8").read()
     base_slide = "15.7% self and 49.3%" in re.sub(r"\s+", " ", txt)
-    (oks if base_slide else fails).append("slide 6 quotes the baseline cProfile figures (15.7 / 48.2)")
+    (oks if base_slide else fails).append("slide 6 quotes the baseline cProfile shares (15.7% self, 49.3% cumulative)")
     (oks if "15.7%" in rep and "49.3%" in rep else fails).append("those figures are the report's section 2 numbers")
 
     # ---- the shares on the "what remains" slide come from the folded stacks ----
@@ -282,7 +282,11 @@ def main():
                             ("README mdp % less", 100 * (1 - mo / mb), "{:.1f}"),
                             ("README pyflate baseline s", pb, "{:.3f}"),
                             ("README mdp baseline s", mb, "{:.3f}")):
-        (oks if fmt.format(val) in rd else fails).append(f"{label}: README should say {fmt.format(val)}")
+        s = fmt.format(val)
+        if s in rd:
+            oks.append(f"{label} ({s})")
+        else:
+            fails.append(f"{label}: README should say {s}")
 
     print(f"PASS {len(oks)}   FAIL {len(fails)}")
     for l in oks:
