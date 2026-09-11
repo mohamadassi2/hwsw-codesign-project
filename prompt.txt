@@ -128,10 +128,10 @@ Auditing the work against itself
     bubbles, and the testbench now fails if DONE asserts early.
   - "Check the reports against their own artifacts." Three claims did not
     survive: the per-function shares were from a profiling run that had been
-    replaced (51.1%, not 49.7%), the mdp counters were quoted from the run
-    the report says it does not use, and the ablation reverted move-to-front
-    by patching a function the optimized decoder never calls - so it reverted
-    3% of the work and reported the change as worth nothing.
+    replaced, the mdp counters were quoted from the run the report says it
+    does not use, and the ablation reverted move-to-front by patching a
+    function the optimized decoder never calls - so it reverted 3% of the
+    work and reported the change as worth nothing.
 
   That last one is the one worth remembering. A revert that does not revert
   reads exactly like a measurement, and we believed it until it was rebuilt

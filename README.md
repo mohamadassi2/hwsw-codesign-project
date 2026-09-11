@@ -4,11 +4,10 @@ Final project for *HW/SW Co-design* (00460882, Technion).
 Mohamad Assi (212343594), Ido Sefi (208008698).
 
 Two benchmarks from the pyperformance suite, **pyflate** and **mdp**, profiled
-with py-spy flame graphs and `perf stat` counters (`perf record` collects no
-samples in this guest -- section 2 of each report says why), optimized in pure
-Python with byte-identical output, and, for pyflate, a hardware accelerator for
-the canonical-Huffman symbol decoder, written in SystemVerilog and verified
-against the benchmark's real compressed block.
+with py-spy flame graphs and `perf stat` counters, optimized in pure Python with
+byte-identical output, and, for pyflate, a hardware accelerator for the
+canonical-Huffman symbol decoder, written in SystemVerilog and verified against
+the benchmark's real compressed block.
 
 | | baseline | optimized | improvement | output |
 |---|---|---|---|---|
@@ -21,6 +20,25 @@ E5-2630 v3) by the two scripts below; the raw files are in `results/`, and
 the slides from them. Both improvements are far above the 7% the assignment
 asks for.
 
+## Start here
+
+1. `report_pyflate.txt`, `report_mdp.txt` - the two reports, sections in the assignment's order
+2. `docs/presentation.html` - the deck (open in a browser); `docs/presentation_outline.md` is the speaker guide
+3. `benchmarks/<b>/run_benchmark_opt.py` - the optimized code; `run_benchmark.py` beside it is the untouched original
+4. `hw/rtl/huffman_decoder.sv` - the accelerator; `docs/hw_sw_interface.md` - its register map
+5. `results/` - the course-VM measurements every number above comes from
+
+What we run live at the presentation (about a minute in total, standard library only):
+
+    python3 scripts/local_check.py                   # both benchmarks: same output as the original, and the speedup
+    (cd hw && make sim)                              # the RTL decodes the benchmark's real block: 148271 symbols, 0 errors, PASS
+    python3 scripts/check_report_numbers.py | head -1 # every figure in the reports recomputed from results/: PASS <n>   FAIL 0
+
+That `make sim` line is line 7 of `results/rtl_sim_guest.log` - the same testbench
+run inside the course VM. `local_check.py` needs no venv (it supplies its own
+pyperf stand-in) and prints this machine's speedup, not the VM's; on CPython
+3.12+ its mdp line explains a one-ulp difference, see report_mdp.txt section 3.
+
 ## Layout
 
 ```
@@ -32,25 +50,24 @@ THIRD-PARTY.md                       what in here is not ours, and under what te
 benchmarks/<b>/run_benchmark.py      the benchmark exactly as pyperformance ships it
 benchmarks/<b>/run_benchmark_opt.py  our optimized version, same pyperf runner
 benchmarks/pyflate/data/             the benchmark input (interpreter.tar.bz2)
-scripts/check_all.sh                 runs all three gates below in order
-scripts/local_check.py               in-process correctness + speed check, baseline vs optimized
-scripts/summarize_results.py         turns results/ into the tables quoted in the reports
-scripts/fill_reports.py              writes the measured figures into the two reports
-scripts/check_report_numbers.py      recomputes every figure the reports quote, and fails on a mismatch
-scripts/check_deck_numbers.py        the same gate for the slides, the diagram and this README
-scripts/compare_runs.py              drift between two independent runs of the same benchmark
-scripts/focus_folded.py              re-roots py-spy stacks at the benchmark function
-scripts/table_stats.py               what the shipped pyflate table scan costs on this input
-scripts/ablation.py                  what each pyflate optimization is worth on its own
-scripts/cprofile_shares.py           per-function shares recomputed from the cProfile artifacts
-scripts/record_reproduction.py       captures a from-scratch guest rerun into results/reproducibility/
+scripts/check_all.sh                 the one command to run live: gates (1)-(3) below in order, then the drift line (4)
+scripts/local_check.py               (1) optimized == original: pyflate byte-for-byte, mdp to the last bit, plus a rough speedup
+scripts/check_report_numbers.py      (2) every figure the reports quote recomputes from results/, or it fails
+scripts/check_deck_numbers.py        (3) the same for the slides, the block diagram and this README
+scripts/compare_runs.py              (4) drift between the shipped run and the independent rerun in results/reproducibility/ (printed, not gated)
+scripts/focus_folded.py              called by both script_*.sh: re-roots py-spy stacks at the benchmark function
+scripts/table_stats.py               called by script_pyflate.sh: what the shipped table scan costs on this input
+scripts/ablation.py                  called by script_pyflate.sh: what each pyflate optimization is worth on its own
+scripts/summarize_results.py         prints results/ as the tables the reports quote (read-only)
+scripts/fill_reports.py              rewrites section 4.1 of each report and the Amdahl line in pyflate 5.6 from results/ (already run for the shipped run; gate 2 verifies it)
+scripts/cprofile_shares.py           prints the per-function shares the reports' cProfile tables quote, from results/<b>/cprofile_*.txt (read-only)
 hw/rtl/*.sv                          the accelerator: bit reader, decoder, top
 hw/tb/tb_huffman.sv                  self-checking testbench on the real benchmark block
-hw/tb/mutate.sh, hw/tb/MUTATIONS.md  mutation testing: six injected bugs, and that the testbench kills each
+hw/tb/mutate.sh, hw/tb/MUTATIONS.md  mutation testing: 20 injected bugs, 19 killed, the survivor explained
 hw/tb/synth_report.py                turns a yosys run into docs/synthesis_yosys.txt
 hw/gen_vectors.py                    dumps tables / bit stream / expected symbols from the software
 hw/synth.ys                          the yosys script `make synth` runs
-hw/Makefile                          `make sim`, `make vectors`, `make synth`
+hw/Makefile                          `make vectors`, `make sim`, `make sim_all`, `make synth`
 docs/presentation.html               the project presentation (open in a browser)
 docs/presentation_outline.md         the slide-by-slide plan behind it
 docs/hw_sw_interface.md              register map, data flow, the one software change
@@ -71,41 +88,69 @@ git clone https://github.com/mohamadassi2/hwsw-codesign-project.git && cd hwsw-c
 ./script_mdp.sh          # ~10 min
 ```
 
-Each script clears `results/<benchmark>/` before it starts, so running one
-replaces the evidence committed here. That also means the reports and slides,
-which quote the committed run, will no longer agree with `results/` - and
-`scripts/check_all.sh` will say so and list every figure that moved. That is the
-checkers working, not a broken submission: they compare the documents against
-whatever is in `results/` now. `results/RUN_ID.txt` fingerprints the run the
-documents quote, and `check_all.sh` warns before it starts if they differ.
+Each script replaces `results/<benchmark>/`. The reports and slides quote the
+committed run (`results/RUN_ID.txt` fingerprints those measurement files,
+`results/CODE_ID.txt` the code that produced them), so after a rerun
+`scripts/check_all.sh` lists every figure that moved; `git checkout -- results/`
+restores the shipped evidence.
 
-To check the submission as shipped: `git checkout -- results/`.
+Both scripts have the same shape. The `=== ... ===` headings they print follow
+the numbered sections of the script itself (`# ---- 0. environment` through
+`# ---- 4b. contention`; `results/<b>/trace.log` keeps the same sequence as
+`+ log ...` lines):
 
-Each script installs its own venv (pyperf, pyperformance, py-spy) and
-FlameGraph, sets the two `perf` sysctls the guest needs
-(`kptr_restrict=0`, `perf_event_paranoid=-1`: without them `perf report`
-shows no kernel symbols and empty call graphs), then runs:
+0. environment: a venv with pyperf, pyperformance and py-spy; FlameGraph; the
+   two `perf` sysctls the guest needs (`kptr_restrict=0`,
+   `perf_event_paranoid=-1`: without them `perf report` shows no kernel symbols
+   and empty call graphs); then a probe of which `perf` sampling events
+   actually fire in this guest (`pmu_diagnosis.txt`, `perf_events_probe.txt`).
+1. baseline: `pyperformance run --bench <b>` itself
+   (`<b>_pyperformance_baseline.json`), then the vendored copy through the same
+   pyperf runner (`<b>_base.json`) - that is what we diff against.
+2. profile the baseline: `perf record` (collects nothing in this guest -
+   `perf_top_{base,opt}.txt` is what it leaves behind; report_pyflate.txt
+   section 2 says why) and `py-spy` flame graphs, re-rooted at the benchmark
+   function by `scripts/focus_folded.py` (`flame_<b>_base_{pyspy,focus}.svg`).
+3. optimized: the same runner and the same profiles on `run_benchmark_opt.py`
+   (`<b>_opt.json`, `flame_<b>_opt_{pyspy,focus}.svg`), then cProfile on both
+   for the per-function shares the reports quote (`cprofile_{base,opt}.txt`).
+   pyflate only: `scripts/table_stats.py` (what the shipped table scan costs on
+   this input, `table_stats.txt`) and `scripts/ablation.py` (what each
+   optimization is worth on its own, `ablation.txt`).
+4. compare: `pyperf compare_to` (`compare_<b>.txt`), `perf stat -r 3` on both
+   (`perfstat_{base,opt}.txt`), and a contention check that marks the
+   wall-clock figures untrustworthy if the guest did not have the whole core
+   (`contention.txt`).
 
-1. the baseline through `pyperformance run --bench <b>` itself,
-2. the baseline and the optimized version through the same pyperf runner
-   (`benchmarks/<b>/run_benchmark*.py -o ….json`),
-3. `py-spy` flame graphs on both (the scripts also attempt `perf record`, which
-   collects nothing in this guest - see report_pyflate.txt section 2),
-4. `pyperf compare_to` and `perf stat -r 3` for both.
+### Guest DNS fix
 
-Outputs: `results/<b>/<b>_base.json`, `<b>_opt.json`, `compare_<b>.txt`,
-`flame_<b>_{base,opt}_{focus,pyspy}.svg`, `perf_top_{base,opt}.txt`,
-`perfstat_{base,opt}.txt`.
-
-## Quick local check (any machine with Python 3.8+)
+QEMU's user-mode NAT forwards the guest's DNS queries to the host's resolver.
+When the host runs systemd-resolved, that is the 127.0.0.53 stub, which the
+NAT cannot reach: names fail in the guest while plain TCP works, so `apt` and
+`pip` silently die. If `pypi.org` does not resolve, the scripts rewrite
+`/etc/resolv.conf` once to Technion's resolvers plus 8.8.8.8, keep the old
+file as `/etc/resolv.conf.bak`, and say so. If a script still stops with
+`network: offline`, apply the same fix by hand and re-run it:
 
 ```bash
-python3 -m venv venv && venv/bin/pip install pyperf
-venv/bin/python scripts/local_check.py          # both benchmarks, 5 repetitions
+printf 'nameserver 132.68.39.127\nnameserver 132.68.32.5\nnameserver 8.8.8.8\n' > /etc/resolv.conf
 ```
 
-Prints the correctness gate of each benchmark on the optimized code and a
-rough speedup.
+## Showing the change live (any Python 3.8+, no packages needed)
+
+```bash
+python3 scripts/local_check.py all 1     # both benchmarks, one timed repetition each, a few seconds
+diff -u benchmarks/pyflate/run_benchmark.py benchmarks/pyflate/run_benchmark_opt.py
+diff -u benchmarks/mdp/run_benchmark.py benchmarks/mdp/run_benchmark_opt.py
+```
+
+The first line runs each benchmark's own correctness gate on the optimized
+code, checks it against the baseline (pyflate byte-for-byte, mdp to the last
+bit) and prints a rough local speedup; the speedups quoted in this README and
+the reports are the VM's, from `results/`. Without `all 1` it runs five
+repetitions. The two diffs are the whole optimization (pyflate's is the
+longer); section 3 of each report walks them change by change - 3.1-3.5 for
+pyflate, 3.1-3.2 for mdp - and that is the order to read them in.
 
 ## Hardware
 
@@ -113,9 +158,10 @@ rough speedup.
 cd hw
 make vectors     # plain python3, no packages needed; writes tb/vectors/
 make sim         # the real bzip2 block, Icarus Verilog (iverilog -g2012)
-make sim_all     # the above plus backpressure, level-LAST, and five directed streams
+make sim_all     # the above plus backpressure, level-LAST, and six directed streams
 make synth       # regenerates docs/synthesis_yosys.txt
-tb/mutate.sh     # injects 20 bugs one at a time and reports which the suite catches
+tb/mutate.sh     # ~25 min: injects 20 bugs one at a time, reports which the suite catches
+ONLY=comparators tb/mutate.sh   # just one of them, live: control passes, then vectors_lengths kills it
 ```
 
 `make sim_all` is the one to run if you only run one: `sim` alone passes on
@@ -135,13 +181,3 @@ again with every table flattened into logic.
 The history is meant to be read: baseline vendored → pyflate optimization →
 mdp optimization → scripts → RTL + testbench → docs/synthesis. Each commit
 message states what was measured and why the change was made.
-
-To re-verify everything from the shipped files in one command (the reports quote the
-committed run in `results/`; after rerunning the scripts, regenerate the report blocks
-with `scripts/fill_reports.py` before checking, or restore the committed set):
-
-    scripts/check_all.sh
-
-To confirm the hardware testbench can actually fail (mutation test, ~25 min):
-
-    cd hw && tb/mutate.sh
