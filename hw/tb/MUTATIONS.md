@@ -6,16 +6,15 @@ scratch copy, and records whether the suite caught it.
 
     cd hw && tb/mutate.sh
 
-## Why the suite is `sim_all` and not `sim`
+## Why the suite is `sim_all`: against `make sim` alone, 12 of 20 escape
 
-`make sim` runs one stimulus: the real bzip2 block taken from the benchmark
-input. That block is well formed, uses only code lengths 2..15, never runs out
-of input mid-code, never presents a code that matches nothing, and never
-stalls the consumer. Eight of the mutations below pass it unnoticed.
-
-That is a property of the stimulus, not of the design, and it is why the
-directed vector sets exist. `hw/tb/gen_synth_vectors.py` builds four small
-streams that reach the corners the benchmark cannot:
+`make sim` runs one stimulus, the real bzip2 block from the benchmark input.
+That block is well formed, uses only code lengths 2..15, never runs out of
+input mid-code, never presents a code that matches nothing, and never stalls
+the consumer - so twelve of the twenty bugs below pass it unnoticed
+(reproduce with `SUITE=sim tb/mutate.sh`). That is a property of the
+stimulus, not of the design, and it is why `hw/tb/gen_synth_vectors.py`
+builds six small streams that reach the corners the benchmark cannot:
 
 | set | what it forces |
 |---|---|
@@ -33,15 +32,13 @@ a register-mapped host would, and the `drain` set is also run with `+bubble`,
 which stalls the producer for 40 cycles just before it hands over the final
 word. Mutations 19 and 20 exist only because those two runs do.
 
-## Against `make sim` alone: 12 of 20 escape
-
-Reproduce with `SUITE=sim tb/mutate.sh`. That is the number worth quoting: the
-single well-formed block cannot reach end-of-input, an unmatchable code, a
-stalled consumer, an out-of-range index, the extreme code lengths, or a
-producer bubble, so a third of the injected bugs pass it unnoticed. The
-directed streams and the throttled runs exist to close exactly that gap.
-
 ## Result with `make sim_all`: 19 of 20 killed, 1 unreachable
+
+One line per injected bug. The verdict names what noticed it: `timeout` is
+the testbench watchdog, a set name or plusarg (`+bp`, `+last_level +bubble`)
+names the run that failed, and a number comes from an assertion in
+`tb_huffman.sv` - 148,271 is the symbol count of the benchmark block, so
+`148,271 errors` means every symbol came out wrong.
 
 | # | mutation | verdict |
 |---|---|---|
@@ -69,18 +66,13 @@ directed streams and the throttled runs exist to close exactly that gap.
 ## The one that survives, and why that is the right answer
 
 **8 - the bit reader's saturating `cnt_after`.** The decoder only emits a
-symbol when its whole code is in the buffer (`enough` in
-`huffman_decoder.sv`), so `consume` can never exceed `cnt_q` and the
-saturation can never be reached from this design. It is kept as a guard on the
-reader's own interface, for any other consumer that does not make that
-promise. Unreachable code cannot be killed by any test, and listing it here is
-the honest way to say so rather than deleting the guard to improve a score.
-
-It is recorded rather than removed. A mutation score is only meaningful if the
-survivors are explained, and deleting an unreachable guard to make the number
-look better would be the wrong trade: the guard costs nothing and protects the
-reader's own interface against a future consumer that does not make the same
-promise.
+symbol when its whole code is in the buffer (`fits[L]` in
+`huffman_decoder.sv`, folded into `hit[L]`), so `consume` can never exceed
+`cnt_q` and the saturation can never be reached from this design. The guard
+costs nothing and is kept on the reader's own interface, for any other
+consumer that does not make that promise. Unreachable code cannot be killed by
+any test, and listing it here is the honest way to say so rather than deleting
+the guard to improve a score.
 
 The halt-on-error mutation (10) used to survive too. It is caught now because
 the directed error test keeps the engine enabled after `err` asserts and

@@ -1,4 +1,3 @@
-import os
 #!/usr/bin/env python3
 """Turn the yosys stat/ltp files written by synth.ys into docs/synthesis_yosys.txt.
 
@@ -44,11 +43,12 @@ print(f"""# Generic synthesis of huffman_accel_top with {ver}.
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.
 #
-# Why three configurations. limit_r is read at all 20 code lengths in the same
-# cycle - that parallel compare is the whole point of the design - and base_r is
-# read asynchronously. No SRAM macro has twenty read ports, so those two tables
-# are register files and are counted as such below. Only the symbol table, with
-# one synchronous read port, is a genuine SRAM candidate.
+# Why two configurations, and why the tables are not all counted alike.
+# limit_r is read at all 20 code lengths in the same cycle - that parallel
+# compare is the whole point of the design - and base_r is read asynchronously.
+# No SRAM macro has twenty read ports, so those two tables are register files
+# and are counted as such below. Only the symbol table, with one synchronous
+# read port, is a genuine SRAM candidate.
 
 === 1. as built: limit/base as register files, symbols in SRAM ===
 {cells(asb)} cells: {ffs(asb)} flip-flops, {gates(asb)} gates, {mems(asb)} memory

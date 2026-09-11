@@ -3,14 +3,20 @@
 
 hw/gen_vectors.py dumps one real block from the benchmark. That block is
 well-formed, uses only code lengths 2..15, and ends with slack bits after the
-last symbol, so it exercises none of these:
+last symbol, so it reaches none of the corners below. One directed set per
+corner, in the order `make sim_all` runs them:
 
-  * code length 1, and lengths 16..20 - the widest codes bzip2 allows and the
-    reason the comparators and the 21-bit limit width exist;
-  * the all-ones maximum-length code, the largest value a limit row must hold;
-  * end of stream: flush, eof, and a stream that ends exactly on the last code,
-    with nothing left over;
-  * the error path: a code that matches no length must halt the engine.
+  * lengths   every code length 1..20, including the all-ones 20-bit code -
+              the widest codes bzip2 allows, and the reason the comparators
+              and the 21-bit limit width exist;
+  * eof       the stream ends exactly on a code boundary;
+  * err       an incomplete code, so some bit pattern matches nothing: err
+              must halt the engine;
+  * badidx    a base row that points past the symbol table: err, not a
+              wrong symbol;
+  * underrun  the stream ends short of a whole code: underrun must rise;
+  * drain     a whole number of 32-bit words, so the buffer empties and
+              `done` can assert.
 
 Each set is written in exactly the format tb_huffman.sv already reads, so the
 same testbench runs them.  A mutation-tested design needs stimulus that can
@@ -134,7 +140,6 @@ def main():
     #    A complete canonical code needs exactly one symbol per length plus a
     #    second at the longest length: 1/2/4/.../2^19 with the last level full.
     lengths = [(i, i) for i in range(1, MAXBITS + 1)] + [(MAXBITS + 1, MAXBITS)]
-    codes, maxb = canonical(lengths)[0], MAXBITS
     seq = [s for s, _ in lengths] * 3
     emit("tb/vectors_lengths", lengths, seq)
 
@@ -149,24 +154,25 @@ def main():
     #    unassigned, and the decoder must raise err and halt on it.
     emit("tb/vectors_err", [(0, 1), (1, 2)], [0, 1, 0, 1], corrupt_tail=True)
 
-    # 3b. A stream that is a whole number of 32-bit words, so the buffer drains
-    #     to zero and `done` asserts. Without this, done never rises in any test
-    #     and anything about it is unverifiable.
-    emit("tb/vectors_drain", [(i, i) for i in range(1, 5)] + [(5, 4)],
-         [1, 2, 3, 4, 5] * 4, word_align=True)
-
     # 4. A table whose base row points past the end of the symbol table. The
     #    index check is the only thing between that and a silently wrong
     #    symbol, so the decoder must raise err instead of reading out of range.
     emit("tb/vectors_badidx", [(0, 2), (1, 2), (2, 2), (3, 2)], [0, 1, 2, 3],
-         bad_base=400, corrupt_tail=False)
+         bad_base=400)
 
-    # 5. The stream ends one bit short of the shortest code. The shortest code
-    #    here is two bits, and 2+2+3 = 7 bits leaves exactly one bit of byte
-    #    padding, so a correct decoder must report underrun rather than
-    #    manufacture a symbol out of the pad bit.
+    # 5. The stream ends short of a whole code. Three symbols take 7 bits, but
+    #    the testbench hands over a whole 32-bit word, so the 25 zero bits after
+    #    them decode as twelve 2-bit codes that nobody checks (comparison stops
+    #    at nsym) and the one bit left is shorter than any code: underrun must
+    #    rise there - "UNDERRUN at symbol 15" in the log.
     emit("tb/vectors_underrun", [(0, 2), (1, 2), (2, 2), (3, 3), (4, 3)],
          [0, 1, 3])
+
+    # 6. A stream that is a whole number of 32-bit words, so the buffer drains
+    #    to zero and `done` asserts. Without this, done never rises in any test
+    #    and anything about it is unverifiable.
+    emit("tb/vectors_drain", [(i, i) for i in range(1, 5)] + [(5, 4)],
+         [1, 2, 3, 4, 5] * 4, word_align=True)
 
 
 if __name__ == "__main__":

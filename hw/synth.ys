@@ -1,7 +1,7 @@
 # Generic synthesis of the accelerator with Yosys.
 # Run from hw/:   yosys -q synth.ys      (or: make synth, which also writes docs/synthesis_yosys.txt)
 #
-# Three configurations, because the tables are not all the same kind of thing:
+# Two configurations, because the tables are not all the same kind of thing:
 #
 #   1. as built   limit/base are register files (they are read at every code
 #                 length in the same cycle, so no SRAM macro can implement

@@ -4,6 +4,8 @@
 // streams the compressed bytes through the bit reader 32 bits at a time,
 // drives `tsel` per symbol from the recorded selector sequence, and checks
 // every decoded (symbol, code length) against the software decoder.
+// The +bp, +last_level, +bubble, +expect_err and +expect_underrun modes are
+// explained at their declarations below; hw/Makefile has the target that runs each.
 `timescale 1ns/1ps
 module tb_huffman;
     localparam int MAXBITS = 20, NSYM = 258, SYMW = 9, NTAB = 6, INW = 32;
@@ -176,9 +178,7 @@ module tb_huffman;
             nchk <= nchk + 1;
             last_cycle = cycles;
         end
-        // err and underrun are sticky, so count the RISING EDGE. Counting the
-        // level added one error per cycle until the watchdog fired, which turned
-        // any single decode error into a twenty-million-cycle run.
+        // err and underrun are sticky, so count the RISING EDGE, not the level.
         // Protocol: a symbol offered while the consumer is not ready must still
         // be there, unchanged, on the next cycle. Without this check out_ready
         // can be ignored entirely and every test still passes.
@@ -192,10 +192,8 @@ module tb_huffman;
                     $display("PROTOCOL: a stalled symbol was dropped or changed at symbol %0d", nchk);
             end
         end
-        // DONE means the block is finished. It must not assert while symbols
-        // are still expected: the previous flush condition set end-of-input
-        // during table programming, and every test still passed because none
-        // of them looked at done.
+        // DONE means the block is finished: it must not assert while symbols are
+        // still expected.
         if (done && nchk < nsym && !want_err && !want_underrun) begin
             errors++;
             if (errors < 10)
@@ -386,14 +384,11 @@ module tb_huffman;
         return acc;
     endfunction
 
-    // watchdog
-    // Cycle-based, and proportional to the work: a stalled decoder must fail,
-    // but a 20-million-cycle absolute limit made every directed test - some of
-    // which decode four symbols - run for twenty million cycles before giving
-    // up, which is most of the cost of a mutation sweep. Four cycles per
-    // expected symbol plus a fixed margin is far more than the one cycle per
-    // symbol the design achieves, and fails a stall almost immediately on the
-    // small sets.
+    // Watchdog, proportional to the work: four cycles per expected symbol plus
+    // a fixed margin. The design decodes one symbol per cycle, so the bound is
+    // generous, yet a stalled decoder fails almost at once even on the smallest
+    // directed sets, which decode three or four symbols. That is what keeps the
+    // twenty-mutation sweep affordable.
     always @(posedge clk) begin
         if (run_en && cycles > (longint'(nsym) * 4 + 20000)) begin
             $display("TIMEOUT: decoded %0d/%0d symbols in %0d cycles", nchk, nsym, cycles);

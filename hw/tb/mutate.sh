@@ -5,13 +5,16 @@
 # proves nothing, so this is how we know tb_huffman.sv's PASS means something.
 #
 # The suite here is `make sim_all`, not `make sim`. That matters: the benchmark
-# block is one well-formed bzip2 block, and against it alone eight of the
-# mutations below pass unnoticed, because a single good stream never reaches
-# end-of-input, never presents an unmatchable code, never stalls the consumer
-# and never uses a code shorter than 2 or longer than 15 bits. The directed
-# vector sets and the backpressure run exist to close exactly those gaps.
+# block is one well-formed bzip2 block, and against it alone twelve of the
+# twenty mutations below pass unnoticed (`SUITE=sim tb/mutate.sh` reproduces
+# that), because one good stream never reaches end-of-input, never presents an
+# unmatchable code or an out-of-range table index, never stalls the consumer or
+# the producer, and never uses a code shorter than 2 or longer than 15 bits.
+# The directed vector sets and the throttled runs exist to close exactly those
+# gaps.
 #
-#   cd hw && tb/mutate.sh
+#   cd hw && tb/mutate.sh                    # all twenty (~25 min)
+#   cd hw && ONLY=comparators tb/mutate.sh   # one bug: the control run passes, then vectors_lengths kills it
 #
 # Runs on a scratch copy; the repository files are never modified.
 set -euo pipefail
@@ -26,6 +29,8 @@ SUITE=${SUITE:-sim_all}
 
 run() {   # run NAME 'sed-expression' FILE
   local name=$1 expr=$2 file=$3
+  # ONLY=<any part of a mutation name> runs just that one bug instead of all twenty.
+  if [ -n "${ONLY:-}" ] && [[ "$name" != *"$ONLY"* ]]; then return; fi
   cp "$file" "$file.orig"
   if ! sed -i.bak "$expr" "$file" 2>/dev/null; then
     echo "[$name] SED FAILED - the expression is malformed, not a result"
@@ -54,15 +59,16 @@ run "base adder off by one"             's/idx_s = base_r\[tsel\]\[len_c\] + /id
 run "priority encoder direction"        's/for (int L = MAXBITS; L >= 1; L--)/for (int L = 1; L <= MAXBITS; L++)/' rtl/huffman_decoder.sv
 run "barrel shift one bit short"        's/buf_d = buf_q << consume;/buf_d = buf_q << (consume - 1);/'          rtl/bitreader.sv
 
-# ---- the classes a single well-formed block cannot reach ---------------------
-# Each of these passed `make sim` unnoticed before the directed vector sets and
-# the backpressure run existed. They are the reason those exist.
+# ---- the corners the directed vector sets and the throttled runs were built to
+# reach: end of input, an unmatchable code, an out-of-range table index, a
+# stalled consumer or producer, and the extreme code lengths.
 run "end-of-input term dropped from peek_valid" 's/(eof_q \&\& cnt_q != 0)/(1'"'"'b0)/'                       rtl/bitreader.sv
-# Expected to escape, and that is the correct result: the decoder's `enough`
-# gate means it never consumes more bits than the buffer holds, so the reader's
-# saturation can no longer be reached from this design. It is kept as a
-# contract guard for any other consumer, and listed here so the escape is a
-# recorded conclusion rather than an untested corner.
+# Expected to escape, and that is the correct result: the decoder only emits a
+# symbol when `fits[L]` says its whole code is in the buffer (folded into
+# `hit[L]` in huffman_decoder.sv), so it never consumes more bits than the
+# buffer holds and the reader's saturation can no longer be reached from this
+# design. It is kept as a contract guard for any other consumer, and listed
+# here so the escape is a recorded conclusion rather than an untested corner.
 run "bit-count underflow guard removed"         's/assign cnt_after = (cnt_q > consume) ? (cnt_q - consume) : .0;/assign cnt_after = cnt_q - consume;/' rtl/bitreader.sv
 run "flush tied low in the top"                 's/\.flush(flush_c),/.flush(1'"'"'b0),/'                       rtl/huffman_accel_top.sv
 run "decode error no longer halts"              's/out_free \&\& !err_q \&\& !underrun_q/out_free/'            rtl/huffman_decoder.sv

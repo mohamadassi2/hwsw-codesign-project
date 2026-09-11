@@ -3,9 +3,8 @@
 This describes how the accelerator in `hw/rtl/` plugs into pyflate. The
 software side is the optimized decoder in `benchmarks/pyflate/run_benchmark_opt.py`;
 the hardware replaces exactly one call site, `HuffmanTable.find_next_symbol`,
-which the profile shows is 28.5% of the optimized run on its own and 51.0%
-cumulatively, i.e. including the bit-extraction helpers it calls. (Those two
-shares must not be added together; report_pyflate.txt section 5.6 explains why.)
+which, with the bit-extraction helpers it calls, is 51.0% of the optimized run
+(report_pyflate.txt sections 4.2 and 5.6).
 
 ## What moves to hardware, what stays
 
@@ -23,11 +22,11 @@ The interface is therefore: *tables in, bytes in, symbols out*.
 
 | Offset | Name | R/W | Meaning |
 |---|---|---|---|
-| 0x00 | `CTRL` | RW | bit0 `RUN` decode enabled (drives `run`); bit2 `LAST` the current DMA buffer is the end of the stream (drives `in_last`, and may be held as a level after the final beat) |
+| 0x00 | `CTRL` | RW | bit0 `RUN` decode enabled (drives `run`); bit2 `LAST` the buffer now being streamed is the last one. It reaches the core as `in_last`, and the flush is the `in_valid & in_ready` handshake of the final beat (AXI-stream TLAST style), so `LAST` may stay high afterwards but must not be high before that beat is offered - `make sim_last_level` presents it as a held level, with producer bubbles, to keep that fixed. |
 | 0x04 | `STATUS` | R | bit0 `BUSY` (`run & ~done & ~err & ~underrun`); bit1 `ERR` (no code length matched, or the table index left the symbol table); bit2 `DONE` (input flushed, buffer empty, and no symbol still waiting to be taken - see the note below); bit3 `UNDERRUN` (the stream ended part-way through a code); bits[15:8] bit-buffer level |
 | 0x08 | `TSEL` | RW | active table 0..5 (software writes it every 50 symbols, mirroring the bzip2 selector list) |
 | 0x0C | `TBL_ADDR` | W | `{bank[2:0], kind, index[8:0]}`: kind 0: length row `index`=L (1..20); kind 1: symbol entry |
-| 0x10 | `TBL_DATA` | W | kind 0: `{base[21:0], limit[20:0]}` packed over two writes; kind 1: 9-bit symbol. A write to `TBL_DATA` pulses `tbl_we`. |
+| 0x10 | `TBL_DATA` | W | kind 0: two writes, `limit[20:0]` then `base[21:0]`, and `tbl_we` pulses on the second; kind 1: one write, the 9-bit symbol, and `tbl_we` pulses on it. One `tbl_we` pulse per table entry. |
 | 0x14 | `IN_ADDR` / `IN_LEN` | W | DMA source (compressed bytes): the accelerator pulls 32-bit words |
 | 0x1C | `OUT_ADDR` / `OUT_LEN` | W | DMA destination for the 9-bit symbols (stored as `uint16`) |
 | 0x24 | `SYM_COUNT` | R | symbols *accepted* by the output so far (a symbol held while the consumer is not ready is counted once) |
@@ -53,13 +52,6 @@ the padding and then hit `UNDERRUN` as the *normal* end of the block. Read it as
 well-formed block reached through EOB it never asserts, and `hw/tb` asserts
 exactly that (`make sim` fails if `underrun` rises on the benchmark block).
 
-`LAST` may be presented either with the final beat or held as a level; the
-accelerator flushes on the handshake of the final beat either way. It must not
-be raised before that beat is offered: an earlier version of the RTL also
-flushed on `LAST & ~in_valid`, which a producer bubble then turned into a
-premature end of stream. `make sim_last_level` drives the level form with
-bubbles to keep that fixed.
-
 The symbol port is a valid/ready stream. `sym_valid` may be asserted while the
 DMA is not ready; the symbol is then held unchanged until it is taken, and the
 decoder stalls rather than dropping it. `hw/tb` runs the whole benchmark block
@@ -67,12 +59,10 @@ with that ready line gated pseudo-randomly (`make sim_bp`) precisely so this is
 tested and not merely asserted.
 
 Table programming for one block is at most 6 × (20 rows + 258 symbols) ≈ 1,700
-register writes, done once per 900 KB block: microseconds against a decode
-that the software spends tens of milliseconds on. For the benchmark's block the
-tables are sparser than the worst case: `gen_vectors.py` emits 120 length rows
-and 882 symbol entries, so 1,002 `tbl_we` pulses. (The ~1,700 figure counts
-MMIO writes at the maximum table size; the 1,002 counts the pulses actually
-issued for this input. Both appear in the report and mean different things.)
+entries, done once per 900 KB block: microseconds against a decode that the
+software spends tens of milliseconds on. The benchmark's block is sparser:
+`gen_vectors.py` emits 120 length rows and 882 symbol entries, so 1,002
+`tbl_we` pulses.
 
 The host must write all twenty length rows of a bank before selecting it. The
 table arrays are not reset, so a row left over from a previous block would
@@ -93,9 +83,9 @@ CTRL.RUN = 1                           --> one symbol per clock:
                                            -> symbol SRAM -> DMA out
 write TSEL every 50 symbols            --> (or: hand the selector list to the
                                             accelerator and let a counter do it)
-poll STATUS: BUSY drops on DONE, ERR or UNDERRUN
-                                           (for bzip2 the host also knows the block
-                                            is over when it decodes the EOB symbol)
+stop RUN on the EOB symbol, poll ERR   --> (STATUS.BUSY drops only on ERR or
+                                            UNDERRUN, or on DONE if the input
+                                            drains - see the DONE note above)
 MTF / run expansion / BWT / RLE on the symbol buffer (unchanged code)
 ```
 
@@ -103,7 +93,7 @@ The selector switch every 50 symbols is the one piece of control that crosses
 the boundary at symbol rate. Two options are implemented/considered:
 
 1. **Software-driven `TSEL`** (what the register map above does): simple, but
-   the host must poll `SYM_COUNT` and write `TSEL` 2,965 times for this block.
+   the host must poll `SYM_COUNT` and write `TSEL` 2,966 times for this block.
 2. **Selector list in hardware**: write the selector list (≤ 18,002 entries of
    3 bits) into a small SRAM and let a 6-bit counter advance `tsel` every 50
    symbols. This is the better design for a real product and costs ~7 KB of
@@ -131,14 +121,8 @@ and gets the same bytes. This follows lecture 5's first rule for accelerators
 
 ## Interface widths and rates
 
-| Signal | Width | Notes |
-|---|---|---|
-| `in_data` | 32 bit | compressed stream, MSB-first; `in_ready` throttles the DMA |
-| `peek` (internal) | 20 bit | longest bzip2 code |
-| `sym` | 9 bit | bzip2 alphabet ≤ 258 |
-| `len` | 5 bit | 1..20 |
-| `tsel` | 3 bit | 6 tables |
-| table row | 21 + 22 bit | `limit[L]` unsigned, `base[L]` signed |
+Every port and its width: report_pyflate.txt section 5.3, in the order of
+huffman_accel_top.sv.
 
 Sustained throughput is one symbol per clock; on the benchmark's block that is
 148,272 cycles for 148,271 symbols (measured in `hw/tb`). The bit buffer holds

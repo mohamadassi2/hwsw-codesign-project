@@ -1,8 +1,29 @@
-# hw/Makefile -- simulate the Huffman accelerator against the real benchmark data.
-#   make vectors   dump golden tables/stream/symbols from the software decoder
-#   make sim       compile with Icarus Verilog and run the testbench
-#   make sim_all   sim, plus backpressure and the four directed vector sets
-#   make synth     regenerate docs/synthesis_yosys.txt with Yosys
+# hw/Makefile -- simulate (Icarus Verilog) and synthesize (Yosys) the Huffman accelerator.
+#
+#   make vectors          dump the golden data from the software decoder into
+#                         tb/vectors/: 6 tables, the bit stream, 148,271 expected symbols
+#   make sim              the real bzip2 block at full rate; asserts one symbol per cycle
+#   make sim_bp           the same block with +bp: both handshakes throttled
+#   make sim_last_level   the same block with +bp +last_level: LAST held as a level
+#   make sim_all          everything, in this order:
+#                           1. the six directed sets from tb/gen_synth_vectors.py
+#                              (lengths, eof, err, badidx, underrun, drain), then
+#                              drain again with +last_level +bubble
+#                           2. sim, sim_bp, sim_last_level on the real block
+#                         (why the cheap sets go first: see the note above sim_all)
+#   make synth            regenerate docs/synthesis_yosys.txt with Yosys
+#   tb/mutate.sh          inject 20 bugs into the RTL one at a time, run sim_all on each
+#
+# Testbench plusargs (all off by default; the recipes below pass them):
+#   +bp               gate out_ready and in_valid pseudo-randomly (16-bit LFSR,
+#                     so reproducible); the throughput assertion is skipped
+#   +last_level       hold in_last high from the final word on, even on cycles
+#                     with nothing valid - the way a register-mapped host drives it
+#   +bubble           stall the producer 40 cycles just before the final word
+#   +expect_err       the stream is built to trip err (err set: a code that matches
+#                     nothing; badidx set: an index past the symbol table): PASS needs
+#                     err to rise and the engine to make no progress afterwards
+#   +expect_underrun  the stream ends short of a whole code: PASS needs underrun
 IVL  ?= iverilog -g2012
 VVP  ?= vvp
 PY   ?= python3
@@ -26,9 +47,7 @@ sim_bp: build/tb tb/vectors/expected.txt
 	grep -q '^PASS' build/sim_bp.log || { echo "make sim_bp: FAILED (see build/sim_bp.log)"; exit 1; }
 
 # LAST held as a level, with producer bubbles, on the real block: the
-# register-mapped host style. Declared .PHONY once without a recipe, which make
-# reports as "Nothing to be done" and reports as success - so this run silently
-# did not exist while three documents cited it.
+# register-mapped host style.
 sim_last_level: build/tb tb/vectors/expected.txt
 	@$(VVP) build/tb +bp +last_level > build/sim_last.log 2>&1; rc=$$?; tail -3 build/sim_last.log; \
 	if [ $$rc -ne 0 ]; then echo "make sim_last_level: simulator exited $$rc"; exit $$rc; fi; \
@@ -53,7 +72,7 @@ synth_vectors:
 # The directed sets run FIRST: they are milliseconds each, and a broken decoder
 # usually fails one of them, so the expensive 148,271-symbol runs are only
 # reached by a design that already passed the cheap checks. That ordering is
-# what makes an eighteen-mutation sweep affordable on one vCPU.
+# what makes a twenty-mutation sweep affordable on one vCPU.
 sim_all: synth_vectors build/tb
 	@echo "directed vector sets:"
 	$(call run_one,lengths,)
