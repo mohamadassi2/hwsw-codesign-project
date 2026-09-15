@@ -1,47 +1,40 @@
 #!/usr/bin/env python3
 """Attribute the pyflate speedup to the individual optimizations.
 
-report_pyflate.txt section 3 lists five changes. Quoting one overall speedup
-for all five says nothing about which of them earned it, and section 3.1 is
-labelled "the main fix" - a claim worth measuring rather than asserting.
-
-Each variant below is the optimized module with exactly one change put back to
-the shipped implementation, so the difference from the full optimized run is
-that change's contribution. Only the changes that are separable this way are
-measured; 3.2 (the bit reader) and 3.5 (local names) are woven through the
-decode loop and cannot be reverted without rewriting it, so they are reported
-together as the remainder.
+report_pyflate.txt section 3 lists five changes. Each variant below is the
+optimized module with exactly one of them put back to the shipped
+implementation, so the difference from the full optimized run is that change's
+contribution. 3.2 (the bit reader) and 3.5 (local names) are woven through the
+decode loop and cannot be reverted on their own, so they are reported together
+as the remainder.
 
 Timings must come from the course VM like every other timing in this project.
 
     python3 scripts/ablation.py [reps] [output-file]
 """
-import os, statistics, sys, time
+import os, statistics, sys, time, types
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from local_check import _load_without_pyperf  # noqa: E402
+from local_check import ensure_pyperf, load_benchmark  # noqa: E402
 
 D = os.path.join(ROOT, "benchmarks", "pyflate")
 DATA = os.path.join(D, "data", "interpreter.tar.bz2")
 
 
 def fresh(which):
-    name = "pyflate_" + which + "_ablation"
-    return _load_without_pyperf(name, os.path.join(D, "run_benchmark%s.py" % ("" if which == "base" else "_opt")))
+    """A fresh copy of the baseline ("base") or optimized ("opt") module."""
+    fname = "run_benchmark.py" if which == "base" else "run_benchmark_opt.py"
+    return load_benchmark("pyflate_" + which + "_ablation", os.path.join(D, fname))
 
 
 def variant_from_source(tag, *replacements):
     """Load the optimized module with the given source substitutions applied.
 
-    Reverting a change by monkey-patching only works when the optimized code
-    still calls the thing being patched. It does not for move-to-front: the
-    optimized decoder inlines the pop/insert into the decode loop and reaches
-    the module-level move_to_front only for the six-element selector list, so
-    patching that function reverted 2,966 of 92,803 operations and reported the
-    change as worth nothing. Substituting the source reverts what actually runs.
+    Monkey-patching a function is not enough for move-to-front: the optimized
+    decode loop inlines the pop/insert, so the revert has to be made in the
+    source that actually runs.
     """
-    import importlib.util, types
     src = open(os.path.join(D, "run_benchmark_opt.py"), encoding="utf-8").read()
     for old, new in replacements:
         if old not in src:
@@ -49,13 +42,9 @@ def variant_from_source(tag, *replacements):
         src = src.replace(old, new, 1)
     mod = types.ModuleType("pyflate_opt_" + tag)
     mod.__file__ = os.path.join(D, "run_benchmark_opt.py")
-    _load_without_pyperf("pyflate_probe_" + tag, os.path.join(D, "run_benchmark_opt.py"))  # ensure the pyperf stub exists
+    ensure_pyperf()
     exec(compile(src, mod.__file__, "exec"), mod.__dict__)
     return mod
-
-
-def variant_full():
-    return fresh("opt")
 
 
 def variant_no_canonical():
@@ -101,7 +90,7 @@ def variant_no_rle():
 
 VARIANTS = [
     ("baseline (as pyperformance ships it)", lambda: fresh("base"), "-"),
-    ("optimized (all of 3.1-3.5)", variant_full, "-"),
+    ("optimized (all of 3.1-3.5)", lambda: fresh("opt"), "-"),
     ("optimized, 3.1 reverted to the table scan", variant_no_canonical, "3.1"),
     ("optimized, 3.3 reverted to the slice rebuild", variant_no_mtf, "3.3"),
     ("optimized, 3.4 reverted to the per-byte RLE loop", variant_no_rle, "3.4"),
@@ -115,26 +104,19 @@ def main():
     mods = []
     for label, build, which in VARIANTS:
         m = build()
-        m.bench_pyflake(1, DATA)          # the benchmark's own md5 check; raises if a
-                                          # reverted piece broke the output
+        m.bench_pyflake(1, DATA)          # the benchmark's own md5 check: raises if a revert broke the output
         mods.append((label, which, m))
 
-    # Interleaved, not blocked: running all reps of one variant and then all of
-    # the next lets drift between blocks masquerade as a difference between
-    # variants. Round-robin spreads any drift evenly.
-    # Keyed by position, not by the change name: the baseline and the full
-    # optimized row both carry "-", so keying by name pooled their times and
-    # made the spread look like the difference between them.
-    times = {i: [] for i in range(len(mods))}
+    # round-robin over the variants, so slow drift hits all of them equally
+    times = [[] for _ in mods]
     for _ in range(reps):
-        for i, (label, which, m) in enumerate(mods):
+        for ts, (label, which, m) in zip(times, mods):
             t0 = time.perf_counter()
             m.bench_pyflake(1, DATA)
-            times[i].append(time.perf_counter() - t0)
+            ts.append(time.perf_counter() - t0)
 
     rows = []
-    for i, (label, which, _) in enumerate(mods):
-        ts = times[i]
+    for ts, (label, which, _) in zip(times, mods):
         lo, med = min(ts), statistics.median(ts)
         spread = max(ts) - min(ts)
         rows.append((label, which, lo * 1e3, med * 1e3, spread * 1e3))

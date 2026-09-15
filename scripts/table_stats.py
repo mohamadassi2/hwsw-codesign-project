@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Measure the shipped decoder's linear table scan on the real benchmark input.
 
-report_pyflate.txt section 3.1 argues that the baseline's linear scan of the
-Huffman code table is the algorithmic problem the optimized decoder removes.
-That argument needs the actual shape of the tables and the actual cost of the
-scan on this input, not bzip2's theoretical limits, so measure both:
+report_pyflate.txt section 3.1 says the baseline's linear scan of the Huffman
+code table is the algorithmic problem the optimized decoder removes. This
+measures that scan on the benchmark input:
 
   * how many entries the tables really have (bzip2 permits 258),
   * how many entries the scan touches per symbol, mean and worst case.
@@ -19,13 +18,13 @@ import os, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from local_check import _load_without_pyperf  # noqa: E402
+from local_check import load_benchmark  # noqa: E402
 
 
 def main():
     d = os.path.join(ROOT, "benchmarks", "pyflate")
     data = os.path.join(d, "data", "interpreter.tar.bz2")
-    m = _load_without_pyperf("pyflate_base_stats", os.path.join(d, "run_benchmark.py"))
+    m = load_benchmark("pyflate_base_stats", os.path.join(d, "run_benchmark.py"))
 
     scans = []          # table entries compared, one entry per decoded symbol
     peeks = []          # snoopbits() calls made while scanning, per symbol
@@ -34,8 +33,7 @@ def main():
     original = m.HuffmanTable.find_next_symbol
 
     def counting(self, field, reversed=True):
-        """The shipped scan, instrumented. Behaviour is byte-for-byte the
-        original's; the only additions are the three counters."""
+        """The shipped find_next_symbol with the three counters added."""
         sizes.add(len(self.table))
         cached_length = -1
         cached = None

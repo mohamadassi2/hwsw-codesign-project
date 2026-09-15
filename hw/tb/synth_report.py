@@ -7,8 +7,8 @@ kind of storage and treating them alike hides the accelerator's real cost:
   as built    limit/base are register files, the symbol table is an SRAM
   all-logic   every table flattened into gates and flip-flops
 """
-import re, subprocess, sys, os
-os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import glob, hashlib, os, re, subprocess
+os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))       # hw/
 ver = subprocess.run([os.environ.get("YOSYS", "yosys"), "-V"], capture_output=True, text=True).stdout.strip().split("(")[0].strip()
 asb  = open("build/stat_asbuilt.txt").read()
 flat = open("build/stat_flat.txt").read()
@@ -19,7 +19,7 @@ def ffs(s):     return sum(int(m.group(1)) for m in re.finditer(r"^\s+(\d+)\s+\$
 def mems(s):
     m = re.search(r"^\s+(\d+)\s+\$mem_v2$", s, re.M)
     return int(m.group(1)) if m else 0
-def gates(s):
+def gates(s):   # every $_ cell that is not a flip-flop
     return sum(int(m.group(1)) for m in re.finditer(r"^\s+(\d+)\s+\$_(?!DFF)(?!mem)(?!scopeinfo)", s, re.M))
 def breakdown(s):
     return "\n".join(l.rstrip() for l in s.splitlines() if re.match(r"^\s+\d+\s+\$", l))
@@ -27,18 +27,15 @@ depth = int(re.search(r"length=(\d+)", ltp).group(1))
 end = [l for l in ltp.splitlines() if l.strip().startswith("ff:")]
 endpoint = end[0].split("(via")[0].replace("ff:", "").strip() if end else "a flip-flop"
 
-# Stamp the RTL these figures describe. Without it the file can silently
-# outlive the design: the numbers below were once regenerated two RTL changes
-# late and nothing noticed, because every check verified that the report quoted
-# this file, not that this file matched the source.
-import hashlib, glob as _glob
-_rtl = sorted(_glob.glob(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "rtl", "*.sv")))
-_fp = hashlib.md5()
-for _f in _rtl:
-    _fp.update(hashlib.md5(open(_f, "rb").read()).hexdigest().encode())
+# Stamp the RTL these figures describe; scripts/check_report_numbers.py
+# recomputes the same fingerprint and fails if the file is stale.
+rtl_files = sorted(glob.glob("rtl/*.sv"))
+fp = hashlib.md5()
+for path in rtl_files:
+    fp.update(hashlib.md5(open(path, "rb").read()).hexdigest().encode())
 
 print(f"""# Generic synthesis of huffman_accel_top with {ver}.
-# RTL fingerprint: {_fp.hexdigest()}  ({len(_rtl)} files under hw/rtl/)
+# RTL fingerprint: {fp.hexdigest()}  ({len(rtl_files)} files under hw/rtl/)
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.

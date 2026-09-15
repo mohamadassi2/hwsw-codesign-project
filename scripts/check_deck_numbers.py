@@ -7,7 +7,7 @@ the slides state from the measured data and fails if the slide disagrees.
 
   python3 scripts/check_deck_numbers.py
 """
-import base64, json, os, re, statistics, sys
+import base64, hashlib, json, os, re, statistics, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DECK = os.path.join(ROOT, "docs", "presentation.html")
@@ -17,7 +17,7 @@ def slide_text():
     s = open(DECK, encoding="utf-8").read()
     s = re.sub(r"data:image/svg\+xml;base64,[A-Za-z0-9+/=]+", "", s)
     s = re.sub(r"<style>.*?</style>|<script>.*?</script>", "", s, flags=re.S)
-    s = re.sub(r"<svg.*?</svg>", "", s, flags=re.S)          # the bit strips
+    s = re.sub(r"<svg.*?</svg>", "", s, flags=re.S)          # inline drawings (the bit strips)
     s = re.sub(r"<[^>]+>", " ", s)
     for a, b in (("&nbsp;", " "), ("&times;", "x"), ("&rarr;", "->"), ("&mdash;", "-"),
                  ("&plusmn;", "+-"), ("&lt;", "<"), ("&gt;", ">"), ("&amp;", "&")):
@@ -45,13 +45,16 @@ def main():
     present = set(m.replace(",", "") for m in re.findall(r"\d[\d,]*(?:\.\d+)?", txt))
     fails, oks = [], []
 
+    def check(label, ok):
+        if ok:
+            oks.append(label)
+        else:
+            fails.append(label)
+
     def want(label, value, fmt):
         """The slide must contain `value` printed as `fmt` (a format string)."""
         s = fmt.format(value)
-        key = s.replace(",", "")
-        # On a passing line the expected value is the value the slide already
-        # shows, so spelling out "should say" there reads like a complaint.
-        if key in present:
+        if s.replace(",", "") in present:
             oks.append(f"{label} ({s})")
         else:
             fails.append(f"{label}: slide should say {s}")
@@ -73,7 +76,8 @@ def main():
     want("mdp n", nmb, "{:d}")
 
     # ---- hardware counters ---------------------------------------------------
-    b, o = perfstat(f"{ROOT}/results/pyflate/perfstat_base.txt"), perfstat(f"{ROOT}/results/pyflate/perfstat_opt.txt")
+    b = perfstat(f"{ROOT}/results/pyflate/perfstat_base.txt")
+    o = perfstat(f"{ROOT}/results/pyflate/perfstat_opt.txt")
     want("pyflate insn base (B)", b["instructions"] / 1e9, "{:.2f}")
     want("pyflate insn opt (B)", o["instructions"] / 1e9, "{:.2f}")
     want("pyflate cycles base (B)", b["cycles"] / 1e9, "{:.2f}")
@@ -83,7 +87,8 @@ def main():
     want("pyflate insn removed (B)", (b["instructions"] - o["instructions"]) / 1e9, "{:.1f}")
     want("pyflate branch-miss % base", 100 * b["branch-misses"] / b["branches"], "{:.2f}")
     want("pyflate branch-miss % opt", 100 * o["branch-misses"] / o["branches"], "{:.2f}")
-    b, o = perfstat(f"{ROOT}/results/mdp/perfstat_base.txt"), perfstat(f"{ROOT}/results/mdp/perfstat_opt.txt")
+    b = perfstat(f"{ROOT}/results/mdp/perfstat_base.txt")
+    o = perfstat(f"{ROOT}/results/mdp/perfstat_opt.txt")
     want("mdp insn base (B)", b["instructions"] / 1e9, "{:.1f}")
     want("mdp insn opt (B)", o["instructions"] / 1e9, "{:.1f}")
     want("mdp cycles base (B)", b["cycles"] / 1e9, "{:.2f}")
@@ -93,10 +98,11 @@ def main():
 
     # ---- PMU diagnosis --------------------------------------------------------
     pmi = re.findall(r"PMI:\s+(\d+)", open(f"{ROOT}/results/pyflate/pmu_diagnosis.txt").read())
-    (oks if pmi and set(pmi) == {"0"} and "PMI" in txt else fails).append(
-        f"PMI stays at 0 across a record: measured {pmi}")
+    check(f"PMI stays at 0 across a record: measured {pmi}",
+          pmi and set(pmi) == {"0"} and "PMI" in txt)
 
     # ---- accelerator ---------------------------------------------------------------
+    # results/rtl_sim_guest.log: "decoded 148271 symbols in 148272 cycles", "total bits consumed: 531571"
     SYM, CYC, BITS = 148271, 148272, 531571
     want("symbols decoded", SYM, "{:,}")
     want("cycles", CYC, "{:,}")
@@ -105,25 +111,23 @@ def main():
     want("bits/symbol", BITS / SYM, "{:.2f}")
     syn = open(f"{ROOT}/docs/synthesis_yosys.txt").read()
     cfg = re.findall(r"^(\d+) cells: (\d+) flip-flops, (\d+) gates", syn, re.M)
-    (oks if len(cfg) >= 2 else fails).append(f"synthesis file lists both configurations ({len(cfg)})")
+    check(f"synthesis file lists both configurations ({len(cfg)})", len(cfg) >= 2)
     if len(cfg) >= 2:
         want("yosys cells", int(cfg[0][0]), "{:,}")
         want("flip-flops", int(cfg[0][1]), "{:,}")
         want("all-logic variant cells", int(cfg[1][0]), "{:,}")
     levels = int(re.search(r"length=(\d+)", syn).group(1))
     want("gate levels", levels, "{:d}")
-    want("symbol table (kbit)", 13.9, "{:.1f}")
-    for stale in ("2,768", "52,952", "19.4"):
-        (oks if stale not in txt else fails).append(
-            f"the superseded synthesis figure {stale} is gone from the slides")
+    want("symbol table (kbit)", 13.9, "{:.1f}")     # the symbol SRAM, docs/synthesis_yosys.txt
+    for old in ("2,768", "52,952", "19.4"):
+        check(f"the superseded synthesis figure {old} is gone from the slides", old not in txt)
     decode_ms = CYC / 200e6 * 1e3
     want("decode at 200 MHz (ms)", decode_ms, "{:.2f}")
 
     # ---- Amdahl (from the VM optimized time, as in report_pyflate.txt 5.6) ----
+    HUFF_SHARE = 0.510      # find_next_symbol's cumulative share; it already includes the bit readers it calls
     opt_ms = po * 1e3
-    # find_next_symbol's cumulative share. Its self share plus the bit-reading
-    # helpers it calls would double-count, which an earlier draft did as 62%.
-    part = opt_ms * 0.510
+    part = opt_ms * HUFF_SHARE
     accel = decode_ms + 0.6
     new = opt_ms - part + accel
     want("Amdahl: accelerated part (ms)", part, "{:.0f}")
@@ -135,25 +139,24 @@ def main():
     abl = os.path.join(ROOT, "results", "pyflate", "ablation.txt")
     if os.path.exists(abl):
         a = open(abl, encoding="utf-8").read()
-        # The slide quotes what each change is worth in milliseconds, which is
-        # what the ablation actually measures; ratios of leave-one-out deltas do
-        # not compose and are not put on the slide.
+        # the slide quotes ms per change, which is what the ablation measures
+        # (leave-one-out deltas do not compose into ratios)
         for which in ("3.1", "3.3", "3.4"):
             m = re.search(which.replace(".", r"\.") + r"\s+worth\s+([\d.]+) ms", a)
-            (oks if m and m.group(1) in txt else fails).append(
-                f"slides quote the measured {which} contribution ({m.group(1) if m else '?'} ms)")
+            check(f"slides quote the measured {which} contribution ({m.group(1) if m else '?'} ms)",
+                  m and m.group(1) in txt)
 
     # ---- every ratio column must equal the two cells beside it -------------------
-    # The comparison tables carry their own arithmetic, and a stale ratio slipped
-    # through for a while because the checks above only ask whether a number
-    # appears somewhere on the slides, not whether the row is self-consistent.
+    # The checks above only ask whether a number appears somewhere on the slides;
+    # a comparison-table row must also be consistent with itself.
     raw_deck = open(DECK, encoding="utf-8").read()
-    UNIT = {"s": 1.0, "ms": 1e-3, "B": 1.0, "%": 1.0, "": 1.0}
     def cell(t):
+        """A table cell as a number (ms converted to s), or None if it is not one."""
         m = re.match(r"^\s*([\d,.]+)\s*(s|ms|B|%)?\s*$", t)
         if not m:
             return None
-        return float(m.group(1).replace(",", "")) * UNIT[m.group(2) or ""]
+        v = float(m.group(1).replace(",", ""))
+        return v * 1e-3 if m.group(2) == "ms" else v
     rows = re.findall(
         r"<tr[^>]*>\s*<td>([^<]*)</td>\s*<td class=\"n\">([^<]*)</td>\s*"
         r"<td class=\"n\">([^<]*)</td>\s*<td class=\"n\">([^<]*)</td>\s*</tr>", raw_deck)
@@ -165,26 +168,24 @@ def main():
         want_r = va / vb
         checked += 1
         ok = abs(want_r - vr) <= 0.011          # the slides print two decimals
-        (oks if ok else fails).append(
-            f"table row '{label.strip()}': {a.strip()} / {b.strip()} = {want_r:.2f}"
-            + ("" if ok else f", but the slide says {r.strip()}"))
-    (oks if checked >= 6 else fails).append(f"ratio columns checked ({checked} rows)")
+        check(f"table row '{label.strip()}': {a.strip()} / {b.strip()} = {want_r:.2f}"
+              + ("" if ok else f", but the slide says {r.strip()}"), ok)
+    check(f"ratio columns checked ({checked} rows)", checked >= 6)
 
     # ---- claims that come from elsewhere in the repo -----------------------------
     for label, needle in (("4,823 states", "4,823"), ("3,659 getCritDist calls", "3,659"),
                           ("mdp result quoted in full", "0.8987358988699915"), ("md5 prefix", "afa004a6"),
                           ("output bytes", "399,360")):
-        (oks if needle.replace(",", "") in present or needle in txt else fails).append(label)
+        check(label, needle.replace(",", "") in present or needle in txt)
 
     # ---- the baseline slide must carry the BASELINE cProfile figures ----------
     rep = open(os.path.join(ROOT, "report_pyflate.txt"), encoding="utf-8").read()
-    base_slide = "15.7% self and 49.3%" in re.sub(r"\s+", " ", txt)
-    (oks if base_slide else fails).append("slide 6 quotes the baseline cProfile shares (15.7% self, 49.3% cumulative)")
-    (oks if "15.7%" in rep and "49.3%" in rep else fails).append("those figures are the report's section 2 numbers")
+    check("slide 6 quotes the baseline cProfile shares (15.7% self, 49.3% cumulative)",
+          "15.7% self and 49.3%" in re.sub(r"\s+", " ", txt))
+    check("those figures are the report's section 2 numbers", "15.7%" in rep and "49.3%" in rep)
 
     # ---- the shares on the "what remains" slide come from the folded stacks ----
-    # They used to read ~60% / ~30%, which is the double count section 5.6 of the
-    # report retracts, and nothing checked them.
+    # 60% / 30% is the self-plus-helpers double count that report section 5.6 rules out.
     fold = os.path.join(ROOT, "results", "pyflate", "pyspy_opt_focus.folded")
     if os.path.exists(fold):
         tot = fn = bw = 0
@@ -201,78 +202,61 @@ def main():
                 bw += n
         if tot:
             for label, val in (("Huffman share", fn / tot * 100), ("inverse BWT share", bw / tot * 100)):
-                (oks if f"{val:.0f}%" in txt else fails).append(
-                    f"slide quotes the measured {label} ({val:.0f}%)")
-            (oks if "60%" not in txt and "~30%" not in txt else fails).append(
-                "the retracted 60/30 double count is gone from the slides")
+                check(f"slide quotes the measured {label} ({val:.0f}%)", f"{val:.0f}%" in txt)
+            check("the retracted 60/30 double count is gone from the slides",
+                  "60%" not in txt and "~30%" not in txt)
 
     # ---- the embedded figures must be the shipped ones ---------------------------
-    # Three of the four flame graphs on the slides were the second run's, not the
-    # run every number beside them comes from. Nothing noticed, because the
-    # pictures are base64 and no check had ever looked inside them.
-    import base64 as _b64, hashlib as _hl
-    _idx = {}
-    for _root, _dirs, _fs in os.walk(ROOT):
-        _dirs[:] = [d for d in _dirs if d not in (".git", "venv", "FlameGraph", "reproducibility")]
-        for _f in _fs:
-            if _f.endswith(".svg"):
-                _p = os.path.join(_root, _f)
-                try:
-                    _idx[_hl.md5(open(_p, "rb").read()).hexdigest()] = os.path.relpath(_p, ROOT)
-                except OSError:
-                    pass
-    _stray = []
-    for _b in re.findall(r"data:image/svg\+xml;base64,([A-Za-z0-9+/=]+)", raw_deck):
+    # Every base64 picture in the deck must be an .svg file in the tree (matched by
+    # md5). results/reproducibility is the other run, so its flame graphs do not count.
+    svg_md5 = set()
+    for folder, subdirs, files in os.walk(ROOT):
+        subdirs[:] = [d for d in subdirs if d not in (".git", "venv", "FlameGraph", "reproducibility")]
+        for f in files:
+            if f.endswith(".svg"):
+                svg_md5.add(hashlib.md5(open(os.path.join(folder, f), "rb").read()).hexdigest())
+    embedded = []
+    for b in re.findall(r"data:image/svg\+xml;base64,([A-Za-z0-9+/=]+)", raw_deck):
         try:
-            _h = _hl.md5(_b64.b64decode(_b)).hexdigest()
+            embedded.append(base64.b64decode(b))
         except Exception:
-            continue
-        if _h not in _idx:
-            _stray.append(_h[:8])
-    (oks if not _stray else fails).append(
-        "every embedded figure is a file in the shipped tree"
-        + (f" (unmatched: {_stray})" if _stray else ""))
+            pass
+    unknown = []
+    for svg in embedded:
+        h = hashlib.md5(svg).hexdigest()
+        if h not in svg_md5:
+            unknown.append(h[:8])
+    check("every embedded figure is a file in the shipped tree"
+          + (f" (unmatched: {unknown})" if unknown else ""), not unknown)
 
     # ---- the block diagram is a graded deliverable; gate its figures too -------
     dia_path = os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg")
     dia = open(dia_path, encoding="utf-8").read()
     for label, needle in (("diagram: symbols", f"{SYM:,}"), ("diagram: cycles", f"{CYC:,}"),
                           ("diagram: symbols/cycle", "1.00")):
-        (oks if needle in dia else fails).append(f"{label} ({needle})")
+        check(f"{label} ({needle})", needle in dia)
 
-    # The deck carries its own base64 copy of that diagram. A slide showing a
-    # stale copy is worse than a stale file, because it is what the room sees,
-    # so require the embed to be the committed file byte for byte.
-    raw = open(DECK, encoding="utf-8").read()
-    embedded = re.findall(r"data:image/svg\+xml;base64,([A-Za-z0-9+/=]+)", raw)
+    # The deck embeds its own base64 copy of the diagram; it must be the file byte for byte.
     want_b64 = base64.b64encode(open(dia_path, "rb").read()).decode("ascii")
-    (oks if want_b64 in raw else fails).append(
-        "the deck embeds docs/huffman_accel_block_diagram.svg byte-identically")
+    check("the deck embeds docs/huffman_accel_block_diagram.svg byte-identically", want_b64 in raw_deck)
     stale = []
-    for b in embedded:
-        try:
-            d = base64.b64decode(b).decode("utf-8", "replace")
-        except Exception:
-            continue
-        for n in set(re.findall(r"\b148,\d{3}\b", d)):
+    for svg in embedded:
+        for n in set(re.findall(r"\b148,\d{3}\b", svg.decode("utf-8", "replace"))):
             if n not in (f"{SYM:,}", f"{CYC:,}"):
                 stale.append(n)
-    (oks if not stale else fails).append(
-        "no embedded slide image quotes a stale cycle count" + (f" (found {sorted(set(stale))})" if stale else ""))
+    check("no embedded slide image quotes a stale cycle count"
+          + (f" (found {sorted(set(stale))})" if stale else ""), not stale)
 
-    # ---- per-symbol CPU cost: 235 ms / 148,271 symbols at 2.4 GHz -------------
-    # Derived, not hardcoded: the accelerated share of the measured optimized
-    # run, spread over the symbols, at the guest's 2.4 GHz.
-    cyc_per_sym = po * 0.510 / SYM * 2.4e9
+    # ---- per-symbol CPU cost: accelerated ms / 148,271 symbols at 2.4 GHz ------
+    cyc_per_sym = po * HUFF_SHARE / SYM * 2.4e9      # the VM runs at 2.4 GHz
     for label, path in (("deck", DECK),
                         ("docs/presentation_outline.md", os.path.join(ROOT, "docs", "presentation_outline.md")),
                         ("report_pyflate.txt", os.path.join(ROOT, "report_pyflate.txt"))):
         body = open(path, encoding="utf-8").read()
-        rounded = f"{round(cyc_per_sym, -2):,.0f}"        # 3,800
-        (oks if rounded in body else fails).append(
-            f"{label}: CPU cycles per symbol says {rounded}")
-        (oks if "1,600 CPU cycles" not in body and "~1,600 cycles" not in body else fails).append(
-            f"{label}: the 1,585 ns figure is not restated as 1,600 cycles")
+        rounded = f"{round(cyc_per_sym, -2):,.0f}"        # to the nearest hundred
+        check(f"{label}: CPU cycles per symbol says {rounded}", rounded in body)
+        check(f"{label}: the 1,585 ns figure is not restated as 1,600 cycles",
+              "1,600 CPU cycles" not in body and "~1,600 cycles" not in body)
 
     # ---- README headline table must match too ---------------------------------
     rd = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()

@@ -4,7 +4,7 @@
 Reads results/<benchmark>/ (written by script_<benchmark>.sh in the course VM)
 and rewrites the "4.1 Course VM" block of each report, plus the Amdahl estimate
 in report_pyflate.txt section 5.6, so every number in the reports comes from the
-same measurement rather than from a hand transcription.
+same measurement.
 
   python3 scripts/fill_reports.py            # write
   python3 scripts/fill_reports.py --dry-run  # show what would change
@@ -69,9 +69,9 @@ def counter_table(b):
         a, c = ps["base"].get(k), ps["opt"].get(k)
         if a is None and c is None:
             continue
-        fmt1 = (lambda x: f"{x:20,.2f}") if k == "task-clock" else (lambda x: f"{x:20,.0f}")
-        fa = fmt1(a) if a is not None else " " * 20
-        fc = fmt1(c) if c is not None else " " * 20
+        spec = "20,.2f" if k == "task-clock" else "20,.0f"
+        fa = f"{a:{spec}}" if a is not None else " " * 20
+        fc = f"{c:{spec}}" if c is not None else " " * 20
         r = f"{a/c:9.2f}" if (a and c) else " " * 9
         lines.append(f"    {k:18s}{fa}{fc}{r}")
     for v, tag in (("base", "baseline"), ("opt", "optimized")):
@@ -79,15 +79,15 @@ def counter_table(b):
         if cy and ins:
             lines.append(f"    IPC ({tag}): {ins/cy:.3f}")
     # perf's own "insn per cycle" line averages the per-run ratios, while the
-    # figures above are the ratio of the three-run means, so the two differ in
-    # the second decimal. Say so here rather than leaving a grader to wonder
-    # why the report and the file it cites disagree - and generate the note
-    # with the numbers, so it cannot be lost the next time this block is
-    # regenerated.
+    # IPC above is the ratio of the run means, so they differ in the second
+    # decimal; quote both so the report and the perfstat file do not look
+    # inconsistent.
     perf_ipc = []
     for v in ("base", "opt"):
-        m = re.search(r"([\d.]+)\s+insn per cycle", open(f"{d}/perfstat_{v}.txt").read()) \
-            if os.path.exists(f"{d}/perfstat_{v}.txt") else None
+        p = f"{d}/perfstat_{v}.txt"
+        if not os.path.exists(p):
+            continue
+        m = re.search(r"([\d.]+)\s+insn per cycle", open(p).read())
         if m:
             perf_ipc.append(f"{v} {m.group(1)}")
     if perf_ipc:
@@ -141,16 +141,12 @@ def replace_41(text, new_block):
     m = re.search(r"^4\.1 .*?(?=^4\.2 )", text, re.S | re.M)
     if not m:
         return text, False
-    # Guard against swallowing a later subsection: the 4.1 block is the measured
-    # numbers and nothing else, so it must not contain another 4.x heading. When
-    # the sections are momentarily out of order this match runs away, and it
-    # once deleted the cProfile subsection of report_mdp.txt.
+    # The 4.1 block is only the measured numbers, so it must not contain a later
+    # 4.x heading; if the sections are out of order the match above runs away.
     if re.search(r"^4\.[2-9] ", m.group(0), re.M):
         raise SystemExit("fill_reports: the 4.1 block would swallow "
                          + re.search(r"^4\.[2-9] .*", m.group(0), re.M).group(0)
                          + " - fix the section order first")
-    # keep everything after the block - dropping text[m.end():] here truncated
-    # the report at section 4.2 and cost 251 lines the first time this ran
     return text[:m.start()] + new_block + "\n\n" + text[m.end():], True
 
 
@@ -182,11 +178,11 @@ def main():
     if "pyflate" in vm and not args.dry_run:
         base_s, opt_s = vm["pyflate"]
         opt_ms = opt_s * 1e3
-        # find_next_symbol's CUMULATIVE share: it already contains the bit
-        # reads it makes, so snoopbits/readbits must not be added again.
+        # cumulative share of find_next_symbol; it already includes the bit
+        # reads (snoopbits/readbits), so those are not added on top
         frac = 49.7
         part = opt_ms * frac / 100
-        accel = 148272 / 200e6 * 1e3 + 0.6      # decode at 200 MHz + DMA/MMIO
+        accel = 148272 / 200e6 * 1e3 + 0.6      # decoder cycles at 200 MHz, plus 0.6 ms of DMA/MMIO
         newtot = opt_ms - part + accel
         p = os.path.join(ROOT, "report_pyflate.txt")
         t = open(p).read()

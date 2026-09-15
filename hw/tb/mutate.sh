@@ -1,20 +1,16 @@
 #!/usr/bin/env bash
 # Mutation test for the testbench: inject one bug at a time into the RTL, run
-# the real simulation suite, and report whether the test KILLED it (the suite
-# failed) or let it ESCAPE (the suite passed). A testbench that cannot fail
-# proves nothing, so this is how we know tb_huffman.sv's PASS means something.
+# `make sim_all`, and report whether the suite KILLED it (failed) or let it
+# ESCAPE (passed). A testbench that cannot fail proves nothing.
 #
-# The suite here is `make sim_all`, not `make sim`. That matters: the benchmark
-# block is one well-formed bzip2 block, and against it alone twelve of the
-# twenty mutations below pass unnoticed (`SUITE=sim tb/mutate.sh` reproduces
-# that), because one good stream never reaches end-of-input, never presents an
-# unmatchable code or an out-of-range table index, never stalls the consumer or
-# the producer, and never uses a code shorter than 2 or longer than 15 bits.
-# The directed vector sets and the throttled runs exist to close exactly those
-# gaps.
+# The suite is sim_all, not sim: against the benchmark block alone twelve of
+# the twenty bugs escape (`SUITE=sim tb/mutate.sh` shows it), because one
+# well-formed stream never reaches end-of-input, an unmatchable code, a bad
+# table index, a stalled handshake, or a code outside 2..15 bits. The directed
+# sets and the throttled runs exist to reach those. Results: tb/MUTATIONS.md.
 #
 #   cd hw && tb/mutate.sh                    # all twenty (~25 min)
-#   cd hw && ONLY=comparators tb/mutate.sh   # one bug: the control run passes, then vectors_lengths kills it
+#   cd hw && ONLY=comparators tb/mutate.sh   # one bug, matched by name
 #
 # Runs on a scratch copy; the repository files are never modified.
 set -euo pipefail
@@ -43,9 +39,8 @@ run() {   # run NAME 'sed-expression' FILE
   out=$(make $SUITE 2>&1) && rc=0 || rc=$?
   mv "$file.orig" "$file"
   local summary; summary=$(echo "$out" | grep -E 'decoded|errors|PASS|FAIL|TIMEOUT|X on' | tail -2 | tr '\n' ' ' | cut -c1-150)
-  # The suite's own exit status is the verdict. Do not second-guess it from the
-  # log: one directed set decodes zero symbols on purpose (a corrupt table must
-  # be refused, not decoded), so "decoded 0 symbols" is a pass there.
+  # The suite's exit status is the verdict, not the log: the badidx set decodes
+  # zero symbols on purpose, so "decoded 0 symbols" is a pass there.
   if [ "$rc" -ne 0 ]; then echo "[$name] KILLED   (suite exit $rc)  $summary"
   else                     echo "[$name] ESCAPED  (suite exit 0)   $summary"; fi
 }
@@ -59,16 +54,14 @@ run "base adder off by one"             's/idx_s = base_r\[tsel\]\[len_c\] + /id
 run "priority encoder direction"        's/for (int L = MAXBITS; L >= 1; L--)/for (int L = 1; L <= MAXBITS; L++)/' rtl/huffman_decoder.sv
 run "barrel shift one bit short"        's/buf_d = buf_q << consume;/buf_d = buf_q << (consume - 1);/'          rtl/bitreader.sv
 
-# ---- the corners the directed vector sets and the throttled runs were built to
-# reach: end of input, an unmatchable code, an out-of-range table index, a
-# stalled consumer or producer, and the extreme code lengths.
+# ---- corners only the directed sets and the throttled runs reach: end of
+# input, an unmatchable code, a bad table index, a stalled handshake, the
+# extreme code lengths.
 run "end-of-input term dropped from peek_valid" 's/(eof_q \&\& cnt_q != 0)/(1'"'"'b0)/'                       rtl/bitreader.sv
-# Expected to escape, and that is the correct result: the decoder only emits a
-# symbol when `fits[L]` says its whole code is in the buffer (folded into
-# `hit[L]` in huffman_decoder.sv), so it never consumes more bits than the
-# buffer holds and the reader's saturation can no longer be reached from this
-# design. It is kept as a contract guard for any other consumer, and listed
-# here so the escape is a recorded conclusion rather than an untested corner.
+# Expected to escape: the decoder consumes a code only when fits[L] (folded
+# into hit[L] in huffman_decoder.sv) says the whole code is in the buffer, so
+# cnt_q < consume cannot happen. Kept as a guard for any other consumer of the
+# bit reader; MUTATIONS.md #8.
 run "bit-count underflow guard removed"         's/assign cnt_after = (cnt_q > consume) ? (cnt_q - consume) : .0;/assign cnt_after = cnt_q - consume;/' rtl/bitreader.sv
 run "flush tied low in the top"                 's/\.flush(flush_c),/.flush(1'"'"'b0),/'                       rtl/huffman_accel_top.sv
 run "decode error no longer halts"              's/out_free \&\& !err_q \&\& !underrun_q/out_free/'            rtl/huffman_decoder.sv

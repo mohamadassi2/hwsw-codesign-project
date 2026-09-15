@@ -12,10 +12,9 @@ files.
 import os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# An entry is either a bare function name, matched against the (function) field
-# exactly, or a "file.py:line(function)" fragment matched as a substring. Bare
-# substring matching picked getSuccessorsList when asked for getSuccessors, and
-# silently dropped every row whose name it could not distinguish.
+# A bare name must match the (function) field exactly, so that "getSuccessors"
+# does not also pick up getSuccessorsList; a "file.py:line(function)" fragment
+# is matched as a substring.
 ROWS = {
     "pyflate": ["find_next_symbol", "decode_huffman_block", "readbits", "snoopbits",
                 "move_to_front", "_mask", "bwt_reverse", "bwt_transform", "_more",
@@ -39,12 +38,8 @@ def rows(path):
 
 
 def matches(want, label):
-    """A bare name must be the whole (function) field; a fragment is a substring.
-
-    Built-ins are the exception: pstats writes them as "{built-in method
-    builtins.sum}", with no parenthesised function field at all, so they are
-    matched as a substring too.
-    """
+    """See ROWS. Built-ins have no (function) field - pstats writes them as
+    "{built-in method builtins.sum}" - so they are matched as a substring too."""
     if ":" in want or "(" in want or "." in want:
         return want in label
     return label.endswith("(" + want + ")")
@@ -59,7 +54,8 @@ def main():
             rs = rows(p)
             den = next((c for _, _, c, lbl in rs if DENOM[b] in lbl), None)
             if not den:
-                print(f"{b}/{tag}: no {DENOM[b]} row"); continue
+                print(f"{b}/{tag}: no {DENOM[b]} row")
+                continue
             print(f"\n{b} {tag}  (denominator: {DENOM[b]} cumulative = {den:.3f} s)")
             print(f"    {'function':26s}{'self':>8s}{'cum':>8s}{'calls':>12s}")
             seen = set()

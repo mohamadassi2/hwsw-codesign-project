@@ -5,7 +5,7 @@
 
 For each benchmark it prints the mean of the baseline and optimized runs in both
 sets, the speedup each set gives, and the drift between them, plus the drift of
-the perf stat counters. This is how we check that a fresh run of the shipped
+the perf stat counters. Used to check that a fresh run of the shipped
 repository in the course VM reproduces the committed numbers.
 """
 import json, os, re, statistics, sys

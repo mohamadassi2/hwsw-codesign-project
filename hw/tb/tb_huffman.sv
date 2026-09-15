@@ -22,7 +22,7 @@ module tb_huffman;
     logic signed [MAXBITS+1:0] tbl_base = 0;
     logic [8:0]         tbl_idx = 0;
     logic [SYMW-1:0]    tbl_sym = 0;
-    logic [INW-1:0]     in_data;              // driven by assigns below
+    logic [INW-1:0]     in_data;              // driven by the stimulus block below
     logic               in_valid, in_ready, in_last;
     logic               run, sym_valid, err;
     logic               run_en = 0;
@@ -32,23 +32,19 @@ module tb_huffman;
     logic               busy, done, underrun;
     logic [31:0]        sym_count;
     logic [6:0]         level;
-    // +bp gates out_ready and in_valid pseudo-randomly, to prove the handshakes
-    // hold under backpressure. It changes the cycle count by construction, so
-    // the throughput check below is only made in the default (full-rate) mode.
+    // +bp: gate out_ready and in_valid pseudo-randomly so both handshakes are
+    // exercised under backpressure. The throughput check is skipped in this mode.
     logic               bp_mode = 0;
-    // Directed modes for the failure paths. The real bzip2 block is well
-    // formed, so err and underrun never assert on it; these run the decoder
-    // past the last good symbol on a purpose-built stream and require the
-    // corresponding flag to come up.
+    // +expect_err / +expect_underrun: the real block never trips err or underrun,
+    // so these run a purpose-built stream that ends in a bad tail (see
+    // gen_synth_vectors.py); PASS requires the matching flag to rise.
     logic               want_err = 0, want_underrun = 0;
-    // +last_level drives LAST the way a register-mapped host would: set once,
-    // held, and therefore high across cycles in which the producer has nothing
-    // to hand over. The accelerator must not read that as end of input.
+    // +last_level: hold in_last high from the final word on, as a register-mapped
+    // host would, even on cycles with nothing valid. The DUT must not take that
+    // as end of input.
     logic               last_level = 0;
-    // +bubble stalls the producer for a long, deterministic run of cycles just
-    // before the final word is handed over. That is the one shape that tells a
-    // correct end-of-input condition from one that also fires on `LAST` while
-    // the producer simply has nothing ready.
+    // +bubble: stall the producer 40 cycles just before the final word, so an
+    // end-of-input that fires on LAST alone (in_valid low) is caught.
     logic               bubble_mode = 0;
     int                 bubble = 0;
     logic               bubbled = 0;
@@ -81,37 +77,30 @@ module tb_huffman;
     int nchk = 0;          // symbols checked at the output
     int errors = 0;
     longint cycles = 0;
-    longint bits_consumed = 0;      // accumulated from the DUT, not from the golden file
+    longint bits_consumed = 0;      // summed from the DUT's len output
     int first_cycle = -1, last_cycle = -1;
     logic err_d = 0, underrun_d = 0;
     logic sv_d = 0, or_d = 0;
     int halt_ndec, halt_nchk; longint halt_bits;
     logic [SYMW-1:0] sym_d = 0;
 
-    // input stream: present word widx while any remain
-    // Stimulus as plain Verilog-2001 processes with explicit sensitivity lists.
-    // Two things the course VM's Icarus Verilog 11.0 cannot simulate: an @*
-    // block that reads a word of a large array with a variable index (the whole
-    // array lands on the sensitivity list and vvp aborts), and a ?: in a
-    // continuous assignment over SystemVerilog int variables (vvp aborts with
-    // "recv_real not implemented"). Listing the scalar inputs explicitly avoids
-    // both; the behaviour is the same as an @* block.
-    // Armed combinationally: registering it costs a cycle, and with a 64-bit
-    // buffer and 32-bit words the reader has already taken the final word by
-    // then, so the stall lands after the moment it was meant to test.
+    // input stream: present word widx while any remain.
+    // Explicit sensitivity lists, not @*: Icarus 11 on the course VM aborts on
+    // @* over a large array indexed by a variable, and on ?: in a continuous
+    // assignment over int. arm_bubble is combinational because a registered
+    // version arrives one cycle after the reader has already taken the final word.
     wire arm_bubble = bubble_mode && !bubbled && (widx == nwords - 1);
     always @(widx, nwords, run, bp_mode, lfsr, last_level, bubble, arm_bubble) begin
         in_valid = (widx < nwords) && run && (!bp_mode || lfsr[7])
                    && (bubble == 0) && !arm_bubble;
         in_data  = words[widx];
-        // LAST accompanies the final beat. Held as a level from the final word
-        // onwards it would flush during table programming, when run is low and
-        // in_valid is therefore low, for any stream short enough to be one word.
+        // Default: LAST travels with the final valid beat (a one-word stream would
+        // otherwise show LAST before run). +last_level holds it as a level.
         in_last  = last_level ? (widx >= nwords - 1) : ((widx == nwords - 1) && in_valid);
     end
     always @(posedge clk) if (in_valid && in_ready) widx <= widx + 1;
-    // Stall once, on reaching the last word, for long enough that a premature
-    // flush has time to poison the reader before the word arrives.
+    // +bubble: one 40-cycle stall on reaching the last word, long enough for a
+    // premature flush to show.
     always @(posedge clk) begin
         if (!rst_n) begin bubble <= 0; bubbled <= 1'b0; end
         else if (arm_bubble) begin bubble <= 40; bubbled <= 1'b1; end
@@ -123,12 +112,9 @@ module tb_huffman;
     always @(ndec, nsym, run_en, want_err, want_underrun, err, underrun) begin
         cur_tsel = (ndec < nsym) ? exp_tsel[ndec] : 0;
         tsel     = cur_tsel[2:0];
-        // Normally stop once every expected symbol has been consumed. In the
-        // directed failure modes keep going into the bad tail until the flag
-        // the test is about actually asserts (or the watchdog fires).
-        // Keep driving the engine after err in the directed error test: a
-        // decode error is claimed to HALT the decoder, and that is only a
-        // testable claim if the enable stays asserted afterwards.
+        // Default: stop after the last expected symbol. +expect_underrun: run into
+        // the bad tail until underrun rises. +expect_err: keep run high even after
+        // err, so the halt-on-error check in main proves something.
         if (want_err)           run = run_en;
         else if (want_underrun) run = run_en && !underrun;
         else                    run = run_en && (ndec < nsym);
@@ -140,21 +126,18 @@ module tb_huffman;
         if (dut.len_valid) begin
             if (first_cycle < 0) first_cycle = cycles;
             bits_consumed <= bits_consumed + dut.len;
-            // The contract that makes end-of-stream safe: a symbol may only be
-            // emitted when its whole code is really in the buffer. Anything
-            // else is a symbol invented out of the zero padding.
+            // A symbol may only be consumed when its whole code is in the buffer;
+            // otherwise it was decoded from the zero padding.
             if (dut.len > level) begin
                 errors++;
                 if (errors < 10)
                     $display("PROTOCOL: consumed %0d bits with only %0d in the buffer, at symbol %0d",
                              dut.len, level, ndec);
             end
-            // The directed failure tests deliberately run past the last good
-            // symbol into a bad tail, and there is nothing to compare there.
+            // Past nsym there is nothing to compare (the failure modes run on).
             if (ndec >= nsym) ; else
-            // !== so an X compares as a difference; with != an all-X decoder
-            // makes every check evaluate to x, which `if` treats as false and
-            // the whole run passes with zero errors.
+            // === / !== so an X counts as a mismatch: with != an all-X decoder makes
+            // every compare x, which `if` treats as false.
             if (^dut.len === 1'bx) begin
                 errors++;
                 if (errors < 10) $display("X on len at symbol %0d", ndec);
@@ -178,10 +161,8 @@ module tb_huffman;
             nchk <= nchk + 1;
             last_cycle = cycles;
         end
-        // err and underrun are sticky, so count the RISING EDGE, not the level.
-        // Protocol: a symbol offered while the consumer is not ready must still
-        // be there, unchanged, on the next cycle. Without this check out_ready
-        // can be ignored entirely and every test still passes.
+        // A symbol offered while out_ready is low must still be there, unchanged,
+        // on the next cycle.
         sv_d  <= sym_valid;
         or_d  <= out_ready;
         sym_d <= sym;
@@ -192,13 +173,13 @@ module tb_huffman;
                     $display("PROTOCOL: a stalled symbol was dropped or changed at symbol %0d", nchk);
             end
         end
-        // DONE means the block is finished: it must not assert while symbols are
-        // still expected.
+        // done must not assert while symbols are still expected.
         if (done && nchk < nsym && !want_err && !want_underrun) begin
             errors++;
             if (errors < 10)
                 $display("PROTOCOL: done asserted with %0d of %0d symbols still to come", nchk, nsym);
         end
+        // err and underrun are sticky, so count rising edges.
         err_d      <= err;
         underrun_d <= underrun;
         if (err && !err_d) begin
@@ -214,10 +195,9 @@ module tb_huffman;
     end
 
     // ---- main -----------------------------------------------------------------
-    int fd, code, t, l, lim, bas, idx, s, i, w, bpos, b;
-    // Icarus Verilog 11 (the course VM's version) accepts only a packed vector as
-    // $fgets's target; a SystemVerilog `string` is rejected at run time. The
-    // vector files' lines are all far shorter than 256 characters.
+    int fd, t, l, lim, bas, idx, s, i, w, bpos, b;
+    // A packed vector, not `string`: Icarus 11 (the course VM) rejects a string
+    // target for $fgets. Vector-file lines are well under 256 characters.
     reg [8*256-1:0] line;
     initial begin
         // meta
@@ -251,12 +231,11 @@ module tb_huffman;
             end
         end
         $fclose(fd);
-        // A testbench with no vectors would otherwise "pass": wait(nchk==nsym)
-        // returns at once for nsym==0 and errors stays 0. Refuse to run instead.
         if (i != nsym) begin
             $display("FAIL: expected.txt has %0d lines, meta.txt says %0d", i, nsym);
             $fatal(1);
         end
+        // nsym == 0 would pass trivially: wait(nchk == nsym) returns at once.
         if (nsym == 0) begin
             $display("FAIL: no expected symbols - run gen_vectors.py first");
             $fatal(1);
@@ -297,10 +276,8 @@ module tb_huffman;
         else if (want_underrun) wait (underrun);
         else                    wait (nchk == nsym);
         repeat (4) @(posedge clk);
-        // A decode error must be terminal. With the engine still enabled, give
-        // it a hundred more cycles and require that it made no further
-        // progress: an error that does not halt sends the decoder round the
-        // same unmatchable bits for ever.
+        // err must halt the decoder, or it spins on the unmatchable bits for ever:
+        // with run still high, 100 more cycles must add no symbols and no bits.
         if (want_err) begin
             halt_ndec = ndec; halt_nchk = nchk; halt_bits = bits_consumed;
             repeat (100) @(posedge clk);
@@ -312,8 +289,7 @@ module tb_huffman;
             $display("halted after err: no further symbols or bits in 100 cycles");
         end
         $display("----------------------------------------------------------------");
-        // first_cycle stays -1 when nothing decoded, which the directed error
-        // tests do on purpose; printing a negative window there is nonsense.
+        // first_cycle is still -1 when nothing was decoded.
         if (nchk > 0)
             $display("decoded %0d symbols in %0d cycles (%.3f symbols/cycle), %0d errors",
                      nchk, last_cycle - first_cycle + 1,
@@ -322,29 +298,24 @@ module tb_huffman;
             $display("decoded 0 symbols (the decoder refused the stream), %0d errors", errors);
         $display("total bits consumed: %0d  (avg %.2f bits/symbol)", bits_consumed,
                  nchk > 0 ? real'(bits_consumed) / real'(nchk) : 0.0);
-        // Belt and braces: a run that checked nothing is not a pass - unless
-        // decoding nothing is the point, as when the very first table row is
-        // corrupt and the decoder must refuse rather than return a symbol.
-        // On a stream that is a whole number of words the buffer drains to
-        // zero, so done must be observable. If it never rises here, the signal
-        // is untested everywhere.
+        // A stream that is a whole number of words drains the buffer to zero, so
+        // done must have asserted.
         if (nwords * 32 == nbytes * 8 - skip_bits && !want_err && !want_underrun && done !== 1'b1) begin
             $display("FAIL: the stream drained but done never asserted");
             $fatal(1);
         end
+        // A run that checked nothing is not a pass, unless refusing the stream is
+        // the point (+expect_err on the badidx set).
         if (nchk == 0 && !want_err) begin
             $display("FAIL: decoded no symbols");
             $fatal(1);
         end
-        // The bits the DUT actually consumed must equal what the software
-        // decoder consumed. Reporting the golden file's total instead would
-        // print the right number even for a DUT that consumed nothing.
+        // Bits consumed by the DUT must match what the software decoder consumed.
         if (!want_err && !want_underrun && bits_consumed !== sum_len()) begin
             $display("FAIL: consumed %0d bits, software consumed %0d", bits_consumed, sum_len());
             $fatal(1);
         end
-        // sym_count is what the host reads back; it must agree with the symbols
-        // the testbench saw on the bus.
+        // sym_count is what the host reads back; it must match the count on the bus.
         if (!want_err && !want_underrun && sym_count !== nchk) begin
             $display("FAIL: sym_count reads %0d, testbench counted %0d", sym_count, nchk);
             $fatal(1);
@@ -361,9 +332,8 @@ module tb_huffman;
             $display("FAIL: the stream ends short of a whole code but underrun never asserted");
             $fatal(1);
         end
-        // One symbol per cycle is a headline claim of the report, so assert it
-        // rather than only printing it. Two cycles of slack cover the pipeline
-        // fill. Backpressure mode deliberately throttles, so skip it there.
+        // The report claims one symbol per cycle, so assert it; two cycles of slack
+        // cover the pipeline fill. Skipped in the modes that stall on purpose.
         if (!bp_mode && !bubble_mode && !want_err && !want_underrun
             && (last_cycle - first_cycle + 1) > nsym + 2) begin
             $display("FAIL: throughput %0d cycles for %0d symbols (expected at most %0d)",
@@ -373,7 +343,7 @@ module tb_huffman;
         if (errors == 0) $display("PASS");
         else begin
             $display("FAIL (%0d errors)", errors);
-            $fatal(1);          // non-zero exit, so `make sim` actually fails
+            $fatal(1);          // non-zero exit so `make sim` fails
         end
         $finish;
     end
@@ -384,11 +354,9 @@ module tb_huffman;
         return acc;
     endfunction
 
-    // Watchdog, proportional to the work: four cycles per expected symbol plus
-    // a fixed margin. The design decodes one symbol per cycle, so the bound is
-    // generous, yet a stalled decoder fails almost at once even on the smallest
-    // directed sets, which decode three or four symbols. That is what keeps the
-    // twenty-mutation sweep affordable.
+    // Watchdog: four cycles per expected symbol plus a margin. Generous for a
+    // one-symbol-per-cycle design, and still quick on the small directed sets,
+    // which keeps tb/mutate.sh affordable.
     always @(posedge clk) begin
         if (run_en && cycles > (longint'(nsym) * 4 + 20000)) begin
             $display("TIMEOUT: decoded %0d/%0d symbols in %0d cycles", nchk, nsym, cycles);

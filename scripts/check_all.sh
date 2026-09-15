@@ -15,13 +15,10 @@ cd "$(dirname "$0")/.."
 if [ -z "${PY:-}" ]; then
   if [ -x venv/bin/python ]; then PY=venv/bin/python; else PY=python3; fi
 fi
-# The reports quote one particular run, fingerprinted in results/RUN_ID.txt. If
-# the benchmark scripts have been rerun here, results/ holds a different run and
-# the checkers below will report every figure that moved. That is the checkers
-# working, not the submission being broken, so say so before they run.
-#
-# This used to be a `git status` test, which is silent when the tree came from an
-# archive rather than a clone - exactly the case where the warning is needed.
+# results/RUN_ID.txt fingerprints the run the reports quote. If the benchmarks
+# were rerun here the checkers below will flag every figure that moved - that is
+# expected, so warn first. Hashing the files (not `git status`) also works when
+# the tree came from an archive rather than a clone.
 if [ -f results/RUN_ID.txt ]; then
   have=$("$PY" - <<'FP'
 import hashlib
@@ -49,9 +46,8 @@ FP
   fi
 fi
 echo "== 1/4 optimizations vs originals (speedup timed on this machine; the shipped VM figures are in results/)"; $PY scripts/local_check.py all "${REPS:-3}"
-# `| head -1` keeps the summary line short, but on a failure it also hides which
-# checks failed - the one moment the detail matters. Show the summary on success
-# and everything on failure.
+# On success print only a checker's summary line; on failure print the summary
+# and the FAIL lines (or the last 20 lines if the checker crashed).
 run_gate() {
   local label=$1 script=$2 out
   if out=$("$PY" "$script" 2>&1); then

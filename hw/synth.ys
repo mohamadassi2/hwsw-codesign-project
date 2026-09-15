@@ -1,18 +1,14 @@
 # Generic synthesis of the accelerator with Yosys.
-# Run from hw/:   yosys -q synth.ys      (or: make synth, which also writes docs/synthesis_yosys.txt)
+# Run from hw/:   yosys -q synth.ys      (make synth also writes docs/synthesis_yosys.txt)
 #
-# Two configurations, because the tables are not all the same kind of thing:
-#
-#   1. as built   limit/base are register files (they are read at every code
-#                 length in the same cycle, so no SRAM macro can implement
-#                 them); the symbol table is a real single-port SRAM. This is
-#                 the honest area figure and the one the report quotes.
+# Two configurations:
+#   1. as built   limit/base as register files (every code length reads them
+#                 in the same cycle, so no SRAM macro can hold them); the
+#                 symbol table as a single-port SRAM. This is the figure the
+#                 report quotes.
 #   2. all-logic  every table flattened into gates and flops.
-#
-# A third configuration - every table treated as a memory macro - would report a
-# much smaller cell count, but only because `stat` does not charge for memory
-# cells; it assumes a 20-read-port SRAM, which cannot be built. It is left out
-# rather than quoted with a caveat.
+# Treating every table as a memory macro would look much smaller only because
+# `stat` does not count memory cells, so that configuration is not reported.
 
 # ---- 1. as built ------------------------------------------------------------
 read_verilog -DSYNTHESIS -sv rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv
