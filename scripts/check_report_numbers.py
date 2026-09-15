@@ -12,7 +12,7 @@ Two kinds of check:
 Run it after filling the reports:  python3 scripts/check_report_numbers.py
 Exit status is non-zero if anything fails, so it can gate a commit.
 """
-import json, os, re, statistics, sys
+import glob, hashlib, json, os, re, statistics, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FAIL = []
@@ -20,12 +20,13 @@ OK = []
 
 
 def check(name, cond, detail=""):
-    # `detail` explains what went wrong, so it belongs only on a failing line;
-    # appending it to a passing line makes the report read like a contradiction.
+    # detail says what went wrong, so it is printed only on a failing line
     if cond:
         OK.append(name)
+    elif detail:
+        FAIL.append(name + "  " + detail)
     else:
-        FAIL.append(f"{name}{('  ' + detail) if detail else ''}")
+        FAIL.append(name)
 
 
 def _flat(t):
@@ -46,7 +47,12 @@ def _count(text, needle):
     return len(re.findall(r"(?<![\d.,])" + re.escape(needle) + r"(?![\d.,])", text))
 
 
+def results(*parts):
+    return os.path.join(ROOT, "results", *parts)
+
+
 def mean_of(path):
+    """mean of every value in a pyperf JSON file, None if the file is missing"""
     if not os.path.exists(path):
         return None
     with open(path) as f:
@@ -56,6 +62,24 @@ def mean_of(path):
         for run in b.get("runs", []):
             vals.extend(run.get("values", []))
     return statistics.mean(vals) if vals else None
+
+
+def perf_counters(path):
+    """{event: count} from a `perf stat` text file"""
+    r = {}
+    for line in open(path):
+        m = re.match(r"\s*([\d,\.]+)\s+(?:msec\s+)?([a-z-]+)", line)
+        if m:
+            r[m.group(2)] = float(m.group(1).replace(",", ""))
+    return r
+
+
+def fingerprint(paths):
+    """md5 of the per-file md5s; the stamp `make synth` and results/CODE_ID.txt carry"""
+    h = hashlib.md5()
+    for p in paths:
+        h.update(hashlib.md5(open(p, "rb").read()).hexdigest().encode())
+    return h.hexdigest()
 
 
 def report_text(b):
@@ -68,136 +92,119 @@ def nums(text):
     return set(m.group(0).replace(",", "") for m in re.finditer(r"\d[\d,]*(?:\.\d+)?", text))
 
 
+# the reports and every measured mean, read once
+_pf = report_text("pyflate")
+_md = report_text("mdp")
+_flat_pf = _flat(_pf)
+_flat_md = _flat(_md)
+_concl = _pf[_pf.rindex("6. Conclusion"):] if "6. Conclusion" in _pf else ""
+
+_pf_base = mean_of(results("pyflate", "pyflate_base.json"))
+_pf_opt = mean_of(results("pyflate", "pyflate_opt.json"))
+_md_base = mean_of(results("mdp", "mdp_base.json"))
+_md_opt = mean_of(results("mdp", "mdp_opt.json"))
+# the two reruns section 4.3 compares the shipped run with
+_pf_base2 = mean_of(results("reproducibility", "pyflate", "pyflate_base.json"))
+_pf_opt2 = mean_of(results("reproducibility", "pyflate", "pyflate_opt.json"))
+_md_base2 = mean_of(results("reproducibility", "mdp", "mdp_base.json"))
+_md_opt2 = mean_of(results("reproducibility", "mdp", "mdp_opt.json"))
+_pf_base3 = mean_of(results("reproducibility", "run3", "pyflate", "pyflate_base.json"))
+_pf_opt3 = mean_of(results("reproducibility", "run3", "pyflate", "pyflate_opt.json"))
+_md_base3 = mean_of(results("reproducibility", "run3", "mdp", "mdp_base.json"))
+_md_opt3 = mean_of(results("reproducibility", "run3", "mdp", "mdp_opt.json"))
+
 # ---------------------------------------------------------------- measured
-for b in ("pyflate", "mdp"):
-    d = os.path.join(ROOT, "results", b)
-    base, opt = mean_of(f"{d}/{b}_base.json"), mean_of(f"{d}/{b}_opt.json")
-    txt = report_text(b)
+for b, base, opt, rep in (("pyflate", _pf_base, _pf_opt, _pf), ("mdp", _md_base, _md_opt, _md)):
     if base is None or opt is None:
-        check(f"{b}: results present", False, "no results/*.json yet - run script_%s.sh" % b)
+        check(f"{b}: results present", False, f"no results/*.json yet - run script_{b}.sh")
         continue
     sp = base / opt
     pct = 100.0 * (1 - opt / base)
     check(f"{b}: speedup > 1", sp > 1, f"{sp:.2f}x")
     check(f"{b}: clears the 7% bar", pct >= 7, f"{pct:.1f}% faster")
     # the report must quote the speedup it measured, to 2 decimals or 1
-    quoted = nums(txt)
+    quoted = nums(rep)
     want = {f"{sp:.2f}", f"{sp:.1f}"}
     check(f"{b}: report quotes the measured speedup", bool(want & quoted),
           f"measured {sp:.2f}x; report has none of {sorted(want)}")
     wantpct = {f"{pct:.1f}", f"{pct:.0f}"}
     check(f"{b}: report quotes the measured percentage", bool(wantpct & quoted),
           f"measured {pct:.1f}%")
-    check(f"{b}: no TODO-VM left", "TODO-VM" not in txt,
-          f"{txt.count('TODO-VM')} placeholders remain")
+    check(f"{b}: no TODO-VM left", "TODO-VM" not in rep,
+          f"{rep.count('TODO-VM')} placeholders remain")
 
 # ---------------------------------------------------------------- prose that quotes the run
 # The 4.1 blocks are generated; these sentences are hand-written and must agree with them.
-_pf = report_text("pyflate"); _md = report_text("mdp")
-_b = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_base.json"))
-_o = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_opt.json"))
-if _b and _o:
-    check("pyflate conclusion quotes the measured speedup", f"gives {_b/_o:.2f}x in the" in _pf, f"{_b/_o:.2f}x")
-    check("pyflate conclusion quotes the measured percentage", f"{100*(1-_o/_b):.1f}% less time" in _pf)
-    def _ps(p):
-        r = {}
-        for line in open(p):
-            m = re.match(r"\s*([\d,\.]+)\s+(?:msec\s+)?([a-z-]+)", line)
-            if m: r[m.group(2)] = float(m.group(1).replace(",", ""))
-        return r
-    pb = _ps(os.path.join(ROOT, "results", "pyflate", "perfstat_base.txt"))
+if _pf_base and _pf_opt:
+    check("pyflate conclusion quotes the measured speedup", f"gives {_pf_base/_pf_opt:.2f}x in the" in _pf, f"{_pf_base/_pf_opt:.2f}x")
+    check("pyflate conclusion quotes the measured percentage", f"{100*(1-_pf_opt/_pf_base):.1f}% less time" in _pf)
+    pb = perf_counters(results("pyflate", "perfstat_base.txt"))
     if pb:
         check("section 2 quotes the measured baseline cycles", f"{pb['cycles']/1e9:.1f} billion cycles" in _pf, f"{pb['cycles']/1e9:.1f}")
         check("section 2 quotes the measured baseline instructions", f"{pb['instructions']/1e9:.1f} billion instructions" in _pf, f"{pb['instructions']/1e9:.1f}")
         check("section 2 quotes the measured baseline IPC", f"IPC {pb['instructions']/pb['cycles']:.2f}" in _pf, f"{pb['instructions']/pb['cycles']:.2f}")
-# mdp section 2 quotes the same counters; gate them too (it once drifted a whole run)
-_mps = _ps(os.path.join(ROOT, "results", "mdp", "perfstat_base.txt"))
+# mdp section 2 quotes the same counters
+_mps = perf_counters(results("mdp", "perfstat_base.txt"))
 if _mps:
-    _mflat = re.sub(r"\s+", " ", _md)
-    check("mdp section 2 quotes the measured instructions", f"{_mps['instructions']:,.0f}" in _mflat, f"{_mps['instructions']:,.0f}")
-    check("mdp section 2 quotes the measured cycles", f"{_mps['cycles']:,.0f}" in _mflat, f"{_mps['cycles']:,.0f}")
-    check("mdp section 2 quotes the measured branches", f"{_mps['branches']:,.0f}" in _mflat, f"{_mps['branches']:,.0f}")
+    check("mdp section 2 quotes the measured instructions", f"{_mps['instructions']:,.0f}" in _flat_md, f"{_mps['instructions']:,.0f}")
+    check("mdp section 2 quotes the measured cycles", f"{_mps['cycles']:,.0f}" in _flat_md, f"{_mps['cycles']:,.0f}")
+    check("mdp section 2 quotes the measured branches", f"{_mps['branches']:,.0f}" in _flat_md, f"{_mps['branches']:,.0f}")
     check("mdp section 2 IPC agrees with section 4.1",
-          f"IPC of {_mps['instructions']/_mps['cycles']:.2f}" in _mflat,
+          f"IPC of {_mps['instructions']/_mps['cycles']:.2f}" in _flat_md,
           f"{_mps['instructions']/_mps['cycles']:.2f}")
 
-_mb = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_base.json"))
-_mo = mean_of(os.path.join(ROOT, "results", "mdp", "mdp_opt.json"))
-if _mb and _mo:
-    # Flattened: these sentences are wrapped at 82 columns, so a literal match
-    # breaks whenever a paragraph is re-wrapped rather than when a number is wrong.
+if _md_base and _md_opt:
+    # matched on the flattened text: these sentences are line-wrapped in the report
     check("mdp conclusion quotes the measured speedup",
-          f"gives {_mb/_mo:.2f}x in the course VM" in _flat(_md), f"{_mb/_mo:.2f}x")
+          f"gives {_md_base/_md_opt:.2f}x in the course VM" in _flat_md, f"{_md_base/_md_opt:.2f}x")
     check("mdp conclusion quotes the measured percentage",
-          f"{100*(1-_mo/_mb):.1f}% less time" in _flat(_md))
+          f"{100*(1-_md_opt/_md_base):.1f}% less time" in _flat_md)
 
 # ---------------------------------------------------------------- reproducibility section
-_rb = mean_of(os.path.join(ROOT, "results", "reproducibility", "pyflate", "pyflate_base.json"))
-_ro = mean_of(os.path.join(ROOT, "results", "reproducibility", "pyflate", "pyflate_opt.json"))
-if _b and _o and _rb and _ro:
-    # Both ratios must appear in the reproducibility subsection itself, rather
-    # than anywhere in the report: the point is that the section compares the
-    # two runs, and tying the check to one particular wording ("... rerun")
-    # meant rephrasing the sentence broke the gate.
+# Section 4.3 of each report compares the shipped run with two reruns. Every
+# ratio, and the spread the section states, is recomputed and looked for
+# inside that section only.
+if _pf_base and _pf_opt and _pf_base2 and _pf_opt2:
     _rep = _flat(_sect(_pf, "4.3 Reproducibility", 3200))
-    # A third run is now kept; its ratios must be quoted too, and the spread the
-    # section claims must be the spread the three runs actually show.
-    _r3p = os.path.join(ROOT, "results", "reproducibility", "run3", "pyflate")
-    _r3m = os.path.join(ROOT, "results", "reproducibility", "run3", "mdp")
-    if os.path.isdir(_r3p):
-        _3b = mean_of(os.path.join(_r3p, "pyflate_base.json"))
-        _3o = mean_of(os.path.join(_r3p, "pyflate_opt.json"))
-        _3mb = mean_of(os.path.join(_r3m, "mdp_base.json"))
-        _3mo = mean_of(os.path.join(_r3m, "mdp_opt.json"))
-        if _3b and _3o:
-            check("reproducibility: the third run's pyflate ratio is quoted",
-                  f"{_3b/_3o:.3f}x" in _rep, f"{_3b/_3o:.3f}x")
-            _ps = [_b/_o, _rb/_ro, _3b/_3o]
-            _spread = (max(_ps) - min(_ps)) / min(_ps) * 100
-            check(f"reproducibility: the stated pyflate spread matches the three runs ({_spread:.1f}%)",
-                  f"{_spread:.1f}%" in _rep, f"expected {_spread:.1f}%")
-        # the mdp reruns are read again here rather than relying on names the
-        # file happens to define further down
-        _m2b = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_base.json"))
-        _m2o = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_opt.json"))
-        if _3mb and _3mo and _m2b and _m2o and _mb and _mo:
-            _ms = [_mb/_mo, _m2b/_m2o, _3mb/_3mo]
-            _mspread = (max(_ms) - min(_ms)) / min(_ms) * 100
-            check(f"reproducibility: the stated mdp spread matches the three runs ({_mspread:.1f}%)",
-                  f"{_mspread:.1f}%" in _rep, f"expected {_mspread:.1f}%")
+    if _pf_base3 and _pf_opt3:
+        check("reproducibility: the third run's pyflate ratio is quoted",
+              f"{_pf_base3/_pf_opt3:.3f}x" in _rep, f"{_pf_base3/_pf_opt3:.3f}x")
+        _ratios = [_pf_base/_pf_opt, _pf_base2/_pf_opt2, _pf_base3/_pf_opt3]
+        _spread = (max(_ratios) - min(_ratios)) / min(_ratios) * 100
+        check(f"reproducibility: the stated pyflate spread matches the three runs ({_spread:.1f}%)",
+              f"{_spread:.1f}%" in _rep, f"expected {_spread:.1f}%")
+    if _md_base3 and _md_opt3 and _md_base2 and _md_opt2 and _md_base and _md_opt:
+        _ratios = [_md_base/_md_opt, _md_base2/_md_opt2, _md_base3/_md_opt3]
+        _mspread = (max(_ratios) - min(_ratios)) / min(_ratios) * 100
+        check(f"reproducibility: the stated mdp spread matches the three runs ({_mspread:.1f}%)",
+              f"{_mspread:.1f}%" in _rep, f"expected {_mspread:.1f}%")
     check("reproducibility: pyflate shipped speedup quoted",
-          f"{_b/_o:.3f}x" in _rep, f"{_b/_o:.3f}x, in section 4.3")
+          f"{_pf_base/_pf_opt:.3f}x" in _rep, f"{_pf_base/_pf_opt:.3f}x, in section 4.3")
     check("reproducibility: pyflate rerun speedup quoted",
-          f"{_rb/_ro:.3f}x" in _rep, f"{_rb/_ro:.3f}x, in section 4.3")
-_rmb = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_base.json"))
-_rmo = mean_of(os.path.join(ROOT, "results", "reproducibility", "mdp", "mdp_opt.json"))
-if _mb and _mo and _rmb and _rmo:
-    # Section 4.3 lists the runs as a table now, so check both ratios appear in
-    # it rather than pinning one sentence's wording.
+          f"{_pf_base2/_pf_opt2:.3f}x" in _rep, f"{_pf_base2/_pf_opt2:.3f}x, in section 4.3")
+if _md_base and _md_opt and _md_base2 and _md_opt2:
+    # section 4.3 lists the runs as a table; every ratio must appear in it
     _mrep = _flat(_sect(_md, "4.3 Reproducibility", 3200))
     check("reproducibility: mdp quotes the shipped ratio",
-          f"{_mb/_mo:.3f}x" in _mrep, f"{_mb/_mo:.3f}x, in section 4.3")
+          f"{_md_base/_md_opt:.3f}x" in _mrep, f"{_md_base/_md_opt:.3f}x, in section 4.3")
     check("reproducibility: mdp quotes the second run's ratio",
-          f"{_rmb/_rmo:.3f}x" in _mrep, f"{_rmb/_rmo:.3f}x, in section 4.3")
-    _3mb = mean_of(os.path.join(ROOT, "results", "reproducibility", "run3", "mdp", "mdp_base.json"))
-    _3mo = mean_of(os.path.join(ROOT, "results", "reproducibility", "run3", "mdp", "mdp_opt.json"))
-    if _3mb and _3mo:
+          f"{_md_base2/_md_opt2:.3f}x" in _mrep, f"{_md_base2/_md_opt2:.3f}x, in section 4.3")
+    if _md_base3 and _md_opt3:
         check("reproducibility: mdp quotes the third run's ratio",
-              f"{_3mb/_3mo:.3f}x" in _mrep, f"{_3mb/_3mo:.3f}x, in section 4.3")
+              f"{_md_base3/_md_opt3:.3f}x" in _mrep, f"{_md_base3/_md_opt3:.3f}x, in section 4.3")
 
 # every flame graph a report names must exist
-for _rep, _txt in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
-    for _svg in set(re.findall(r"(flame_[A-Za-z0-9_]+\.svg)", _txt)):
-        _found = any(os.path.exists(os.path.join(ROOT, "results", _b, _svg)) for _b in ("pyflate", "mdp"))
-        check(f"{_rep} cites {_svg} and it exists", _found, "no such file under results/")
+for _name, _body in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
+    for _svg in set(re.findall(r"(flame_[A-Za-z0-9_]+\.svg)", _body)):
+        _found = any(os.path.exists(results(b, _svg)) for b in ("pyflate", "mdp"))
+        check(f"{_name} cites {_svg} and it exists", _found, "no such file under results/")
 
 # ---------------------------------------------------------------- derived: accelerator
 SYMBOLS, CYCLES = 148271, 148272
-txt = report_text("pyflate")
 check("hw: symbols/cycle claim", abs(SYMBOLS / CYCLES - 1.0) < 0.001,
       f"{SYMBOLS/CYCLES:.4f}")
 check("hw: report states both symbol and cycle counts",
-      "148,271" in txt and "148,272" in txt)
+      "148,271" in _pf and "148,272" in _pf)
 for f, mhz in (("0.74", 200), ("0.37", 400)):
     got = CYCLES / (mhz * 1e6) * 1e3
     check(f"hw: {mhz} MHz decode time", abs(got - float(f)) < 0.01, f"{got:.3f} ms vs {f}")
@@ -205,57 +212,52 @@ BITS = 531571
 check("hw: average bits per symbol", abs(BITS / SYMBOLS - 3.59) < 0.01,
       f"{BITS/SYMBOLS:.3f}")
 
-# 62% may appear only in the sentence that records the earlier double count;
-# anywhere else it would mean the corrected share had been lost again.
-_flat_pf = re.sub(r"\s+", " ", _pf)
+# 62% was a double-counted share; it may appear only in the sentence that retracts it
+_retract = "earlier draft of this report did exactly that and quoted ~62%"
 check("the corrected share is used, not the double-counted 62%",
-      "51.0%" in _pf and _flat_pf.count("62%") == _flat_pf.count("earlier draft of this report did exactly that and quoted ~62%"),
+      "51.0%" in _pf and _flat_pf.count("62%") == _flat_pf.count(_retract),
       f"{_flat_pf.count('62%')} mention(s) of 62%, "
-      f"{_flat_pf.count('earlier draft of this report did exactly that and quoted ~62%')} in the sentence that records the mistake")
+      f"{_flat_pf.count(_retract)} in the sentence that records the mistake")
 
-# The same retracted share used to live in the supporting documents, where the
-# guard above could not see it. Nothing outside that one sentence may say 62%.
+# the supporting documents may not quote it at all
 for _rel in ("docs/hw_sw_interface.md", "docs/presentation_outline.md", "README.md", "docs/presentation.html"):
     _p = os.path.join(ROOT, _rel)
     if os.path.exists(_p):
-        _t = re.sub(r"\s+", " ", open(_p, encoding="utf-8").read())
+        _t = _flat(open(_p, encoding="utf-8").read())
         check(f"{_rel} does not quote the retracted 62%", "62%" not in _t,
               "the corrected cumulative share is 49.7%")
 
-# The conclusion must quote the ratios section 5.6 actually computes, not the
-# ones an earlier draft reached from the double count.
+# the conclusion and the slide outline must quote the ratios section 5.6 computes
 _m56 = re.search(r"=\s*~(\d+) ms\s*->\s*~([\d.]+)x over the optimized software,\s*"
                  r"~([\d.]+)x over the shipped benchmark", _pf)
 check("section 5.6 states the Amdahl result and both ratios", _m56 is not None)
 if _m56:
-    _ms, _vs_opt, _vs_base = _m56.group(1), _m56.group(2), _m56.group(3)
-    _concl = _pf[_pf.rindex("6. Conclusion"):] if "6. Conclusion" in _pf else ""
+    _vs_opt, _vs_base = _m56.group(2), _m56.group(3)
     check("the conclusion quotes 5.6's ratio over the optimized code",
           f"{_vs_opt}x" in _concl, f"5.6 computes {_vs_opt}x")
     check("the conclusion quotes 5.6's ratio over the shipped benchmark",
           f"{_vs_base}x" in _concl, f"5.6 computes {_vs_base}x")
     _out = os.path.join(ROOT, "docs", "presentation_outline.md")
     if os.path.exists(_out):
-        # The glyph is incidental: prose may render the ratio as 2.0x or 2.0\u00d7.
-        # Normalise before testing so the gate checks the number, not the typography.
-        _o = open(_out, encoding="utf-8").read().replace("\u00d7", "x")
+        # the outline may write the ratio as 2.0\u00d7 rather than 2.0x
+        _outline = open(_out, encoding="utf-8").read().replace("\u00d7", "x")
         check("the outline quotes the same two ratios",
-              f"{_vs_opt}x" in _o and f"{_vs_base}x" in _o, f"expected {_vs_opt}x / {_vs_base}x")
+              f"{_vs_opt}x" in _outline and f"{_vs_base}x" in _outline, f"expected {_vs_opt}x / {_vs_base}x")
 
 # ---------------------------------------------------------------- derived: Amdahl
 m = re.search(r"Take the optimized run measured in the VM, ([\d.]+) ms, of which that part is\s+"
-              r"([\d.]+)% = ~([\d.]+) ms", txt)
+              r"([\d.]+)% = ~([\d.]+) ms", _pf)
 if m:
     total, frac, part = float(m.group(1)), float(m.group(2)), float(m.group(3))
     check("amdahl: the stated fraction matches the stated milliseconds",
           abs(total * frac / 100 - part) < max(2.0, 0.03 * part),
           f"{total} ms x {frac}% = {total*frac/100:.1f} ms, report says {part}")
-    m2 = re.search(r"([\d.]+) - ([\d.]+) \+ ([\d.]+)\s+=\s+~?([\d.]+) ms", txt)
+    m2 = re.search(r"([\d.]+) - ([\d.]+) \+ ([\d.]+)\s+=\s+~?([\d.]+) ms", _pf)
     if m2:
         a, bb, c, res = (float(x) for x in m2.groups())
         check("amdahl: the subtraction is right", abs((a - bb + c) - res) < 1.5,
               f"{a} - {bb} + {c} = {a-bb+c:.1f}, report says {res}")
-        m3 = re.search(r"~([\d.]+)x over the optimized software", txt)
+        m3 = re.search(r"~([\d.]+)x over the optimized software", _pf)
         if m3:
             check("amdahl: speedup over optimized software",
                   abs(a / res - float(m3.group(1))) < 0.2,
@@ -268,7 +270,7 @@ else:
 syn = os.path.join(ROOT, "docs", "synthesis_yosys.txt")
 if os.path.exists(syn):
     s = open(syn).read()
-    txt_n = nums(txt)
+    txt_n = nums(_pf)
     # Each configuration line is "<cells> cells: <ff> flip-flops, <gates> gates[, ...]".
     _cfg = re.findall(r"^(\d+) cells: (\d+) flip-flops, (\d+) gates", s, re.M)
     _d = re.search(r"length=(\d+)", s)
@@ -281,83 +283,71 @@ if os.path.exists(syn):
                            ("depth", _d.group(1) if _d else None)):
             pretty = f"{int(tok):,}" if tok else None
             check(f"synthesis {label} ({tok}) quoted in the report",
-                  tok is not None and (tok in txt_n or (pretty and pretty in txt)),
+                  tok is not None and (tok in txt_n or (pretty and pretty in _pf)),
                   "from docs/synthesis_yosys.txt")
-        # The superseded memory-macro figures must not come back. 2,768 may
-        # appear only in the sentence that records why it was withdrawn, the
-        # same rule the retracted 62% share is held to above.
-        _flat_txt = re.sub(r"\s+", " ", txt)
+        # 2,768 cells came from a memory-macro estimate; like the 62% share, it
+        # may appear only in the sentence that withdraws it
         check("the superseded 2,768-cell figure appears only where it is retracted",
-              _flat_txt.count("2,768") == _flat_txt.count("An earlier draft quoted 2,768 cells"),
-              f"{_flat_txt.count('2,768')} mention(s)")
+              _flat_pf.count("2,768") == _flat_pf.count("An earlier draft quoted 2,768 cells"),
+              f"{_flat_pf.count('2,768')} mention(s)")
         for stale in ("52,952", "19.4 kbit"):
             check(f"the superseded synthesis figure {stale} is gone from the report",
-                  stale not in txt, "it assumed a 20-read-port SRAM")
+                  stale not in _pf, "it assumed a 20-read-port SRAM")
 
 # ---------------------------------------------------------------- ablation
-# Section 3.6 attributes the speedup to individual optimizations. Recompute the
-# quoted figures from the artifact rather than trusting the prose.
-_abl = os.path.join(ROOT, "results", "pyflate", "ablation.txt")
+# section 3.6 quotes the per-optimization times from results/pyflate/ablation.txt
+_abl = results("pyflate", "ablation.txt")
 if os.path.exists(_abl):
     _a = open(_abl, encoding="utf-8").read()
-    _rows = dict((m.group(1).strip(), float(m.group(2)))
-                 for m in re.finditer(r"^  (.+?)\s{2,}([\d.]+)\s+[\d.]+\s+[\d.]+x$", _a, re.M))
+    _rows = {m.group(1).strip(): float(m.group(2))
+             for m in re.finditer(r"^  (.+?)\s{2,}([\d.]+)\s+[\d.]+\s+[\d.]+x$", _a, re.M)}
     check("ablation.txt has the baseline and full-optimized rows", len(_rows) >= 3,
           f"parsed {len(_rows)} rows")
     for _lbl, _v in _rows.items():
         check(f"section 3.6 quotes the ablation figure for '{_lbl[:38]}' ({_v:,.1f} ms)",
-              f"{_v:,.1f}" in txt, "from results/pyflate/ablation.txt")
+              f"{_v:,.1f}" in _pf, "from results/pyflate/ablation.txt")
 
-_ts = os.path.join(ROOT, "results", "pyflate", "table_stats.txt")
+_ts = results("pyflate", "table_stats.txt")
 if os.path.exists(_ts):
     _t = open(_ts, encoding="utf-8").read()
-    _s36 = _sect(txt, "3.6 Which of those five actually earned the speedup")
+    _s36 = _sect(_pf, "3.6 Which of those five actually earned the speedup")
     check("section 3.6 exists to carry the table-scan figures", bool(_s36))
     for _label, _rx in (("largest table", r"largest table\s+(\d+) entries"),
                         ("mean compares", r"compared, mean/symbol\s+([\d.]+)"),
                         ("snoopbits total", r"snoopbits\(\) calls, total\s+([\d,]+)")):
         _m = re.search(_rx, _t)
-        # Checked inside 3.6, not anywhere in the file: "147" also appears in
-        # section 3.1, so a presence-anywhere test passed even after 3.6 was
-        # changed to say 258. A gate-mutation run in the VM found exactly that.
+        # looked for inside 3.6 only: "147" also appears in section 3.1
         check(f"section 3.6 quotes the measured {_label} ({_m.group(1) if _m else '?'})",
               _m is not None and _m.group(1) in _s36, "from results/pyflate/table_stats.txt")
-    # And section 3.1's description of the same table must agree with it.
+    # section 3.1 describes the same table and must agree
     _mlt = re.search(r"largest table\s+(\d+) entries", _t)
     if _mlt:
-        _s31 = _sect(txt, "3.1 Canonical Huffman decode instead of a table scan")
+        _s31 = _sect(_pf, "3.1 Canonical Huffman decode instead of a table scan")
         check(f"section 3.1 describes the same table size ({_mlt.group(1)})",
               _mlt.group(1) in _s31, "section 3.1 and results/pyflate/table_stats.txt disagree")
 
 # ---------------------------------------------------------------- quoted times
-# The generated 4.1 block is filled from results/, but the same figures are
-# restated by hand in sections 5.6 and 6. Perturbing one of those restatements
-# was not caught until a gate-mutation run in the VM went looking for it, so
-# check each place the number is written rather than the file as a whole.
-_pb = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_base.json"))
-_po = mean_of(os.path.join(ROOT, "results", "pyflate", "pyflate_opt.json"))
-if _pb and _po:
-    _exact = f"{_po * 1e3:.1f}"        # one decimal, as printed in the 4.1 table
-    _round = f"{_po * 1e3:.0f}"        # rounded, as used in the prose
+# the optimized time is printed in the 4.1 table and restated by hand in 5.6
+# and 6, so each place is checked, not the file as a whole
+if _pf_base and _pf_opt:
+    _exact = f"{_pf_opt * 1e3:.1f}"        # one decimal, as printed in the 4.1 table
+    _round = f"{_pf_opt * 1e3:.0f}"        # rounded, as used in the prose
     check("section 4.1 prints the measured optimized time",
-          _exact in _sect(txt, "4.1 Course VM"), f"expected {_exact} ms")
+          _exact in _sect(_pf, "4.1 Course VM"), f"expected {_exact} ms")
     check("section 5.6 uses the same optimized time",
-          _round in _sect(txt, "5.6 Expected performance"), f"expected {_round} ms")
-    _concl = txt[txt.rindex("6. Conclusion"):] if "6. Conclusion" in txt else ""
+          _round in _sect(_pf, "5.6 Expected performance"), f"expected {_round} ms")
     check("the conclusion uses the same optimized time", _round in _concl,
           f"expected {_round} ms")
-    # No stale value of the same shape may survive anywhere in the report.
-    # Section 4.3 deliberately quotes the other runs' times, so exclude it: the
-    # guard is for a shipped figure left behind elsewhere, not for the table
-    # that exists to compare runs.
-    _outside_43 = txt.replace(_sect(txt, "4.3 Reproducibility", 3200), "")
+    # no stale optimized time anywhere else; section 4.3 lists the other runs'
+    # times on purpose, so it is skipped
+    _outside_43 = _pf.replace(_sect(_pf, "4.3 Reproducibility", 3200), "")
     for _stale in ("473.0", "473"):
         if _stale != _exact and _stale != _round:
             check(f"no stale optimized time '{_stale}' outside section 4.3",
                   _count(_outside_43, _stale) == 0,
                   f"the measured value is {_round} ms")
-    # The overlap bound in 5.6 is arithmetic on the same two numbers.
-    _mov = re.search(r"the bound becomes (\d+) - (\d+) = (\d+)\s*\n?\s*ms", txt)
+    # the overlap bound in 5.6 is arithmetic on the same number
+    _mov = re.search(r"the bound becomes (\d+) - (\d+) = (\d+)\s*\n?\s*ms", _pf)
     check("the overlap bound in 5.6 subtracts correctly", _mov is not None
           and int(_mov.group(1)) - int(_mov.group(2)) == int(_mov.group(3)),
           f"{_mov.groups() if _mov else 'sentence not found'}")
@@ -366,65 +356,53 @@ if _pb and _po:
               _mov.group(1) == _round, f"expected {_round}")
 
 # ---------------------------------------------------------------- measured times
-# A local gate-mutation sweep found that the raw wall-clock means were not
-# checked at all: only the ratios derived from them were. Perturbing "1.303" or
-# "1.129" in a 4.1 table therefore passed. Check each measured mean where its
-# section prints it, for both benchmarks.
-for _b, _rep in (("pyflate", _pf), ("mdp", _md)):
-    _bs = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_base.json"))
-    _os_ = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_opt.json"))
-    if not (_bs and _os_):
+# the raw means in each 4.1 table, not only the ratios derived from them
+for b, rep, base, opt in (("pyflate", _pf, _pf_base, _pf_opt), ("mdp", _md, _md_base, _md_opt)):
+    if not (base and opt):
         continue
-    _s41 = _sect(_rep, "4.1 Course VM")
-    check(f"{_b}: section 4.1 prints the measured baseline ({_bs:.3f} s)",
-          f"{_bs:.3f}" in _s41, f"from results/{_b}/{_b}_base.json")
-    _optstr = f"{_os_ * 1e3:.1f}" if _os_ < 1 else f"{_os_:.3f}"
-    check(f"{_b}: section 4.1 prints the measured optimized time ({_optstr})",
-          _optstr in _s41, f"from results/{_b}/{_b}_opt.json")
+    _s41 = _sect(rep, "4.1 Course VM")
+    check(f"{b}: section 4.1 prints the measured baseline ({base:.3f} s)",
+          f"{base:.3f}" in _s41, f"from results/{b}/{b}_base.json")
+    _optstr = f"{opt * 1e3:.1f}" if opt < 1 else f"{opt:.3f}"
+    check(f"{b}: section 4.1 prints the measured optimized time ({_optstr})",
+          _optstr in _s41, f"from results/{b}/{b}_opt.json")
 
 # ---------------------------------------------------------------- simulation
-# The symbol and cycle counts are quoted throughout section 5 and come from the
-# testbench run recorded in results/rtl_sim_guest.log.
-_simlog = os.path.join(ROOT, "results", "rtl_sim_guest.log")
+# the symbol and cycle counts quoted throughout section 5 come from the
+# testbench run recorded in results/rtl_sim_guest.log
+_simlog = results("rtl_sim_guest.log")
 if os.path.exists(_simlog):
     _sl = open(_simlog, encoding="utf-8").read()
     _msim = re.search(r"decoded (\d+) symbols in (\d+) cycles", _sl)
     if _msim:
         _sym, _cyc = int(_msim.group(1)), int(_msim.group(2))
-        check(f"the report quotes the simulated symbol count ({_sym:,})", f"{_sym:,}" in txt,
+        check(f"the report quotes the simulated symbol count ({_sym:,})", f"{_sym:,}" in _pf,
               "from results/rtl_sim_guest.log")
-        check(f"the report quotes the simulated cycle count ({_cyc:,})", f"{_cyc:,}" in txt,
+        check(f"the report quotes the simulated cycle count ({_cyc:,})", f"{_cyc:,}" in _pf,
               "from results/rtl_sim_guest.log")
-        # Presence is not enough: these counts are written a dozen times, so one
-        # of them can be wrong while the others keep a presence test happy. Every
-        # number of this shape in the report must be one of the two real ones.
-        _seen = set(re.findall(r"\b148,\d{3}\b", txt))
+        # the counts are written a dozen times; every 148,xxx in the report must be one of the two
+        _seen = set(re.findall(r"\b148,\d{3}\b", _pf))
         _wrong = sorted(_seen - {f"{_sym:,}", f"{_cyc:,}"})
         check("no other 148,xxx figure appears in the report", not _wrong,
               f"found {_wrong}, but the only real values are {_sym:,} and {_cyc:,}")
-        # per-symbol CPU cost: the accelerated share of the optimized run,
-        # divided by the symbols, at the guest's 2.4 GHz.
-        if _po:
-            _cps = _po * 0.510 / _sym * 2.4e9
+        # per-symbol CPU cost: the accelerated 51.0% of the optimized run, divided
+        # by the symbols, at the guest's 2.4 GHz
+        if _pf_opt:
+            _cps = _pf_opt * 0.510 / _sym * 2.4e9
             _want_cps = f"{round(_cps, -2):,.0f}"
             check(f"the per-symbol CPU cost recomputes ({_want_cps} cycles)",
-                  _want_cps in txt,
-                  f"{_po * 1e3:.0f} ms x 51.0% / {_sym:,} at 2.4 GHz")
-            # Same reasoning: check every place the report states a per-symbol
-            # cycle cost, not merely that the right number occurs once.
-            # Only the CPU-cost sentences, not every "cycles per symbol" in the
-            # report: section 5.7 legitimately quotes 3.6 cycles/symbol for a
-            # bit-serial alternative and 1 for this design.
-            _states = set(re.findall(r"~([\d,]+) cycles of a 2\.4 GHz", txt)) | \
-                      set(re.findall(r"~([\d,]+) CPU cycles per symbol", txt))
+                  _want_cps in _pf,
+                  f"{_pf_opt * 1e3:.0f} ms x 51.0% / {_sym:,} at 2.4 GHz")
+            # every CPU-cost sentence must state it; only those sentences, because
+            # 5.7 also quotes 3.6 and 1 cycles/symbol for the two decoder designs
+            _states = (set(re.findall(r"~([\d,]+) cycles of a 2\.4 GHz", _pf))
+                       | set(re.findall(r"~([\d,]+) CPU cycles per symbol", _pf)))
             _bad = sorted(v for v in _states if v != _want_cps)
             check("every per-symbol cycle figure in the report is the computed one",
                   not _bad, f"found {_bad}, expected {_want_cps}")
 
 # ---------------------------------------------------------------- cited files
-# A report that points at a file which is not in the tree is worse than one that
-# does not cite anything: the reader goes looking. Check every repository path
-# either report names.
+# every repository path either report names must exist
 _missing = []
 for _name, _body in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
     for _m in re.finditer(r"\b((?:results|docs|scripts|hw|benchmarks)/[A-Za-z0-9_./-]+)", _body):
@@ -436,52 +414,36 @@ for _name, _body in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
 check("every file the reports cite exists", not _missing, "; ".join(sorted(set(_missing))[:4]))
 
 # ---------------------------------------------------------------- synth is current
-# The synthesis figures must describe the RTL that is in the tree. They were
-# once two RTL changes behind, and every existing check passed, because they all
-# verify that the report quotes docs/synthesis_yosys.txt - not that the file
-# still matches hw/rtl/.
-_syn = os.path.join(ROOT, "docs", "synthesis_yosys.txt")
-if os.path.exists(_syn):
-    import hashlib, glob
-    _rtl_files = sorted(glob.glob(os.path.join(ROOT, "hw", "rtl", "*.sv")))
-    _h = hashlib.md5()
-    for _f in _rtl_files:
-        _h.update(hashlib.md5(open(_f, "rb").read()).hexdigest().encode())
-    _stamp = re.search(r"RTL fingerprint: ([0-9a-f]{32})", open(_syn, encoding="utf-8").read())
+# docs/synthesis_yosys.txt stamps the md5 of the hw/rtl/*.sv it was generated
+# from; its figures are only valid while that matches the RTL in the tree
+if os.path.exists(syn):
+    _stamp = re.search(r"RTL fingerprint: ([0-9a-f]{32})", s)
     check("docs/synthesis_yosys.txt carries an RTL fingerprint", _stamp is not None,
           "regenerate it with `make synth` in hw/")
     if _stamp:
+        _rtl = sorted(glob.glob(os.path.join(ROOT, "hw", "rtl", "*.sv")))
         check("the synthesis figures describe the RTL in the tree",
-              _stamp.group(1) == _h.hexdigest(),
-              f"the file was generated from different RTL; run `make synth` in hw/")
+              _stamp.group(1) == fingerprint(_rtl),
+              "the file was generated from different RTL; run `make synth` in hw/")
 
 # ---------------------------------------------------------------- headline ratios
-# Both headline speedups appear three times in their report: the 4.1 table, the
-# compare_to table beside it, and the conclusion. Checking that the right value
-# appears SOMEWHERE lets any one of the three be wrong, which a gate-mutation
-# run demonstrated by changing only the first. Every occurrence of the shape has
-# to be the measured value.
-for _b, _rep, _name in (("pyflate", _pf, "report_pyflate.txt"), ("mdp", _md, "report_mdp.txt")):
-    _bs = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_base.json"))
-    _os2 = mean_of(os.path.join(ROOT, "results", _b, f"{_b}_opt.json"))
-    if not (_bs and _os2):
+# the headline speedup is written three times (4.1 table, compare_to table,
+# conclusion). Every d.ddx ratio must be it, except in 3.6 and 4.3, which
+# exist to compare variants and runs.
+for b, rep, base, opt in (("pyflate", _pf, _pf_base, _pf_opt), ("mdp", _md, _md_base, _md_opt)):
+    if not (base and opt):
         continue
-    _want = f"{_bs / _os2:.2f}x"
-    # Sections 3.6 and 4.3 exist to compare runs and variants, so the other
-    # ratios in them are legitimate; everywhere else the only ratio of this
-    # shape is the headline one.
-    _body = _rep.replace(_sect(_rep, "4.3 Reproducibility", 3200), "")
+    _want = f"{base / opt:.2f}x"
+    _body = rep.replace(_sect(rep, "4.3 Reproducibility", 3200), "")
     _body = _body.replace(_sect(_body, "3.6 Which of those five actually earned the speedup", 3000), "")
     _found = re.findall(r"(?<![\d.])(\d\.\d\d)x(?![\d.])", _body)
     _bad = sorted({v + "x" for v in _found} - {_want})
-    check(f"{_name}: every headline ratio outside 4.3 is the measured {_want}",
+    check(f"report_{b}.txt: every headline ratio outside 4.3 is the measured {_want}",
           not _bad, f"also found {_bad}")
 
 # ---------------------------------------------------------------- cProfile tables
-# Both reports quote per-function shares. pyflate's were regenerated from the
-# artifacts; mdp's were not, and nothing noticed for weeks because no check ever
-# opened results/<b>/cprofile_*.txt. Recompute a few load-bearing rows here so a
-# table that drifts from its artifact fails.
+# the per-function shares in both reports' cProfile tables, recomputed from
+# results/<b>/cprofile_*.txt
 def _cprof(path, want):
     """(self%, cum%, calls) for one row, as shares of the benchmark function"""
     if not os.path.exists(path):
@@ -501,25 +463,24 @@ def _cprof(path, want):
             return (tot / den * 100, cum / den * 100, calls)
     return None
 
-for _b, _rep, _name, _rows in (
-        ("pyflate", _pf, "report_pyflate.txt", ["find_next_symbol", "decode_huffman_block"]),
-        ("mdp", _md, "report_mdp.txt", ["evaluate", "getSuccessors", "getCritDist"])):
+for b, rep, _fns in (
+        ("pyflate", _pf, ["find_next_symbol", "decode_huffman_block"]),
+        ("mdp", _md, ["evaluate", "getSuccessors", "getCritDist"])):
     for _tag in ("base", "opt"):
-        for _fn in _rows:
-            _r = _cprof(os.path.join(ROOT, "results", _b, f"cprofile_{_tag}.txt"), _fn)
+        for _fn in _fns:
+            _r = _cprof(results(b, f"cprofile_{_tag}.txt"), _fn)
             if not _r:
                 continue
             _self, _cum, _calls = _r
-            check(f"{_name}: the {_tag} cProfile table's {_fn} self share ({_self:.1f}%)",
-                  f"{_self:.1f}%" in _rep, f"from results/{_b}/cprofile_{_tag}.txt")
-            check(f"{_name}: the {_tag} cProfile table's {_fn} cumulative share ({_cum:.1f}%)",
-                  f"{_cum:.1f}%" in _rep, f"from results/{_b}/cprofile_{_tag}.txt")
+            check(f"report_{b}.txt: the {_tag} cProfile table's {_fn} self share ({_self:.1f}%)",
+                  f"{_self:.1f}%" in rep, f"from results/{b}/cprofile_{_tag}.txt")
+            check(f"report_{b}.txt: the {_tag} cProfile table's {_fn} cumulative share ({_cum:.1f}%)",
+                  f"{_cum:.1f}%" in rep, f"from results/{b}/cprofile_{_tag}.txt")
 
 # ---------------------------------------------------------------- state count
-# Section 1 of report_mdp.txt gives the number of nodes topoSort visits. That is
-# the getSuccessorsList call count in the baseline profile (once per visited
-# node, win and loss included) and the figure slide 11 quotes as "4,823 states".
-_r = _cprof(os.path.join(ROOT, "results", "mdp", "cprofile_base.txt"), "getSuccessorsList")
+# section 1 of report_mdp.txt gives the number of nodes topoSort visits: the
+# getSuccessorsList call count in the baseline profile, one per visited node
+_r = _cprof(results("mdp", "cprofile_base.txt"), "getSuccessorsList")
 if _r:
     _nodes = int(_r[2].split("/")[0])
     check(f"report_mdp.txt: section 1 gives the measured node count ({_nodes:,})",
@@ -527,53 +488,40 @@ if _r:
           "from results/mdp/cprofile_base.txt")
 
 # ---------------------------------------------------------------- perf probe
-# Section 2 quotes the sample counts out of results/<b>/perf_events_probe.txt.
-# One of them was a figure from an earlier run that the file no longer contained.
-for _b, _rep, _name in (("pyflate", _pf, "report_pyflate.txt"), ("mdp", _md, "report_mdp.txt")):
-    _pp = os.path.join(ROOT, "results", _b, "perf_events_probe.txt")
+# section 2 quotes the sample counts out of results/<b>/perf_events_probe.txt
+for b, rep in (("pyflate", _pf), ("mdp", _md)):
+    _pp = results(b, "perf_events_probe.txt")
     if not os.path.exists(_pp):
         continue
     for _ev, _n in re.findall(r"(cpu-clock|task-clock): works \((\d+) samples\)", open(_pp, encoding="utf-8").read()):
         _pretty = f"{int(_n):,}"
-        if _pretty in _rep or _n in _rep:
-            check(f"{_name}: the {_ev} sample count it quotes ({_pretty})", True)
-        else:
-            check(f"{_name}: the {_ev} sample count it quotes ({_pretty})",
-                  # only required where the report actually discusses that event
-                  _ev not in _rep, f"from results/{_b}/perf_events_probe.txt")
+        # only required where the report actually discusses that event
+        check(f"report_{b}.txt: the {_ev} sample count it quotes ({_pretty})",
+              _pretty in rep or _n in rep or _ev not in rep,
+              f"from results/{b}/perf_events_probe.txt")
 
 # ---------------------------------------------------------------- evidence age
-# The measurements describe a particular version of the benchmark code and of
-# the scripts that ran it. Both changed after results/ was captured once - by
-# eight unreachable lines, so the numbers survived, but nothing would have said
-# so if the change had mattered. results/CODE_ID.txt stamps what was measured.
-_code_id = os.path.join(ROOT, "results", "CODE_ID.txt")
-_measured_files = ["benchmarks/pyflate/run_benchmark.py", "benchmarks/pyflate/run_benchmark_opt.py",
-                   "benchmarks/mdp/run_benchmark.py", "benchmarks/mdp/run_benchmark_opt.py",
-                   "script_pyflate.sh", "script_mdp.sh"]
-import hashlib as _hh
-_h = _hh.md5()
-_ok = True
-for _f in _measured_files:
-    _fp = os.path.join(ROOT, _f)
-    if not os.path.exists(_fp):
-        _ok = False
-        break
-    _h.update(_hh.md5(open(_fp, "rb").read()).hexdigest().encode())
-if _ok and os.path.exists(_code_id):
-    _stamp = re.search(r"([0-9a-f]{32})", open(_code_id, encoding="utf-8").read())
-    check("results/ was measured from the benchmark code now in the tree",
-          _stamp is not None and _stamp.group(1) == _h.hexdigest(),
-          "the benchmarks or their scripts changed after the measurements; re-run them in the VM "
-          "and refresh results/CODE_ID.txt")
-elif _ok:
-    check("results/CODE_ID.txt records the code the measurements describe", False,
-          "missing; write it when results/ is captured")
+# results/CODE_ID.txt stamps the md5 of the benchmark code and scripts that
+# produced results/; it must match what is in the tree now
+_code_id = results("CODE_ID.txt")
+_measured_files = [os.path.join(ROOT, f) for f in (
+    "benchmarks/pyflate/run_benchmark.py", "benchmarks/pyflate/run_benchmark_opt.py",
+    "benchmarks/mdp/run_benchmark.py", "benchmarks/mdp/run_benchmark_opt.py",
+    "script_pyflate.sh", "script_mdp.sh")]
+if all(os.path.exists(f) for f in _measured_files):
+    if os.path.exists(_code_id):
+        _stamp = re.search(r"([0-9a-f]{32})", open(_code_id, encoding="utf-8").read())
+        check("results/ was measured from the benchmark code now in the tree",
+              _stamp is not None and _stamp.group(1) == fingerprint(_measured_files),
+              "the benchmarks or their scripts changed after the measurements; re-run them in the VM "
+              "and refresh results/CODE_ID.txt")
+    else:
+        check("results/CODE_ID.txt records the code the measurements describe", False,
+              "missing; write it when results/ is captured")
 
 # ---------------------------------------------------------------- mutations
-# The mutation score is a headline claim in both the report and the slides, and
-# hw/tb/MUTATIONS.md is where it is recorded. Recount it from that table rather
-# than trusting three documents to be edited together.
+# the mutation score is quoted in the report and the slides; recount it from
+# hw/tb/MUTATIONS.md, which in turn must list every mutation mutate.sh runs
 _mut = os.path.join(ROOT, "hw", "tb", "MUTATIONS.md")
 if os.path.exists(_mut):
     _m = open(_mut, encoding="utf-8").read()
@@ -581,16 +529,13 @@ if os.path.exists(_mut):
     _escaped = len(re.findall(r"\*\*escapes", _m))
     _total = _killed + _escaped
     check(f"MUTATIONS.md lists {_total} mutations, {_killed} killed", _total > 0 and _killed > 0)
-    # The table and the script that produces it must describe the same suite.
-    # Two mutations were added to mutate.sh without MUTATIONS.md following, and
-    # nothing noticed because every check downstream reads only the table.
     _sh = os.path.join(ROOT, "hw", "tb", "mutate.sh")
     if os.path.exists(_sh):
         _runs = len(re.findall(r"^run ", open(_sh, encoding="utf-8").read(), re.M))
         check(f"MUTATIONS.md covers every mutation mutate.sh runs ({_runs})",
               _total == _runs, f"the script runs {_runs}, the table lists {_total}")
     for _rel in ("report_pyflate.txt", "docs/presentation.html"):
-        _t = re.sub(r"\s+", " ", open(os.path.join(ROOT, _rel), encoding="utf-8").read())
+        _t = _flat(open(os.path.join(ROOT, _rel), encoding="utf-8").read())
         check(f"{_rel} quotes the mutation score {_killed} of {_total}",
               f"{_killed} of {_total}" in _t or f"{_killed} of the {_total}" in _t,
               f"MUTATIONS.md records {_killed}/{_total}")
