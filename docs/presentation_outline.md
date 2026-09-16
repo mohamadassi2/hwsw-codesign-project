@@ -3,8 +3,8 @@
 The deck is `docs/presentation.html` — arrow keys or scroll, Cmd-P prints one
 slide per page. This file is the talk track, not a spec: for each slide, why
 it is there and the one sentence that has to land. Everything numeric on the
-slides is recomputed by `scripts/check_deck_numbers.py` (85 gates), so nothing
-here needs to be defended from memory.
+slides is recomputed by `scripts/check_deck_numbers.py`, so nothing here needs
+to be defended from memory.
 
 ## Shape
 
@@ -69,7 +69,7 @@ the course VM.
 
     python3 scripts/check_deck_numbers.py | head -1
 
-prints `PASS 85   FAIL 0` (`head`, not `tail`: the summary is the first line).
+prints `PASS <n>   FAIL 0` (`head`, not `tail`: the summary is the first line).
 `scripts/check_report_numbers.py | head -1` does the same for the reports. Do
 not run `scripts/check_all.sh` live — it re-runs both benchmarks and takes
 minutes; keep it for the reproducibility question at the end.
