@@ -747,8 +747,12 @@ inside bench_pyflake() also passes in every run.
     way:
         18,796 cells: 5,441 flip-flops, 13,352 gates, and one memory of
         13,932 bits (~13.9 kbit, 1.7 KB) for the symbol table. The register
-        files are 6 x 21 x 21 = 2,646 bits of limit and 6 x 21 x 22 = 2,772
-        bits of base, which is most of those flip-flops.
+        files hold at most 6 x 21 x 21 = 2,646 bits of limit and
+        6 x 21 x 22 = 2,772 bits of base, which is most of those flip-flops -
+        not quite all, and necessarily fewer than 5,418 of them, since the
+        same 5,441 also cover the 64-bit bit buffer, the counters and the
+        status flags. Row 0 is never programmed and the high bits of a short
+        code are constant, so Yosys drops part of that nominal storage.
     Leaving all three tables as memory cells makes Yosys's `stat` report far
     fewer cells, because `stat` does not charge for a memory - but that
     silently assumes the twenty-read-port SRAM that cannot be built, so this
