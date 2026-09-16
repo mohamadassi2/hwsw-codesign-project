@@ -472,10 +472,21 @@ for b, rep, _fns in (
             if not _r:
                 continue
             _self, _cum, _calls = _r
-            check(f"report_{b}.txt: the {_tag} cProfile table's {_fn} self share ({_self:.1f}%)",
-                  f"{_self:.1f}%" in rep, f"from results/{b}/cprofile_{_tag}.txt")
-            check(f"report_{b}.txt: the {_tag} cProfile table's {_fn} cumulative share ({_cum:.1f}%)",
-                  f"{_cum:.1f}%" in rep, f"from results/{b}/cprofile_{_tag}.txt")
+            # The row itself, not "the number appears somewhere in the report":
+            # a stale share used to pass whenever the right value sat in the
+            # other table. Find the line whose label names the function and
+            # read the two percentages off it.
+            _before, _sep, _after = rep.partition("(cProfile, optimized)")
+            _region = _after if _tag == "opt" else _before
+            _row = re.search(rf"^\s+\S*\b{re.escape(_fn)}\b[^%\n]*?\s([\d.]+)%\s+([\d.]+)%",
+                             _region, re.M)
+            check(f"report_{b}.txt: the {_tag} cProfile table has a {_fn} row", _row is not None,
+                  f"expected a row naming {_fn} with two percentages")
+            if _row:
+                check(f"report_{b}.txt: the {_tag} cProfile table's {_fn} self share ({_self:.1f}%)",
+                      _row.group(1) == f"{_self:.1f}", f"the row says {_row.group(1)}%")
+                check(f"report_{b}.txt: the {_tag} cProfile table's {_fn} cumulative share ({_cum:.1f}%)",
+                      _row.group(2) == f"{_cum:.1f}", f"the row says {_row.group(2)}%")
 
 # ---------------------------------------------------------------- state count
 # section 1 of report_mdp.txt gives the number of nodes topoSort visits: the
@@ -539,6 +550,21 @@ if os.path.exists(_mut):
         check(f"{_rel} quotes the mutation score {_killed} of {_total}",
               f"{_killed} of {_total}" in _t or f"{_killed} of the {_total}" in _t,
               f"MUTATIONS.md records {_killed}/{_total}")
+        # and no OTHER score: one stale "18 of 20" used to pass unnoticed while
+        # the right phrase sat elsewhere in the same document.
+        _said = set(re.findall(rf"(?<![\d.])(\d+) of (?:the )?{_total}\b", _t))
+        check(f"{_rel}: every mutation score it states is {_killed} of {_total}",
+              _said <= {str(_killed)}, f"also found {sorted(_said - {str(_killed)})}")
+
+    # the score describes one particular RTL: MUTATIONS.md stamps it, as
+    # docs/synthesis_yosys.txt does for the synthesis figures
+    _mfp = re.search(r"RTL fingerprint: ([0-9a-f]{32})", _m)
+    check("hw/tb/MUTATIONS.md carries an RTL fingerprint", _mfp is not None,
+          "re-run tb/mutate.sh in the VM and record the fingerprint it prints")
+    if _mfp:
+        check("the mutation score describes the RTL in the tree",
+              _mfp.group(1) == fingerprint(sorted(glob.glob(os.path.join(ROOT, "hw", "rtl", "*.sv")))),
+              "hw/rtl/ changed after the sweep; re-run SUITE=sim_all tb/mutate.sh in the VM")
 
 # ---------------------------------------------------------------- report
 print(f"PASS {len(OK)}   FAIL {len(FAIL)}\n")

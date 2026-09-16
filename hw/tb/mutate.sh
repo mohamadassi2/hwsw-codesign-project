@@ -46,6 +46,9 @@ run() {   # run NAME 'sed-expression' FILE
 }
 
 echo "suite: make $SUITE"
+# Stamp the RTL these results describe, so a recorded score cannot outlive the
+# code it was measured on (the same check docs/synthesis_yosys.txt carries).
+echo "RTL fingerprint: $(for f in rtl/*.sv; do md5sum "$f" | cut -d" " -f1; done | tr -d "\n" | md5sum | cut -d" " -f1)  ($(ls rtl/*.sv | wc -l) files under hw/rtl/)"
 echo "control (no mutation): $( (rm -rf build; make $SUITE 2>&1) | grep -E 'all simulations passed|FAILED' | tail -1)"
 run "symbol output driven to X"         's/sym <= symtab\[tsel\]\[idx\];/sym <= '"'"'x;/'                          rtl/huffman_decoder.sv
 run "sym_valid stuck low"               's/if (take \&\& idx_ok)  sym_valid <= 1.b1;/if (1'"'"'b0)               sym_valid <= 1'"'"'b1;/' rtl/huffman_decoder.sv
