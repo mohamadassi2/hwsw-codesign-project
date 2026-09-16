@@ -440,7 +440,10 @@ inside bench_pyflake() also passes in every run.
     and the readbits calls made under it; adding those rows to it again would
     count the same work twice. The inverse BWT is 18.3% - bwt_reverse's
     cumulative share, which likewise already contains bwt_transform's 11.5% -
-    and it is a pointer chase through 400 KB. The first part is what hardware
+    and it is a pointer chase through 400 KB. py-spy puts it higher, at 25% of
+    the focused samples, which is the figure the slides quote; the two
+    profilers differ here for the same reason they differ on the Huffman
+    share, and neither changes which half is a datapath problem. The first part is what hardware
     is good at; the second part is not.
 
     One caveat on all of these shares. cProfile's call counts are exact, but its

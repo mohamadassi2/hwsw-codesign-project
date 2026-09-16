@@ -97,9 +97,10 @@ the boundary at symbol rate. Two options are implemented/considered:
 
 1. **Software-driven `TSEL`** (what the register map above does): simple, but
    the host must poll `SYM_COUNT` and write `TSEL` 2,966 times for this block.
-2. **Selector list in hardware**: write the selector list (≤ 18,002 entries of
-   3 bits) into a small SRAM and let a 6-bit counter advance `tsel` every 50
-   symbols. This is the better design for a real product and costs ~7 KB of
+2. **Selector list in hardware**: write the selector list (one entry per 50
+   symbols, so at most 900,000/50 + 2 = 18,002 for a maximum bzip2 block; 2,966
+   for this one) into a small SRAM and let a 6-bit counter advance `tsel` every
+   50 symbols. This is the better design for a real product and costs ~7 KB of
    SRAM; the RTL's `tsel` input is exactly the signal such a counter would
    drive, so the decoder itself is unchanged.
 
