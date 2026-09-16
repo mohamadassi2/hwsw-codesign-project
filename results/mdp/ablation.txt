@@ -1,0 +1,19 @@
+Per-optimization ablation for mdp (scripts/ablation_mdp.py).
+
+Each row is the optimized module with exactly one change reverted to the
+shipped implementation, so the gap to the full optimized row is what that
+change is worth. Every variant is checked against the benchmark's own
+tolerance before it is timed, so a row that computed the wrong value could
+not appear here.
+
+  variant                                        min (ms)     median   vs base
+  baseline (as pyperformance ships it)             5034.2     5044.4     1.00x
+  optimized (both 3.1 and 3.2)                     1299.0     1307.3     3.88x
+  optimized, 3.1 reverted to the dict sweep        4201.0     4212.0     1.20x
+  optimized, 3.2 reverted to recomputing           2137.4     2138.5     2.36x
+
+What each change is worth (reverted row minus the full optimized row):
+    3.1    worth 2902.0 ms, i.e. 3.23x of the overall 3.88x
+    3.2    worth  838.4 ms, i.e. 1.65x of the overall 3.88x
+
+  reps per variant: 5, minimum reported (medians in the table above).

@@ -59,6 +59,7 @@ scripts/compare_runs.py              (4) drift between the shipped run and eithe
 scripts/focus_folded.py              called by both script_*.sh: re-roots py-spy stacks at the benchmark function
 scripts/table_stats.py               called by script_pyflate.sh: what the shipped table scan costs on this input
 scripts/ablation.py                  called by script_pyflate.sh: what each pyflate optimization is worth on its own
+scripts/ablation_mdp.py              the same for mdp's two changes (results/mdp/ablation.txt)
 scripts/summarize_results.py         prints results/ as the tables the reports quote (read-only)
 scripts/fill_reports.py              rewrites section 4.1 of each report and the Amdahl line in pyflate 5.6 from results/ (already run for the shipped run; gate 2 verifies it)
 scripts/stamp_results.py             refreshes results/RUN_ID.txt and results/CODE_ID.txt after a re-measure

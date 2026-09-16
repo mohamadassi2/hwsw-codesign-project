@@ -428,14 +428,16 @@ if os.path.exists(syn):
 
 # ---------------------------------------------------------------- headline ratios
 # the headline speedup is written three times (4.1 table, compare_to table,
-# conclusion). Every d.ddx ratio must be it, except in 3.6 and 4.3, which
-# exist to compare variants and runs.
+# conclusion). Every d.ddx ratio must be it, except in the ablation section and
+# 4.3, which exist to compare variants and runs.
 for b, rep, base, opt in (("pyflate", _pf, _pf_base, _pf_opt), ("mdp", _md, _md_base, _md_opt)):
     if not (base and opt):
         continue
     _want = f"{base / opt:.2f}x"
     _body = rep.replace(_sect(rep, "4.3 Reproducibility", 3200), "")
-    _body = _body.replace(_sect(_body, "3.6 Which of those five actually earned the speedup", 3000), "")
+    for _abl in ("3.6 Which of those five actually earned the speedup",
+                 "3.3 Which of the two earned the speedup"):
+        _body = _body.replace(_sect(_body, _abl, 3000), "")
     _found = re.findall(r"(?<![\d.])(\d\.\d\d)x(?![\d.])", _body)
     _bad = sorted({v + "x" for v in _found} - {_want})
     check(f"report_{b}.txt: every headline ratio outside 4.3 is the measured {_want}",
@@ -529,6 +531,21 @@ if all(os.path.exists(f) for f in _measured_files):
     else:
         check("results/CODE_ID.txt records the code the measurements describe", False,
               "missing; write it when results/ is captured")
+
+# ---------------------------------------------------------------- mdp ablation
+# section 3.3 quotes the per-change times from results/mdp/ablation.txt
+_mabl = results("mdp", "ablation.txt")
+if os.path.exists(_mabl):
+    _a = open(_mabl, encoding="utf-8").read()
+    _sec33 = _flat(_sect(_md, "3.3 Which of the two earned the speedup", 3000)).replace(",", "")
+    for _m in re.finditer(r"^\s+(3\.\d)\s+worth\s+([\d.]+) ms", _a, re.M):
+        _which, _ms = _m.group(1), _m.group(2)
+        check(f"report_mdp.txt 3.3 quotes the measured {_which} contribution ({_ms} ms)",
+              _ms in _sec33, "from results/mdp/ablation.txt")
+    for _m in re.finditer(r"^  (\S.*?)\s{2,}([\d,]+\.\d)\s+[\d,]+\.\d\s+([\d.]+)x$", _a, re.M):
+        _row = _m.group(2).replace(",", "")
+        check(f"report_mdp.txt 3.3 quotes the {_m.group(1).strip()[:34]} row ({_row} ms)",
+              _row in _sec33, "from results/mdp/ablation.txt")
 
 # ---------------------------------------------------------------- accelerated share
 # The share of the optimized run the accelerator replaces is written in three
