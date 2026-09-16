@@ -741,14 +741,17 @@ inside bench_pyflake() also passes in every run.
     and its read muxes. Flattening even the symbol table into logic gives
     49,804 cells (the second run in docs/synthesis_yosys.txt), so keeping that
     one table as SRAM is worth about 31,000 cells.
-    Frequency: the longest combinational path is 98 gate levels, and Yosys
-    reports it ending at the sticky error flag - a status bit the host reads
-    once per block, not per symbol. What has to close at the symbol rate is
-    peek -> the parallel compare -> the priority encoder -> the bit-buffer
-    shift, which is shorter. We did not run FPGA or ASIC timing, so any
-    frequency here is an estimate. Section 5.6 does use it, so it is worth
-    saying how little turns on it: the decode is 148,272 cycles, which is
-    0.74 ms at 200 MHz and 0.37 ms at 400 MHz, against a 487 ms run. Halving
+    Frequency: the longest combinational path is 98 gate levels, running from
+    tsel through the table lookups to the enable of the sticky error flag. An
+    earlier draft dismissed that path on the grounds that the host reads the
+    flag once per block; that is wrong, because the enable is evaluated on
+    every clock and has to meet setup like any other. Nor is it an outlier -
+    cutting that one condition and re-running ltp leaves a 97-level path
+    ending at sym_valid, the symbol-rate path itself. The depth is inherent to
+    the lookup. We did not run FPGA or ASIC timing, so any frequency here is
+    an estimate. Section 5.6 does use it, so it is worth saying how little
+    turns on it: the decode is 148,272 cycles, which is 0.74 ms at 200 MHz and
+    0.37 ms at 400 MHz, against a 487 ms run. Halving
     the clock moves the projected run by less than a millisecond and leaves
     the ratio at 2.0x. What the simulation establishes is throughput, not
     frequency: one symbol per cycle for all 148,271 symbols. The 200 MHz

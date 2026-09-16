@@ -255,9 +255,15 @@ not the BWT, corrupt streams, the table switch, and what sets the clock.
 
 ## Questions the slide does not cover
 
-- **"Is 200 MHz realistic?"** It is inferred from path length, not timing —
-  say so first. The 98-level path is twenty comparators, a priority encoder,
-  an adder and the symbol memory; it splits cleanly if a target demands it.
+- **"Is 200 MHz realistic?"** Not from this RTL, and say so first. The 98-level
+  path runs from `tsel` through the table lookups to the error flag's enable,
+  and it has to close every clock. It is not an outlier either: cut that one
+  condition and ltp still reports 97 levels, ending at `sym_valid`. So 200 MHz
+  assumes the compare tree split into two pipeline stages, which is not in the
+  RTL — report_pyflate.txt 5.7 says exactly that. What simulation proves is
+  throughput, one symbol per cycle; frequency is an estimate, and 5.7 also
+  shows how little turns on it (halving the clock moves the projected run by
+  under a millisecond).
 - **"Why one accelerator and not one per benchmark?"** The TA's ruling, and
   slide 14 gives the technical reason mdp would not have earned one anyway.
 - **"How do you know the optimized pyflate is still correct?"** md5 of all

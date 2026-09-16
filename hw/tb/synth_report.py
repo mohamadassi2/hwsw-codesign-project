@@ -52,11 +52,15 @@ print(f"""# Generic synthesis of huffman_accel_top with {ver}.
 {breakdown(asb)}
 
 Longest combinational path (ltp -noff): length={depth}
-# The path ends at {endpoint}, the sticky error flag. That flag is read once per
-# block, so it has a whole clock to settle; it is not what limits the symbol
-# rate. The path that does - peek, the parallel compare, the priority encoder,
-# and the bit-buffer shift - is shorter, and the design sustains one symbol per
-# cycle for all 148,271 symbols in simulation.
+# The path runs from tsel through the table lookups to {endpoint}, the enable of
+# the sticky error flag. That enable is evaluated on every clock, so this is a
+# real single-cycle path: how often the host reads `err` does not enter into it.
+# Nor is it an outlier. Cutting that one condition and re-running ltp leaves a
+# 97-level path ending at sym_valid - the symbol-rate path itself - so the depth
+# is inherent to the lookup, not an artefact of the error flag. What the
+# simulation establishes is throughput, one symbol per cycle for all 148,271
+# symbols; the clock this depth would support is a separate question, and
+# section 5.7 of report_pyflate.txt says what the frequency estimate assumes.
 
 # Table storage: limit 6 x 21 rows x 21 bits = 2,646 and base 6 x 21 x 22 =
 # 2,772 bits are the register files above; symbols 6 x 258 x 9 = 13,932 bits,
