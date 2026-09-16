@@ -35,8 +35,10 @@ word. Mutations 19 and 20 exist only because those two runs do.
 ## Result with `make sim_all`: 19 of 20 killed, 1 unreachable
 
 RTL fingerprint: 53f74172488e0651024ad3645df2f09b  (3 files under hw/rtl/)
-The score below was measured on that RTL; scripts/check_report_numbers.py
-recomputes the fingerprint and fails if hw/rtl/ has changed since.
+The score below was measured on that RTL, in the course VM on 15 September
+2026; the run is results/mutation_sweep_guest.log, and tb/mutate.sh prints the
+fingerprint at the top of it. scripts/check_report_numbers.py recomputes the
+fingerprint and fails if hw/rtl/ has changed since.
 
 One line per injected bug. The verdict names what noticed it: `timeout` is
 the testbench watchdog, a set name or plusarg (`+bp`, `+last_level +bubble`)

@@ -447,12 +447,22 @@ inside bench_pyflake() also passes in every run.
 
 
 4.3 Reproducibility
-    Three independent runs of these scripts in the same guest are kept, each
-    made by extracting the tree into an empty directory and running them the
-    way a grader would. The shipped set is the latest of them; the other two
-    are under results/reproducibility/ (the second run) and
-    results/reproducibility/run3/ (the third, a full end-to-end run of the
-    submission).
+    Three independent runs in the same guest are kept, each made by extracting
+    the tree into an empty directory and running the scripts the way a grader
+    would. The shipped set is the latest of them; the other two are under
+    results/reproducibility/ (the second run) and results/reproducibility/run3/
+    (the third, a full end-to-end run of the submission).
+
+    The two earlier runs predate the 15 September revision, so they are a
+    reproducibility check on the measurement, not a byte-identical rerun: the
+    scripts gained the perf fix described in section 2, and the optimized
+    benchmark files lost comments and dead code. What times the benchmarks -
+    the pyperf runner and its arguments - is unchanged, and the decoders
+    execute the same operations (pyflate's output is byte-identical and mdp's
+    result bit-identical, checked on every run), so the wall clocks are
+    comparable. One change is not cosmetic: mdp builds its successor rows with
+    a generator expression where the earlier runs appended to a list. It is in
+    the measured path, and part of the mdp spread below.
 
         run          pyflate            mdp
         shipped      2.341x (487.4 ms)  3.895x (1.309 s)

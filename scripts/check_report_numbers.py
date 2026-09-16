@@ -561,6 +561,20 @@ if os.path.exists(_mut):
     _mfp = re.search(r"RTL fingerprint: ([0-9a-f]{32})", _m)
     check("hw/tb/MUTATIONS.md carries an RTL fingerprint", _mfp is not None,
           "re-run tb/mutate.sh in the VM and record the fingerprint it prints")
+    # the sweep log is the evidence behind the table: recount it, so neither the
+    # table nor the log can drift from the other
+    _mlog = results("mutation_sweep_guest.log")
+    if os.path.exists(_mlog):
+        _lt = open(_mlog, encoding="utf-8").read()
+        _lk = len(re.findall(r"^\[.+?\]\s+KILLED", _lt, re.M))
+        _le = len(re.findall(r"^\[.+?\]\s+ESCAPED", _lt, re.M))
+        check(f"results/mutation_sweep_guest.log records {_killed} killed of {_total}",
+              (_lk, _lk + _le) == (_killed, _total),
+              f"the log shows {_lk} killed of {_lk + _le}")
+        _lfp = re.search(r"RTL fingerprint: ([0-9a-f]{32})", _lt)
+        check("the sweep log names the RTL MUTATIONS.md claims",
+              _lfp is not None and _mfp is not None and _lfp.group(1) == _mfp.group(1),
+              "the log and the table describe different RTL")
     if _mfp:
         check("the mutation score describes the RTL in the tree",
               _mfp.group(1) == fingerprint(sorted(glob.glob(os.path.join(ROOT, "hw", "rtl", "*.sv")))),

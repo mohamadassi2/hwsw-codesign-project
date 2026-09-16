@@ -1,0 +1,23 @@
+suite: make sim_all
+RTL fingerprint: 53f74172488e0651024ad3645df2f09b  (3 files under hw/rtl/)
+control (no mutation): all simulations passed
+[symbol output driven to X] KILLED   (suite exit 2)  decoded 63 symbols in 64 cycles (0.984 symbols/cycle), 63 errors FAIL (63 errors) 
+[sym_valid stuck low] KILLED   (suite exit 2)  TIMEOUT: decoded 0/63 symbols in 20253 cycles FAIL (timeout) 
+[hit compare < changed to <=] KILLED   (suite exit 2)  decoded 63 symbols in 64 cycles (0.984 symbols/cycle), 119 errors FAIL: consumed 63 bits, software consumed 690 
+[base adder off by one] KILLED   (suite exit 2)  decoded 63 symbols in 64 cycles (0.984 symbols/cycle), 63 errors FAIL (63 errors) 
+[priority encoder direction] KILLED   (suite exit 2)  TIMEOUT: decoded 0/63 symbols in 20253 cycles FAIL (timeout) 
+[barrel shift one bit short] KILLED   (suite exit 2)  decoded 63 symbols in 64 cycles (0.984 symbols/cycle), 120 errors FAIL: consumed 63 bits, software consumed 690 
+[end-of-input term dropped from peek_valid] KILLED   (suite exit 2)  TIMEOUT: decoded 6/3 symbols in 20013 cycles FAIL (timeout) 
+[bit-count underflow guard removed] ESCAPED  (suite exit 0)   decoded 148271 symbols in 296797 cycles (0.500 symbols/cycle), 0 errors PASS 
+[flush tied low in the top] KILLED   (suite exit 2)  TIMEOUT: decoded 6/3 symbols in 20013 cycles FAIL (timeout) 
+[decode error no longer halts] KILLED   (suite exit 2)    badidx: FAILED FAIL: the decoder kept going after err (symbols 4->16, bits 8->32) 
+[refill decided from the stale count] KILLED   (suite exit 2)  decoded 63 symbols in 67 cycles (0.940 symbols/cycle), 0 errors FAIL: throughput 67 cycles for 63 symbols (expected at most 65) 
+[level output stuck at zero] KILLED   (suite exit 2)  TIMEOUT: decoded 0/63 symbols in 20253 cycles FAIL (timeout) 
+[comparators only for lengths 2..15] KILLED   (suite exit 2)  TIMEOUT: decoded 15/63 symbols in 20253 cycles FAIL (timeout) 
+[consume driven ungated] KILLED   (suite exit 2)  TIMEOUT: decoded 21/28 symbols in 20113 cycles FAIL (timeout) 
+[output backpressure ignored] KILLED   (suite exit 2)  TIMEOUT: decoded 74971/148271 symbols in 613085 cycles FAIL (timeout) 
+[symbol counter counts offers not takes] KILLED   (suite exit 2)  PASS FAIL: sym_count reads 296617, testbench counted 148271 
+[short-code guard removed at end of stream] KILLED   (suite exit 2)  TIMEOUT: decoded 16/3 symbols in 20013 cycles FAIL (timeout) 
+[symbol index range check removed] KILLED   (suite exit 2)  decoded 1 symbols in 2 cycles (0.500 symbols/cycle), 1 errors FAIL (1 errors) 
+[end-of-input flushed on a producer bubble] KILLED   (suite exit 2)  TIMEOUT: decoded 12/28 symbols in 20113 cycles FAIL (timeout) 
+[done ignores the unaccepted last symbol] KILLED   (suite exit 2)  decoded 28 symbols in 29 cycles (0.966 symbols/cycle), 1 errors FAIL (1 errors) 

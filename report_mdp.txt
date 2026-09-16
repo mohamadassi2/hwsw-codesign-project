@@ -255,8 +255,15 @@ Correctness. scripts/local_check.py runs both versions:
 4.3 Reproducibility
     Three independent runs in the same guest, each made by extracting the tree
     into an empty directory and running the scripts as a grader would. The
-    shipped set is one; the others are results/reproducibility/ and
+    shipped set is the latest; the others are results/reproducibility/ and
     results/reproducibility/run3/.
+
+    The two earlier runs predate the 15 September revision - see section 4.3 of
+    report_pyflate.txt for what changed and why the wall clocks are still
+    comparable. The one change that touches this benchmark's measured path:
+    the successor rows are now built with a generator expression where those
+    runs appended to a list. The result is bit-identical either way, and the
+    difference is part of the spread below.
 
         run          speedup   optimized
         shipped      3.895x    1.309 s
