@@ -137,8 +137,9 @@ If asked "so the scan was not the problem?" - correct, and report_pyflate.txt
 section 2 says so in those words. The accelerator removes both.
 
 **8. The fix.** `limit[L]` and `base[L]`: one compare per length instead of
-one per entry. Then the ablation — each of the five changes reverted in turn,
-md5-checked, re-timed in the VM. *Land:* the algorithmic change is the
+one per entry. Then the ablation — the three separable changes reverted in
+turn, md5-checked, re-timed in the VM (3.2 and 3.5 are woven through the decode
+loop and cannot be reverted alone; what they are worth is the remainder). *Land:* the algorithmic change is the
 *smallest* of the three that matter (+85.3 ms, against +163.1 ms for
 move-to-front and +161.8 ms for the RLE regex). That is the honest reading, and
 it is also the setup for the hardware: what justifies an accelerator is the

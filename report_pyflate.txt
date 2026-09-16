@@ -541,7 +541,7 @@ inside bench_pyflake() also passes in every run.
     sym_valid   1 b    out  held until out_ready takes it
     out_ready   1 b    in
     err         1 b    out  sticky: no code length matched, or the index left the symbol table
-    len_valid   1 b    out  a code was consumed this cycle        (STATUS group)
+    len_valid   1 b    out  a code was consumed this cycle (a pulse, so not in STATUS)
     level       7 b    out  bits held in the bit buffer, 0..64
     busy        1 b    out  run & ~done & ~err & ~underrun
     done        1 b    out  input flushed, buffer empty, no symbol waiting
@@ -590,8 +590,8 @@ inside bench_pyflake() also passes in every run.
     The same testbench also passes inside the course VM, with the Icarus
     Verilog 11.0 that Ubuntu 22.04 packages (results/rtl_sim_guest.log:
     148,271 symbols, 148,272 cycles, 0 errors); that simulator needed three
-    workarounds in the testbench - each one commented where it appears in
-    hw/tb/tb_huffman.sv - and no change to the RTL.
+    workarounds in the testbench, noted in two comments in hw/tb/tb_huffman.sv
+    (the sensitivity-list note covers two of them), and no change to the RTL.
     The decoder therefore reproduces the software's decode of the whole
     benchmark block, symbol for symbol. There are no stall cycles in that
     figure - 148,271 decodes plus one pipeline-drain cycle - because the bit
@@ -606,7 +606,7 @@ inside bench_pyflake() also passes in every run.
     production version would put a mod-50 counter and a small selector FIFO
     inside the accelerator so the host writes the list once per block instead
     of tracking it per symbol; we left it out to keep the datapath the subject
-    of the design, and section 5.7 counts the cost.
+    of the design, and section 5.6 prices what it costs the host.
 
     The testbench has properties that matter, because a self-checking
     testbench that cannot fail is worth nothing. It compares with !== and flags

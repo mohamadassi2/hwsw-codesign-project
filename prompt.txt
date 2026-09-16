@@ -169,14 +169,17 @@ Redoing perf after the forum answer
     `set -o pipefail`: head exits after one line, perf script dies of SIGPIPE,
     and the pipeline reports failure on a capture full of samples. Every
     capture had been discarded by the check, not by the guest.
-  - Everything was re-measured in the VM as root. perf record in the guide's
-    own form gives 131K samples on pyflate and 336K on mdp. What it shows is
-    the interpreter by C function name - _PyEval_EvalFrameDefault is 39% of
-    the baseline pyflate worker - and no Python function name, because
-    CPython 3.10 has no perf trampoline. On mdp it earned its place: tuplehash
-    is 36% of the samples, which is the nested-tuple dictionary of section 3
-    seen from the C side. The hardware cycles event still never samples, and
-    the PMI explanation for that was right all along.
+  - Everything was re-measured in the VM as root, with two captures per build.
+    The guide's own form, python3-dbg under pyperformance, gives 131K samples
+    on pyflate and 336K on mdp; the debug build skews its own profile, so the
+    one the reports read is the second, the benchmark worker under the release
+    interpreter. What either shows is the interpreter by C function name and
+    no Python function name, because CPython 3.10 has no perf trampoline. In
+    the worker captures _PyEval_EvalFrameDefault is 39% of the baseline pyflate
+    samples, and on mdp perf earned its place: tuplehash is 36%, which is the
+    nested-tuple dictionary of section 3 seen from the C side. The hardware
+    cycles event still never samples, and the PMI explanation for that was
+    right all along.
   - The wall-clock numbers moved with the re-measure: pyflate 2.33x to 2.34x,
     mdp 3.80x to 3.90x.
 
@@ -206,6 +209,12 @@ What we did with all of this
   benchmark outputs are compared byte for byte, the mdp values bit for bit,
   and the RTL against a golden trace of the real block. The explanations in
   the reports are ours. Where the assistant's first explanation was wrong we
-  say so in the report rather than quietly replacing it - the perf sampling
-  mechanism three times, the accelerator's area once, and the attribution of
-  the software speedup once.
+  say so in the report rather than quietly replacing it. Three of those
+  admissions are in the reports as they stand: why an earlier version of the
+  scripts reported no sampling event (report_pyflate.txt section 2), that we
+  assumed the algorithmic fix dominated the speedup and it does not (3.6), and
+  that an earlier draft dismissed the 98-level path on a reason that does not
+  hold (5.7). Two more - the accelerator's area and the double-counted
+  accelerated share - were corrected earlier and then dropped along with the
+  rest of the drafting history, because neither figure appears anywhere for a
+  reader to be misled by.
