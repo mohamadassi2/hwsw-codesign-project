@@ -61,8 +61,9 @@ own. The files below are not, and are redistributed here under their own terms.
    at run time to render the .folded stack files; the flamegraph.pl source is
    not stored here. The rendered flame graphs under results/ are another
    matter: flamegraph.pl embeds its own interactive search/zoom JavaScript in
-   every SVG it writes, so each results/*/flame_*.svg contains roughly 11 kB of
-   Brendan Gregg's code. That code is his, under the CDDL, and is present here
+   every SVG it writes, so each of the twenty flame graphs under results/ -
+   twelve for the shipped run, eight under results/reproducibility/ - contains
+   roughly 11 kB of Brendan Gregg's code. That code is his, under the CDDL, and is present here
    only as the output of running his tool.
    https://github.com/brendangregg/FlameGraph
 

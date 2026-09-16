@@ -55,7 +55,7 @@ scripts/check_all.sh                 the one command to run live: gates (1)-(3) 
 scripts/local_check.py               (1) optimized == original: pyflate byte-for-byte, mdp to the last bit, plus a rough speedup
 scripts/check_report_numbers.py      (2) every figure the reports quote recomputes from results/, or it fails
 scripts/check_deck_numbers.py        (3) the same for the slides, the block diagram and this README
-scripts/compare_runs.py              (4) drift between the shipped run and the independent rerun in results/reproducibility/ (printed, not gated)
+scripts/compare_runs.py              (4) drift between the shipped run and either rerun in results/reproducibility/ (printed, not gated)
 scripts/focus_folded.py              called by both script_*.sh: re-roots py-spy stacks at the benchmark function
 scripts/table_stats.py               called by script_pyflate.sh: what the shipped table scan costs on this input
 scripts/ablation.py                  called by script_pyflate.sh: what each pyflate optimization is worth on its own
@@ -77,7 +77,7 @@ docs/huffman_accel_block_diagram.svg block diagram
 docs/synthesis_yosys.txt             generic synthesis figures (cells, flops, memories, longest path)
 results/                             flame graphs, perf reports, pyperf JSON and comparison tables,
                                      and rtl_sim_guest.log: the accelerator testbench run inside the course VM
-results/reproducibility/             an independent from-scratch rerun in the guest, and the drift against it
+results/reproducibility/             two further from-scratch runs in the guest, and the drift against them
 ```
 
 ## Reproducing the measurements (course VM)
@@ -98,8 +98,8 @@ restores the shipped evidence.
 
 Both scripts have the same shape. The `=== ... ===` headings they print follow
 the numbered sections of the script itself (`# ---- 0. environment` through
-`# ---- 4b. contention`; `results/<b>/trace.log` keeps the same sequence as
-`+ log ...` lines):
+`# ---- 4b. contention`; each script's own `trace.log`, written beside the
+results but not committed, keeps the same sequence as `+ log ...` lines):
 
 0. environment: a venv with pyperf, pyperformance and py-spy; FlameGraph; the
    two `perf` sysctls the guest needs (`kptr_restrict=0`,

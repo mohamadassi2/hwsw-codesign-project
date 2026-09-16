@@ -178,7 +178,10 @@ difference exactly zero.
 **14. Result.** 5.098 s → 1.309 s, 3.90×. *Land:* same story as pyflate — IPC
 flat, instruction count down 3.8×. And say the negative result out loud: no
 hardware for mdp. One accelerator for one benchmark per the TA's ruling, and
-nothing here is bit-serial enough to earn it.
+the sweep would map onto a MAC array cleanly enough - it is just too small a
+share of a 1.3 s run to be worth it, and what remains is exact-Fraction graph
+building, not a datapath. (report_mdp.txt section 5 makes that case; do not
+say "not bit-serial enough" - a different reason, and a weaker one.)
 
 ## The hinge (slide 15)
 
