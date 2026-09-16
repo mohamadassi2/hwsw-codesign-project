@@ -530,6 +530,25 @@ if all(os.path.exists(f) for f in _measured_files):
         check("results/CODE_ID.txt records the code the measurements describe", False,
               "missing; write it when results/ is captured")
 
+# ---------------------------------------------------------------- accelerated share
+# The share of the optimized run the accelerator replaces is written in three
+# places: this report, scripts/fill_reports.py (which regenerates the Amdahl
+# estimate) and scripts/check_deck_numbers.py. They drifted once - fill_reports
+# kept the pre-re-measure 49.7 and silently rewrote the estimate from it - so
+# require all three to agree.
+_share = re.search(r"takes ([\d.]+)% as the accelerated share", _flat_pf)
+if _share:
+    _fr = re.search(r"^\s*frac = ([\d.]+)", open(os.path.join(ROOT, "scripts", "fill_reports.py"),
+                                                 encoding="utf-8").read(), re.M)
+    _hs = re.search(r"HUFF_SHARE = ([\d.]+)", open(os.path.join(ROOT, "scripts", "check_deck_numbers.py"),
+                                                   encoding="utf-8").read())
+    check(f"scripts/fill_reports.py uses the accelerated share the report states ({_share.group(1)}%)",
+          _fr is not None and float(_fr.group(1)) == float(_share.group(1)),
+          f"fill_reports.py says {_fr.group(1) if _fr else 'nothing'}")
+    check(f"scripts/check_deck_numbers.py uses the same share",
+          _hs is not None and float(_hs.group(1)) * 100 == float(_share.group(1)),
+          f"check_deck_numbers.py says {float(_hs.group(1))*100 if _hs else 'nothing'}")
+
 # ---------------------------------------------------------------- mutations
 # the mutation score is quoted in the report and the slides; recount it from
 # hw/tb/MUTATIONS.md, which in turn must list every mutation mutate.sh runs

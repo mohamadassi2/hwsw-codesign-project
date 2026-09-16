@@ -129,8 +129,9 @@ def block(b):
     lines += ["", "    perf stat (worker run):", counter_table(b)]
     if ev:
         lines += ["", f"    Sampling used: perf record {ev}",
-                  "    (the guest has no sampling PMU, so the default cycles event yields",
-                  "     no samples; see section 2)"]
+                  "    (the hardware cycles event never samples in this guest - the",
+                  "     performance-monitoring interrupt stays at 0 - so the captures use",
+                  "     the software clock; see section 2)"]
     if flames:
         lines += ["", "    Flame graphs:"] + [f"      results/{b}/{f}" for f in flames]
     return "\n".join(lines), base[0], opt[0]
@@ -178,9 +179,13 @@ def main():
     if "pyflate" in vm and not args.dry_run:
         base_s, opt_s = vm["pyflate"]
         opt_ms = opt_s * 1e3
-        # cumulative share of find_next_symbol; it already includes the bit
-        # reads (snoopbits/readbits), so those are not added on top
-        frac = 49.7
+        # The accelerated share: find_next_symbol's cumulative time, which
+        # already includes the bit reads it calls, so those are not added on
+        # top. Section 4.2 settles on 51.0 between cProfile's 50.8 and py-spy's
+        # 51.9; check_deck_numbers.py uses the same figure. It was left at 49.7
+        # here after the re-measure moved it, so running this script rewrote
+        # the estimate from a stale constant.
+        frac = 51.0
         part = opt_ms * frac / 100
         accel = 148272 / 200e6 * 1e3 + 0.6      # decoder cycles at 200 MHz, plus 0.6 ms of DMA/MMIO
         newtot = opt_ms - part + accel

@@ -401,8 +401,9 @@ inside bench_pyflake() also passes in every run.
      'insn per cycle' line averages the per-run ratios and prints base 2.59, opt 2.59.)
 
     Sampling used: perf record -e cpu-clock -F 997 -g
-    (the guest has no sampling PMU, so the default cycles event yields
-     no samples; see section 2)
+    (the hardware cycles event never samples in this guest - the
+     performance-monitoring interrupt stays at 0 - so the captures use
+     the software clock; see section 2)
 
     Flame graphs:
       results/pyflate/flame_pyflate_base_focus.svg
