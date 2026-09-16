@@ -236,9 +236,9 @@ public behaviour are unchanged; the output is byte-identical.
                                                    pattern is compiled at 43)
       bwt_reverse               397-401 / 329-331  3.5, the bytearray
     Not optimizations, so skip them on a first read: the header docstring,
-    `import re`, the exception type in _read (84 / 46), the unreachable lines the original had
-    after the raise in find_next_symbol (237-243), and _find_symbol, the helper
-    those lines were the only caller of.
+    `import re`, the exception type in _read (84 / 46), the unreachable lines
+    the original had after the raise in find_next_symbol (237-243), and
+    _find_symbol, the helper those lines were the only caller of.
 
 3.1 Canonical Huffman decode instead of a table scan
     HuffmanTable now builds, once per table, the same three arrays zlib's
