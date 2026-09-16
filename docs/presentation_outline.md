@@ -259,8 +259,11 @@ not the BWT, corrupt streams, the table switch, and what sets the clock.
   path runs from `tsel` through the table lookups to the error flag's enable,
   and it has to close every clock. It is not an outlier either: cut that one
   condition and ltp still reports 97 levels, ending at `sym_valid`. So 200 MHz
-  assumes the compare tree split into two pipeline stages, which is not in the
-  RTL — report_pyflate.txt 5.7 says exactly that. What simulation proves is
+  is out of reach for this RTL, and a pipeline stage is not the way to it: the
+  compare tree sits in a feedback loop - peek, compare, length, shift, peek -
+  so a register inside it gives one symbol every two cycles. Raising the clock
+  means speculating over candidate bit offsets, which costs area.
+  report_pyflate.txt 5.7 says exactly that. What simulation proves is
   throughput, one symbol per cycle; frequency is an estimate, and 5.7 also
   shows how little turns on it (halving the clock moves the projected run by
   under a millisecond).

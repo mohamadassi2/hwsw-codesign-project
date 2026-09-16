@@ -546,9 +546,10 @@ inside bench_pyflake() also passes in every run.
     sym_count   32 b   out  symbols accepted by the output since reset
     Internal, between the two modules: peek (20 b) and len (5 b, 1..20).
     Operating frequency: an estimate, not a timing result. ~200 MHz on an FPGA
-    (assuming the compare tree is split into two pipeline stages, which the RTL
-    as it stands does not do) and ~400 MHz on an ASIC; 5.7 gives the basis. What
-    the simulation establishes is throughput: one symbol per clock.
+    and ~400 MHz on an ASIC, neither reachable by this RTL as it stands - the
+    lookup is 98 gate levels deep and sits in a loop that cannot be pipelined
+    without halving throughput; 5.7 gives the basis and the way out. What the
+    simulation establishes is throughput: one symbol per clock.
 
 5.4 Architecture (hw/rtl/, see the block diagram)
     bitreader.sv        64-bit left-aligned bit buffer. Presents the next 20
@@ -754,10 +755,23 @@ inside bench_pyflake() also passes in every run.
     0.37 ms at 400 MHz, against a 487 ms run. Halving
     the clock moves the projected run by less than a millisecond and leaves
     the ratio at 2.0x. What the simulation establishes is throughput, not
-    frequency: one symbol per cycle for all 148,271 symbols. The 200 MHz
-    figure assumes the compare tree split into two pipeline stages (~50 extra
-    flops, one more cycle of latency, throughput unchanged), which is not in
-    the RTL as it stands.
+    frequency: one symbol per cycle for all 148,271 symbols.
+
+    What the 200 MHz figure cannot assume is a pipeline stage inside the
+    compare tree. That tree sits in a single-cycle feedback loop - peek, the
+    parallel compare, the priority encoder, the length, the barrel shift, and
+    back to peek through one register - and the loop is inherent to Huffman
+    decoding: where the next code begins is not known until the current one's
+    length is. A register inside it buys clock at the cost of throughput, one
+    symbol every two cycles. Raising the clock properly means speculating -
+    decoding from several candidate bit offsets at once and selecting when the
+    length resolves - which costs area, not a pipeline stage, and is not in
+    this design.
+
+    That is why the estimate is robust rather than lucky. One symbol per cycle
+    at 100 MHz and one per two cycles at 200 MHz both give 1.48 ms of decode
+    instead of 0.74 ms: the projected run moves from ~240 ms to ~241 ms and the
+    ratio stays 2.0x either way.
     Power: we have no cell library, so there is no absolute power number to
     give and the assignment does not ask us to synthesize to one. What can be
     said is the activity per symbol on each side. The accelerator clocks ~5.4k
