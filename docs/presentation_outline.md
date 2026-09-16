@@ -122,11 +122,19 @@ change; the gate is the same 399,360 bytes, md5-checked on every run.
 **6. Baseline profile.** Point at the `find_next_symbol` tower. *Land:* 15.2%
 self, 48.8% cumulative — nearly half the run inside one function.
 
-**7. The problem.** This is the slide the whole talk turns on. The decoder
-walked the whole sorted table for every symbol, so the work scaled with table
-size — which has nothing to do with how much information a symbol carries.
-*Land:* but these are **canonical** Huffman codes: within one length the codes
+**7. The problem.** This is the slide the whole talk turns on, and the honest
+version is better than the obvious one. The obvious story is "it scans the
+whole table"; our own instrumentation says otherwise - 6.0 entries per symbol
+on average, 147 at worst, because short codes carry most of the symbols
+(`results/pyflate/table_stats.txt`). The cost is the 2.3 `snoopbits()` calls
+per symbol around the scan, each a Python method call and a mask, 148,271
+times over. Say that: it is the same interpreter overhead the whole talk is
+about, and it is why the fix is one peek rather than a faster walk.
+*Land:* these are **canonical** Huffman codes - within one length the codes
 are consecutive integers, so an entire length collapses to two numbers.
+
+If asked "so the scan was not the problem?" - correct, and report_pyflate.txt
+section 2 says so in those words. The accelerator removes both.
 
 **8. The fix.** `limit[L]` and `base[L]`: one compare per length instead of
 one per entry. Then the ablation — each of the five changes reverted in turn,
@@ -201,8 +209,8 @@ by construction, not by luck.
 `results/rtl_sim_guest.log`.
 
 **18. Interface.** Memory-mapped registers; one function changes,
-`find_next_symbol` becomes a call into the driver, and `bzip2_main` and every
-caller are untouched — lecture 5's first rule, do not make users change their
+`decode_huffman_block` calls the driver instead of its symbol loop, and
+`bzip2_main` and every caller are untouched — lecture 5's first rule, do not make users change their
 code. *Land:* then the limit, volunteered: the selector list is supplied by
 the host on TSEL rather than sequenced in hardware, and a production version
 puts a mod-50 counter and a small FIFO inside the block. Saying where you
