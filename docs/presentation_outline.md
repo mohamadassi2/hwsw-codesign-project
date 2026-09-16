@@ -21,17 +21,25 @@ hardware arrives only after the software has run out of room.
 | 22 | conclusions | 1 |
 | 23 | questions — backup, do not narrate | — |
 
-About 1,900 narrated words plus ten code blocks and tables that are pointed
-at, not read. Realistically 15-20 minutes in a 20-25 minute slot, which
-leaves room to be interrupted. Do not rush slide 15; it is the shortest
-slide and the one that makes the second half legitimate.
+The minutes above are the target pacing and come to 21, which is the slot. The
+words on the slides do not fill it on their own: 1,218 words of prose, plus
+ten code blocks and tables that are pointed at rather than read, is about
+thirteen minutes read aloud, and the three live commands add two. The gap is
+the part you say and the slide does not — why each change was the right one,
+what the profile looked like before you believed it, what you would do next.
+Treat the slides as the floor of the talk, not the script; a slide you can
+only read is a slide you have not rehearsed.
+
+Do not rush slide 15. It is the shortest slide and the one that makes the
+second half legitimate.
 
 If you are running long, the compressible slides are 3 (method), 8 (the
 ablation table can be one sentence) and 20 (cost — the SRAM argument can
 become "ask me why only the symbol table is SRAM"). Do not compress 7, 15
-or 19.
+or 19. If you are running short, slide 19 rewards it most: the testbench
+that passed on a decoder emitting nothing but X is the best story here.
 
-## Live demo (two commands, about twenty seconds)
+## Live demo (three commands, under half a minute of running)
 
 Have a terminal open in the repository before the talk. Neither command needs
 the venv; the second needs Icarus Verilog (`brew install icarus-verilog` /
