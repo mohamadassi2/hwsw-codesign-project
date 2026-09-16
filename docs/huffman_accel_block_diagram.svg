@@ -15,10 +15,10 @@
   <text x="135" y="168" text-anchor="middle" fill="#444">header · selectors · code lengths</text>
   <text x="135" y="186" text-anchor="middle" fill="#444">→ limit[L], base[L], syms[]</text>
   <rect x="38" y="215" width="194" height="54" rx="5" fill="#fff" stroke="#556"/>
-  <text x="135" y="237" text-anchor="middle">MMIO registers</text>
+  <text x="135" y="237" text-anchor="middle">driver: writes the MMIO registers</text>
   <text x="135" y="255" text-anchor="middle" fill="#444">CTRL · STATUS · TSEL · TBL_*</text>
   <rect x="38" y="286" width="194" height="54" rx="5" fill="#fff" stroke="#556"/>
-  <text x="135" y="308" text-anchor="middle">DMA engine</text>
+  <text x="135" y="308" text-anchor="middle">driver: programs the DMA</text>
   <text x="135" y="326" text-anchor="middle" fill="#444">IN: compressed bytes · OUT: symbols</text>
   <rect x="38" y="358" width="194" height="88" rx="5" fill="#fff" stroke="#556"/>
   <text x="135" y="380" text-anchor="middle">after decode (unchanged code)</text>
@@ -42,9 +42,9 @@
 
   <!-- tsel -->
   <rect x="655" y="130" width="230" height="60" rx="5" fill="#fff" stroke="#556"/>
-  <text x="770" y="152" text-anchor="middle">TSEL register (host-written)</text>
+  <text x="770" y="152" text-anchor="middle">tsel input port (host-driven)</text>
   <text x="770" y="170" text-anchor="middle">next selector every 50 symbols</text>
-  <text x="770" y="184" text-anchor="middle" fill="#666" font-size="11">tsel[2:0] · in-HW counter: future work</text>
+  <text x="770" y="184" text-anchor="middle" fill="#666" font-size="11">tsel[2:0] input · in-HW counter: future work</text>
 
   <!-- pipeline row -->
   <!-- bit reader -->
@@ -110,5 +110,6 @@
   <text x="725" y="522" text-anchor="middle" fill="#333">Measured in simulation (hw/tb, Icarus Verilog): 148,271 / 148,271 symbols correct · 148,272 cycles · 1.00 symbol/cycle · 3.6 bits/symbol average</text>
   <text x="725" y="540" text-anchor="middle" fill="#333">Critical path per cycle: peek → 21-bit compare → 20:5 priority encode → barrel shift.   Symbol path adds one registered SRAM read.</text>
   <text x="590" y="575" text-anchor="middle" fill="#a64" font-size="12">Per code length L: first[L] = smallest code of length L · count[L] = how many codes have length L · index[L] = where those symbols start in syms[]</text>
+  <text x="590" y="618" text-anchor="middle" fill="#a00" font-size="12">hw/rtl implements the shaded datapath and its raw ports (tbl_*, in_*, run, tsel, sym_*). The register block, the address decode and the DMA are the proposed wrapper around it, not RTL in this submission.</text>
   <text x="590" y="600" text-anchor="middle" fill="#666" font-size="12">Blue = decode pipeline (huffman_decoder.sv + bitreader.sv) · Brown = per-block tables written by software · Grey = control</text>
 </svg>

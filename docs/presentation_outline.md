@@ -212,7 +212,9 @@ by construction, not by luck.
 148272 cycles (1.000 symbols/cycle), 0 errors` and `PASS` — the same lines as
 `results/rtl_sim_guest.log`.
 
-**18. Interface.** Memory-mapped registers; one function changes,
+**18. Interface.** Memory-mapped registers - say that these are the proposed
+wrapper and that the RTL exposes the raw ports the testbench drives, because it
+is the first thing a hardware examiner will look for. Then: one function changes,
 `decode_huffman_block` calls the driver instead of its symbol loop, and
 `bzip2_main` and every caller are untouched — lecture 5's first rule, do not make users change their
 code. *Land:* then the limit, volunteered: the selector list is supplied by

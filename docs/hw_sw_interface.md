@@ -6,6 +6,14 @@ the hardware replaces exactly one call site, `HuffmanTable.find_next_symbol`,
 which, with the bit-extraction helpers it calls, is 50.8% of the optimized run
 (28.1% by itself; report_pyflate.txt sections 4.2 and 5.6).
 
+**What is RTL and what is proposed.** `hw/rtl/` implements the datapath and
+exposes it as raw ports - `tbl_*` to program the tables, `in_*` for the
+compressed stream, `run` and `tsel` for control, `sym_*` for the output. The
+register map below, its address decode and the DMA engine are the wrapper that
+would sit around those ports in a real device; they are specified here and
+drawn in the block diagram, but they are not in this submission's RTL, and the
+testbench drives the ports directly.
+
 ## What moves to hardware, what stays
 
 | Stage of `decode_huffman_block` | Where | Why |

@@ -581,7 +581,9 @@ inside bench_pyflake() also passes in every run.
                         symbol memory and the symbol comes out one clock later.
                         Six banks of limit/base rows (21 x 43 bits, lengths 0..20) and six
                         symbol memories (258 x 9 bits), written by software.
-    huffman_accel_top.sv the two glued behind the register/stream interface.
+    huffman_accel_top.sv the two glued behind the raw table and stream ports.
+                        The register map of 5.5 is the proposed wrapper around
+                        those ports, not RTL in this submission.
     Control is minimal: run, tsel, and the table write port. Throughput is one
     symbol per clock as long as peek_valid holds, which with 32-bit refills and
     codes of at most 20 bits is always.
