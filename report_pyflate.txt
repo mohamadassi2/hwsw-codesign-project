@@ -236,8 +236,9 @@ public behaviour are unchanged; the output is byte-identical.
                                                    pattern is compiled at 43)
       bwt_reverse               397-401 / 329-331  3.5, the bytearray
     Not optimizations, so skip them on a first read: the header docstring,
-    `import re`, the exception type in _read (84 / 46), and the unreachable
-    lines the original had after the raise in find_next_symbol (237-243).
+    `import re`, the exception type in _read (84 / 46), the unreachable lines the original had
+    after the raise in find_next_symbol (237-243), and _find_symbol, the helper
+    those lines were the only caller of.
 
 3.1 Canonical Huffman decode instead of a table scan
     HuffmanTable now builds, once per table, the same three arrays zlib's
@@ -294,7 +295,10 @@ public behaviour are unchanged; the output is byte-identical.
     move-to-front of 3.3 is written inline there as the same pop and insert
     (lines 516-517; this is the inlining section 3.6 mentions). bwt_reverse
     (lines 397-401) fills a preallocated bytearray by index instead of
-    appending each byte to a list and converting the list at the end.
+    appending each byte to a list and converting the list at the end, and
+    bwt_transform (368-370 / 300-302) hoists base[symbol] into a local so the
+    inner loop reads and writes it once per byte instead of twice - the same
+    idea, over the same 400 KB.
 
 What we deliberately did not do.
   - No C extension, numpy, or the stdlib bz2 module: that would replace the
@@ -337,10 +341,15 @@ What we deliberately did not do.
     algorithmic (3.1, the canonical decoder) is the smallest of the three, and
     the two largest are the ones that look like housekeeping - replacing a list
     rebuild with a pop and an insert, and replacing a per-byte loop with one
-    regex. One note on method: the variants are built by substituting source,
-    not by patching functions, because the optimized decoder inlines
-    move-to-front into the decode loop, and a patch of the module-level
-    function would not have reverted it.
+    regex. One note on method, because an earlier version of this
+    table was wrong about it. Two of the three variants are built by
+    substituting source rather than patching functions: the optimized decoder
+    inlines move-to-front into the decode loop and compiles the RLE pass into a
+    regex, so patching the module-level function would have reverted neither.
+    The 3.1 variant is the exception and can be a function patch, because the
+    decode loop looks find_next_symbol up through the class each time the table
+    changes - so replacing it there does revert it. scripts/ablation.py shows
+    both forms.
 
     What that means for section 5 is not what it first appears. The case for
     hardware is not that the algorithm was slow - it was not, and on this input

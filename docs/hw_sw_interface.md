@@ -35,10 +35,13 @@ There is deliberately no soft-reset bit: the block is reset by `rst_n` with the
 rest of the design. `RUN` low is enough to hold it.
 
 **`DONE` is not the end-of-block signal, and a host must not wait for it.** It
-means the input stream was flushed and every buffered bit consumed. A bzip2
-block is byte-padded, so after the last real symbol there are still up to seven
-pad bits in the buffer and `DONE` never rises - in the benchmark run the reader
-finishes with 45 bits left. The hardware cannot tell padding from data; only the
+means the input stream was flushed and every buffered bit consumed, and in the
+benchmark run neither happens. The reader prefetches 32-bit words into a 64-bit
+buffer, so at the end of the block it still holds a partial word - 45 bits,
+measured - and the host stops `RUN` at EOB with one whole input word never
+offered, so `in_last & in_valid & in_ready` never fires and the stream is never
+flushed. `DONE` therefore cannot rise. (The block is also byte-padded, which is
+why those trailing bits are not symbols.) The hardware cannot tell padding from data; only the
 decoder's caller knows the block ended, because it recognises the EOB symbol.
 So the host stops on EOB (or on the symbol count it already tracks for `TSEL`),
 and reads `DONE` only to distinguish "input exhausted" from "still running".
