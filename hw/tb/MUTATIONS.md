@@ -40,7 +40,12 @@ The score below was measured on that RTL, in the course VM on 15 September
 fingerprint at the top of it. scripts/check_report_numbers.py recomputes the
 fingerprint and fails if hw/rtl/ has changed since.
 
-One line per injected bug. The verdict names what noticed it: `timeout` is
+One line per injected bug, taken from results/mutation_sweep_guest.log. `make
+sim_all` runs the six directed sets before the 148,271-symbol benchmark block,
+so most bugs are caught by a small set first and the verdict names that run;
+the earlier version of this table quoted the benchmark run for five of them,
+from a sweep made before the suite was reordered. The verdict names what
+noticed it: `timeout` is
 the testbench watchdog, a set name or plusarg (`+bp`, `+last_level +bubble`)
 names the run that failed, and a number comes from an assertion in
 `tb_huffman.sv` - 148,271 is the symbol count of the benchmark block, so
@@ -48,23 +53,23 @@ names the run that failed, and a number comes from an assertion in
 
 | # | mutation | verdict |
 |---|---|---|
-| 1 | symbol output driven to X | KILLED (148,271 errors) |
+| 1 | symbol output driven to X | KILLED (63 errors on `vectors_lengths`) |
 | 2 | `sym_valid` stuck low | KILLED (timeout) |
 | 3 | `hit` compare `<` changed to `<=` | KILLED (bit total wrong) |
-| 4 | base adder off by one | KILLED (148,271 errors) |
+| 4 | base adder off by one | KILLED (63 errors on `vectors_lengths`) |
 | 5 | priority encoder direction reversed | KILLED (timeout) |
-| 6 | barrel shift one bit short | KILLED (timeout) |
+| 6 | barrel shift one bit short | KILLED (bit total: consumed 63, software 690) |
 | 7 | end-of-input term dropped from `peek_valid` | KILLED (timeout) |
 | 8 | bit-count underflow guard removed | **escapes - unreachable, see below** |
 | 9 | `flush` tied low in the top | KILLED (timeout) |
 | 10 | decode error no longer halts the engine | KILLED (the engine kept going after err) |
-| 11 | refill decided from the stale bit count | KILLED (throughput 148,275 > 148,273) |
+| 11 | refill decided from the stale bit count | KILLED (throughput 67 cycles for 63 symbols) |
 | 12 | `level` output stuck at zero | KILLED (timeout) |
 | 13 | comparators built only for lengths 2..15 | KILLED (timeout on `vectors_lengths`) |
 | 14 | `consume` driven ungated | KILLED (timeout) |
 | 15 | output backpressure ignored | KILLED (timeout under `+bp`) |
 | 16 | symbol counter counts offers, not takes | KILLED (`sym_count` 296,617 vs 148,271) |
-| 17 | short-code guard removed at end of stream | KILLED (consumed more bits than the buffer held) |
+| 17 | short-code guard removed at end of stream | KILLED (timeout on `vectors_underrun`) |
 | 18 | symbol index range check removed | KILLED (a corrupt table returned a symbol) |
 | 19 | end-of-input also flushed on a producer bubble | KILLED (`drain` under `+last_level +bubble`) |
 | 20 | `done` ignores a symbol still waiting to be taken | KILLED (`drain`: done with symbols outstanding) |
