@@ -278,7 +278,7 @@ would need <span class="num">2<sup>20</sup></span> entries of 14 bits per bank.<
 <p class="lede">Frequency is inferred from topological path length, not static timing &mdash; no cell
 library, no place-and-route.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>20/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; expected gain</span><span class="kick">21</span></div><div class="body"><h2>What it would buy, with the assumptions on the slide</h2>
 <pre>optimized run in the VM                    487 ms
-  find_next_symbol, cumulative 51.0%      ~249 ms     (cProfile)
+  find_next_symbol, cumulative 51.0%      ~249 ms     (cProfile 50.8, py-spy 51.9)
   the same work at 200 MHz                  0.74 ms   (148,272 cycles)
   + DMA and ~1,000 table writes            ~0.6 ms
                                           --------
@@ -287,8 +287,8 @@ library, no place-and-route.</p></div><div class="foot"><span>Two benchmarks, on
 <div class="stat alt"><div class="k">vs optimized</div><div class="v">2.0&times;</div><div class="s2">487 ms &rarr; 240 ms</div></div>
 <div class="stat alt"><div class="k">vs shipped benchmark</div><div class="v">4.8&times;</div><div class="s2">1.141 s &rarr; 240 ms</div></div>
 <div class="stat alt"><div class="k">per symbol</div><div class="v">~4,000</div><div class="s2">CPU cycles &rarr; one clock</div></div></div>
-<p class="lede">The 51.0% is cProfile's figure; py-spy's flame graph on slide 15 samples the same
-share at 52% and agrees on the ordering. Amdahl sets the ceiling: with the decode reduced to
+<p class="lede">51.0% sits between the two profilers: cProfile puts it at 50.8%, py-spy's
+flame graph on slide 15 at 51.9%, and they agree on the ordering. Amdahl sets the ceiling: with the decode reduced to
 almost nothing, the inverse BWT and the remaining interpreter overhead are the floor. That is the
 honest bound, not a headline.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>21/23</span></div></section><section class="s "><div class="top"><span class="kick on">Conclusions</span><span class="kick">22</span></div><div class="body"><h2>What we would take from this</h2>
 <ul><li><strong>Algorithm first.</strong> Both speedups came from removing work. IPC barely moved in

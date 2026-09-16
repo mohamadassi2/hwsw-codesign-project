@@ -438,11 +438,14 @@ inside bench_pyflake() also passes in every run.
     time shares are not: it charges a fixed cost per call, so functions called
     hundreds of thousands of times carry profiler overhead that the one-call
     frames do not. _mask's 655,017 calls in the baseline are the clearest case.
-    That biases the shares against decode_huffman_block and towards the small
-    hot functions, so the 50.8% above is if anything an understatement of what
-    the accelerator replaces. The py-spy flame graph, which samples rather than
-    instruments, puts find_next_symbol at 51.9% of the focused samples and
-    agrees on the ordering. The rest of this report takes 51.0% as the
+    That biases the shares against the one-call frames and towards the
+    functions called once per symbol - which are exactly the ones the
+    accelerator replaces - so if the bias pointed anywhere it would make 50.8%
+    an overstatement. It does not settle the question: a profiler that samples
+    instead of instrumenting, and so charges nothing per call, puts
+    find_next_symbol higher, at 51.9% of the focused py-spy samples, and agrees
+    on the ordering. The cumulative share is an instrumented estimate checked
+    against a sampled one, not a measurement with a known direction of error. The rest of this report takes 51.0% as the
     accelerated share: a round figure between the two, which differ by 1.1
     points, 5 ms of a 487 ms run.
 
@@ -687,9 +690,11 @@ inside bench_pyflake() also passes in every run.
         at 200 MHz   0.74 ms
         at 400 MHz   0.37 ms
     Add data movement: 66 KB in and 148,271 x 2 bytes out over PCIe or an AXI
-    DMA is well under 0.1 ms, and the ~1,000 table-write cycles over MMIO are a
-    few microseconds. Allow ~0.6 ms for DMA setup and the MMIO round trips, so
-    the accelerated part is ~1.3 ms in total. The run becomes
+    DMA is well under 0.1 ms, and programming the tables is 1,002 entries, so
+    1,002 tbl_we pulses, a few microseconds of accelerator time. Allow ~0.6 ms
+    for DMA setup and the transfers, so the accelerated part is ~1.3 ms in
+    total. That covers the accelerator and the DMA; what the host spends on
+    MMIO round trips is the larger number and is priced below. The run becomes
         487 - 249 + 1.3  =  ~240 ms     ->  ~2.0x over the optimized software,
                                           ~4.8x over the shipped benchmark.
     (The operands are rounded for display; with the measured 487.4 ms and its
@@ -700,12 +705,14 @@ inside bench_pyflake() also passes in every run.
     by Amdahl's law: the inverse BWT and the Python glue around the symbol
     stream stay where they are, and they are what the remaining ~238 ms is.
 
-    One assumption in that arithmetic is worth pricing rather than hiding. In
-    this version the host drives tsel, so it writes the selector register once
-    per 50 symbols: 148,271 / 50, rounded up, is 2,966 MMIO writes per block.
-    At roughly a microsecond each that is about 3 ms - more than the decode
-    itself - which would move the projection from ~240 ms to ~243 ms. The
-    end-to-end ratio still rounds to ~2.0x, because Amdahl's bound and not the
+    The host-side MMIO traffic is the assumption worth pricing rather than
+    hiding, and there are two sources. Programming the tables is 1,002 entries,
+    about 2,100 bus writes with the address and data registers of 5.5, once per
+    block. Driving tsel costs far more: the host writes the selector register
+    once per 50 symbols, and 148,271 / 50, rounded up, is 2,966 writes per
+    block. At roughly a microsecond per round trip those ~5,100 writes are
+    about 5 ms - more than the decode itself - which would move the projection
+    from ~240 ms to ~245 ms. The end-to-end ratio still rounds to ~2.0x, because Amdahl's bound and not the
     accelerator is what sets it, but the host would then spend more time
     driving the accelerator than the accelerator spends decoding. It is why
     docs/hw_sw_interface.md lists the selector SRAM as the better design:
