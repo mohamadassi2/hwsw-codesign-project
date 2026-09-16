@@ -138,6 +138,68 @@ Auditing the work against itself
   to substitute source. Measured properly, the change we had called the main
   algorithmic fix is the smallest of the three separable ones.
 
+Simplifying it for the presentation
+  - "Go over the whole project and make it simpler - we have to show it and
+    explain it." The deck did not need cutting; it needed reordering. It ran
+    pyflate, then the accelerator, then mdp, so the hardware interrupted the
+    software story and mdp arrived after the audience thought the talk was
+    over. It is now three acts, with "what is left to accelerate" between the
+    software half and the hardware half, where it earns the accelerator
+    instead of merely preceding it. docs/presentation_outline.md was rewritten
+    as a speaker guide: per slide, why it is there and the one sentence that
+    has to land.
+  - "Make sure the code reads like code we wrote, not like a machine wrote
+    it." Comments that narrated the project's history, argued with an
+    imagined reviewer, or restated the line below them were cut - 438 comment
+    lines down to 328 across the RTL, the two optimized benchmarks and the two
+    scripts - along with dead code (_find_symbol and a flag nothing read in
+    pyflate, two guards in mdp for a case topoSort makes impossible). The
+    frozen files are fingerprinted by results/CODE_ID.txt, so every edit was
+    proved comment-only by comparing the parsed syntax tree, and the two
+    files that also lost dead code were re-measured.
+
+Redoing perf after the forum answer
+  The TA's answer of 5 September was that perf must be run under sudo to
+  sample everything, and the setup guide profiles python3-dbg. We did
+  neither, and section 2 of both reports concluded that perf record collects
+  no samples in this guest.
+  - "The TA says we should have used sudo and python3-dbg. Check whether our
+    conclusion is actually true." It was not, and the fault was ours. The
+    event probe tested each capture with `perf script | head -1` under
+    `set -o pipefail`: head exits after one line, perf script dies of SIGPIPE,
+    and the pipeline reports failure on a capture full of samples. Every
+    capture had been discarded by the check, not by the guest.
+  - Everything was re-measured in the VM as root. perf record in the guide's
+    own form gives 131K samples on pyflate and 336K on mdp. What it shows is
+    the interpreter by C function name - _PyEval_EvalFrameDefault is 39% of
+    the baseline pyflate worker - and no Python function name, because
+    CPython 3.10 has no perf trampoline. On mdp it earned its place: tuplehash
+    is 36% of the samples, which is the nested-tuple dictionary of section 3
+    seen from the C side. The hardware cycles event still never samples, and
+    the PMI explanation for that was right all along.
+  - The wall-clock numbers moved with the re-measure: pyflate 2.33x to 2.34x,
+    mdp 3.80x to 3.90x.
+
+  Three times now our first explanation of a perf result has been wrong, and
+  the pattern is the same each time: the tool reported nothing and we
+  explained why the environment could not do it, instead of checking whether
+  we had asked it correctly.
+
+Attacking it again, at the end
+  - "Re-run the mutation sweep against the RTL as it stands now." The 19-of-20
+    score had been measured before the RTL comments were rewritten, and
+    nothing tied the claim to the code. It reproduces exactly, row for row,
+    and tb/mutate.sh now prints an RTL fingerprint that MUTATIONS.md records
+    and a gate recomputes - the same stamp the synthesis figures and the
+    measurements already carried.
+  - "Find gates that accept a stale figure." Two did, in the way the earlier
+    audit described: a cProfile share was checked by asking whether the number
+    appears in the report, and both reports carry two profile tables, so a
+    wrong share passed whenever the other table held that value. The gate now
+    reads the row that names the function, inside the right table. The
+    mutation score was checked the same loose way and is now checked at every
+    place the report states it.
+
 What we did with all of this
   Every change suggested by the assistant was read, and the ones that
   changed behaviour were run against the original before being kept: the
@@ -145,5 +207,5 @@ What we did with all of this
   and the RTL against a golden trace of the real block. The explanations in
   the reports are ours. Where the assistant's first explanation was wrong we
   say so in the report rather than quietly replacing it - the perf sampling
-  mechanism twice, the accelerator's area once, and the attribution of the
-  software speedup once.
+  mechanism three times, the accelerator's area once, and the attribution of
+  the software speedup once.
