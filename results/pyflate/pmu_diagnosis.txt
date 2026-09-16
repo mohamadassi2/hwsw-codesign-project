@@ -6,8 +6,7 @@ PMI/NMI after a cycles record over that workload:
 NMI:          0   Non-maskable interrupts
 PMI:          0   Performance monitoring interrupts
 samples in that cycles record: 0
-0
 counting (not sampling) the same workload, to show the PMU is present:
-       10066589168      cycles                                                      
-       33957911564      instructions              #    3.37  insn per cycle         
-dmesg PMU line: [    0.302496] Performance Events: Haswell events, full-width counters, Intel PMU driver.
+        9350675660      cycles                                                      
+       31738886531      instructions              #    3.39  insn per cycle         
+dmesg PMU line: [    0.311600] Performance Events: Haswell events, full-width counters, Intel PMU driver.

@@ -21,7 +21,7 @@ What this report shows, in five lines
     bit peeks per symbol, all in the interpreter (section 2).
   - Five pure-Python changes - a canonical Huffman decoder, a bulk bit reader,
     a pop/insert move-to-front, a regex run-length pass, and local names in the
-    hot loop - give 2.33x in the course VM, 1.127 s -> 483.5 ms, with
+    hot loop - give 2.34x in the course VM, 1.141 s -> 487.4 ms, with
     byte-identical output (sections 3, 4).
   - Reverting one change at a time shows no single change dominates, and the
     two "housekeeping" ones are worth more than the algorithmic one (3.6).
@@ -29,7 +29,7 @@ What this report shows, in five lines
     BWT; only the first belongs in hardware (4.2).
   - The proposed decoder does one symbol per clock, reproduces all 148,271
     symbols of the block in simulation, catches 19 of 20 injected bugs, and
-    would bring the run to ~2.0x over our optimized code, ~4.7x over the
+    would bring the run to ~2.0x over our optimized code, ~4.8x over the
     original (section 5).
 
 Live demo. Any machine with python3 (and iverilog for the RTL). These show the
@@ -87,25 +87,29 @@ tables with code lengths between 2 and 15 bits (measured by hw/gen_vectors.py).
 
 2. Initial analysis
 ----------------------------------------------------------------------------------
-Tools. Two views of the same run, and one that failed. py-spy gives
-Python-level frames rather than interpreter internals
-(flame_pyflate_base_focus.svg), and cProfile gives exact call counts; the two
-agree on which functions dominate. perf record returned no samples for our
-captures (the note at the end of this section says why), so no perf-derived
-flame graph exists in results/ and none is cited.
+Tools. Three views of the same run. py-spy gives Python-level frames rather
+than interpreter internals (flame_pyflate_base_focus.svg), and cProfile gives
+exact call counts; the two agree on which functions dominate. perf record, run
+as root on the cpu-clock software event, resolves the interpreter's own C
+functions and no Python function names, so it measures how much of the run is
+interpreter overhead while py-spy says which Python function; the note at the
+end of this section gives its figures and says why the guest's cycles event
+cannot sample. The flame graphs this report reads are py-spy's; the perf ones
+(flame_pyflate_base_perf.svg, flame_pyflate_opt_perf.svg) sit beside them in
+results/pyflate/.
 
 Where the time goes (cProfile, one decode of the benchmark input, baseline).
 Recomputed from results/pyflate/cprofile_base.txt by scripts/cprofile_shares.py;
-shares are of bench_pyflake's cumulative time, 2.179 s under the profiler:
+shares are of bench_pyflake's cumulative time, 2.167 s under the profiler:
                                 self     cum      calls
-  decode_huffman_block          22.6%   99.0%          1
-  HuffmanTable.find_next_symbol 15.7%   49.3%    148,271
-  RBitfield.snoopbits           10.2%   22.4%    341,601
-  move_to_front                  9.8%    9.8%     92,803
-  RBitfield.readbits             8.9%   11.9%    156,708
-  BitfieldBase._mask             5.9%    5.9%    655,017
-  bwt_reverse                    5.1%   11.1%          1
-  bwt_transform                  3.5%    4.6%          1
+  decode_huffman_block          22.7%   99.0%          1
+  HuffmanTable.find_next_symbol 15.2%   48.8%    148,271
+  RBitfield.snoopbits           10.5%   22.6%    341,601
+  move_to_front                 10.0%   10.0%     92,803
+  RBitfield.readbits             9.0%   11.8%    156,708
+  BitfieldBase._mask             5.8%    5.8%    655,017
+  bwt_reverse                    5.0%   11.1%          1
+  bwt_transform                  3.6%    4.7%          1
   RBitfield._more                3.4%    7.4%     67,562
 
 The flame graph puts almost the whole width under decode_huffman_block, and
@@ -128,14 +132,14 @@ each of which calls _mask(). On this input the scan is short - section 3.6
 measures 6.0 entries per symbol, because short codes carry most of the symbols
 - so the cost is not the walk but the 2.3 snoopbits() calls per symbol around
 it, each a Python method call plus a _mask() call. The table above already
-shows it: snoopbits is 22.4% cumulative against find_next_symbol's 15.7% self.
+shows it: snoopbits is 22.6% cumulative against find_next_symbol's 15.2% self.
 A canonical Huffman code can be decoded with one peek and at most max_bits
 integer comparisons, and the table is already canonical.
 
 Two smaller things sit underneath it: the bit reader refills one byte at a time
 through the io stack (67,562 calls to f.read(1)), and move_to_front builds three
 slices and a concatenation for every decoded byte. Finally the inverse BWT
-(bwt_reverse, 11.1% cumulative, of which bwt_transform is 4.6%) is a loop over 400
+(bwt_reverse, 11.1% cumulative, of which bwt_transform is 4.7%) is a loop over 400
 KB doing pointer chasing through a Python list; it is memory-latency bound by
 nature.
 
@@ -147,8 +151,8 @@ falls when the algorithm is fixed.
 A note on profiling inside this VM, because it decides which tool the flame
 graphs come from.
   - perf stat counts correctly. The numbers in section 4.1 are real hardware
-    counts: 10.9 billion cycles and 28.6 billion instructions for the
-    baseline, IPC 2.62, reproducible to better than 1% over three runs.
+    counts: 11.2 billion cycles and 28.8 billion instructions for the
+    baseline, IPC 2.58, reproducible to better than 1% over three runs.
   - perf record on the cycles event returns no samples
     (results/pyflate/pmu_diagnosis.txt). The guest has a PMU - dmesg reports
     "Performance Events: Haswell events, full-width counters, Intel PMU
@@ -156,30 +160,49 @@ graphs come from.
     /proc/interrupts shows PMI at 0 before and after a record. Sampling is
     driven by that interrupt; counting needs only a counter read, which is
     why perf stat is unaffected.
-  - The software events do sample - cpu-clock 3,766 and task-clock 3,622
-    samples over three seconds of CPU-bound Python
-    (results/pyflate/perf_events_probe.txt) - but only under the system
-    interpreter. Bisecting the command
-    (results/pyflate/perf_isolate.txt) isolates it: the same `perf record -e
-    task-clock -F 997` gives 3,845 samples with /usr/bin/python3 and 0 with
-    venv/bin/python. The three-second probes in script_pyflate.sh run the
-    system python3; the event chooser and every capture run the venv
-    interpreter, because that is where pyperf lives - so every capture came
-    back empty and results/pyflate/perf_event_chosen.txt records "none". That
-    is a limitation of how we drove perf, not of the guest.
-  - A working capture would not have helped either
-    (results/pyflate/perf_system_python.txt): recording the benchmark under
-    the system interpreter gives 5,172 samples, 509 of them carrying any
-    interpreter frame and none a Python function name, because CPython 3.10
-    has no perf trampoline (it arrived in 3.12) and perf can only resolve the
-    interpreter's own C frames.
+  - The software clocks do sample: cpu-clock 3,645 and task-clock 3,496
+    samples over about three seconds of CPU-bound Python
+    (results/pyflate/perf_events_probe.txt). script_pyflate.sh takes the first
+    of them (results/pyflate/perf_event_chosen.txt) and records as root with
+    `perf record -e cpu-clock -F 997 -g`; the course forum's ruling of 5
+    September is that perf needs sudo to sample everything and that any flag
+    is acceptable. An earlier version of the script reported no working event
+    at all, and the fault was in the script, not the guest: its probe checked
+    each capture with `perf script | head -1` under `set -o pipefail`, head
+    exits after one line, perf script dies of SIGPIPE, and the pipeline
+    reports failure on a capture full of samples. The probe was fixed on 15
+    September and every capture in results/pyflate/ comes from the corrected
+    script.
+  - Two captures are kept per build. The setup guide's own form, `perf record
+    -F 999 -g` on cpu-clock around python3-dbg running pyperformance, is
+    results/pyflate/perf_report_base_dbg.txt (131K samples) and
+    results/pyflate/perf_report_opt_dbg.txt (10K, the optimized worker). The
+    debug build skews its own profile - its allocator hooks show up as
+    _PyMem_DebugCheckAddress at about 4% - and leaves many call-chain entries
+    unresolved, [unknown] addresses such as 0xdddddddddddddddd, the debug
+    allocator's fill pattern read as a return address because CPython is built
+    without frame pointers; that is why the capture this report reads is the
+    other one, the benchmark worker under the release interpreter
+    (results/pyflate/perf_top_base.txt, results/pyflate/perf_top_opt.txt, and
+    flame_pyflate_base_perf.svg, flame_pyflate_opt_perf.svg).
+  - What perf shows is the interpreter by C function name.
+    _PyEval_EvalFrameDefault is 39.2% of the baseline worker's samples and
+    40.1% of the optimized worker's; next in the baseline come
+    _PyObject_GetMethod, object_dealloc, list_dealloc and PyObject_RichCompare
+    at 3-4% each, in the optimized worker list_subscript (5.7%) and the
+    long_rshift and long_sub helpers; then kernel and libc frames. No Python
+    function name appears at all: CPython 3.10 has no perf trampoline (3.12
+    added it), so perf resolves only the interpreter's own C frames. perf
+    therefore answers how much of the run is interpreter overhead; py-spy
+    answers which Python function.
 
-So the flame graphs come from py-spy, which does not use perf_events: it reads
-the interpreter's frame objects out of process memory and reports Python
-functions by name. The per-function percentages quoted in this report come
-from cProfile, which is exact.
+So the flame graphs this report reads come from py-spy, which does not use
+perf_events: it reads the interpreter's frame objects out of process memory
+and reports Python functions by name. The per-function percentages quoted in
+this report come from cProfile, which is exact.
 
-    Two flame graphs are written per build. flame_<b>_<tag>_pyspy.svg is the
+    Three flame graphs are written per build. flame_<b>_<tag>_perf.svg is the
+    perf capture of the worker, C frames only; flame_<b>_<tag>_pyspy.svg is the
     whole process as py-spy recorded it; flame_<b>_<tag>_focus.svg re-roots the
     same samples at bench_pyflake with scripts/focus_folded.py, dropping the ten
     frames of pyperf runner above it and the ~1% of samples that never reach the
@@ -196,24 +219,24 @@ public behaviour are unchanged; the output is byte-identical.
     Reading order, so the file can be opened next to the original (line
     numbers are opt / orig; `diff -u benchmarks/pyflate/run_benchmark.py
     benchmarks/pyflate/run_benchmark_opt.py` shows all of it at once):
-      find_next_symbol          312-334 / 224-243  3.1, the decode loop (the snippet
+      find_next_symbol          291-310 / 224-243  3.1, the decode loop (the snippet
                                                    below writes mb as max_bits and
                                                    self._syms as syms)
-      _build_canonical          278-304 / new      3.1, limit/base/syms, built once
+      _build_canonical          264-289 / new      3.1, limit/base/syms, built once
                                                    per table
-      BitfieldBase.__init__      48-86  /  31-42   3.2, the input read once
-      RBitfield._more/readbits  164-182 / 106-123  3.2, eight-byte refill; MASKS is
+      BitfieldBase.__init__      48-77  /  31-42   3.2, the input read once
+      RBitfield._more/readbits  150-168 / 106-123  3.2, eight-byte refill; MASKS is
                                                    line 41, and Bitfield, the gzip
-                                                   reader (143-159 / 85-101), gets
+                                                   reader (129-145 / 85-101), gets
                                                    the same change
-      move_to_front             379-380 / 288-289  3.3; the bzip2 loop inlines it
-                                                   at 540-541
-      decode_huffman_block      507-548 / 413-455  3.5, the local names (510-515),
-                                                   and 3.4, the regex (545-548; the
+      move_to_front             355-356 / 288-289  3.3; the bzip2 loop inlines it
+                                                   at 516-517
+      decode_huffman_block      483-524 / 413-455  3.5, the local names (486-491),
+                                                   and 3.4, the regex (521-524; the
                                                    pattern is compiled at 43)
-      bwt_reverse               421-425 / 329-331  3.5, the bytearray
+      bwt_reverse               397-401 / 329-331  3.5, the bytearray
     Not optimizations, so skip them on a first read: the header docstring,
-    `import re`, the exception type in _read (95 / 46), and the unreachable
+    `import re`, the exception type in _read (84 / 46), and the unreachable
     lines the original had after the raise in find_next_symbol (237-243).
 
 3.1 Canonical Huffman decode instead of a table scan
@@ -242,14 +265,13 @@ public behaviour are unchanged; the output is byte-identical.
     Refilling eight bytes at a time breaks something the original relied on
     without saying so: with one-byte refills the bit buffer was empty at every
     byte boundary, and two places assumed that. The copy constructor in
-    BitfieldBase.__init__ (lines 49-69) no longer inherits the other reader's
+    BitfieldBase.__init__ (lines 49-62) no longer inherits the other reader's
     buffer - Bitfield and RBitfield hold bits in opposite orders, so a buffer
     copied from one to the other would be read backwards. It rewinds to the
     byte boundary instead, and raises ValueError rather than round down
-    silently if the reader were ever not byte-aligned. dropbits (lines 113-128)
+    silently if the reader were ever not byte-aligned. dropbits (lines 102-114)
     clears the buffer as it empties it, so leftover bits cannot be ORed into
-    the next refill. That is what the long comments in the bit reader are
-    about; the output is still byte-identical.
+    the next refill. The output is still byte-identical.
 
 3.3 Move-to-front
     l.insert(0, l.pop(c)) - two C-level list operations instead of three
@@ -261,17 +283,17 @@ public behaviour are unchanged; the output is byte-identical.
     the scan runs in C.
 
 3.5 Local names in the main loop, and a bytearray in bwt_reverse
-    Lines 510-512 bind buffer.append, favourites.pop and favourites.insert
-    to local variables before the loop, and lines 513-514 hoist two values
+    Lines 486-488 bind buffer.append, favourites.pop and favourites.insert
+    to local variables before the loop, and lines 489-490 hoist two values
     the loop only reads: eob, the end-of-block symbol (symbols_in_use - 1),
     and nsel, the number of selectors. The selected table's find_next_symbol
-    is bound to a local (find, line 521) once per table switch, every 50
+    is bound to a local (find, line 497) once per table switch, every 50
     symbols, where the shipped code looked it up on the table object for
     every symbol (run_benchmark.py line 425). Each iteration then does a
     local-variable load where it used to do an attribute lookup. The
     move-to-front of 3.3 is written inline there as the same pop and insert
-    (lines 540-541; this is the inlining section 3.6 mentions). bwt_reverse
-    (lines 421-425) fills a preallocated bytearray by index instead of
+    (lines 516-517; this is the inlining section 3.6 mentions). bwt_reverse
+    (lines 397-401) fills a preallocated bytearray by index instead of
     appending each byte to a list and converting the list at the end.
 
 What we deliberately did not do.
@@ -291,21 +313,25 @@ What we deliberately did not do.
     scripts/ablation.py reverts one change at a time to the shipped
     implementation and times the result; every variant is checked against the
     benchmark's own md5 before it is timed, so a variant that decoded wrongly
-    could not appear. Measured in the VM (results/pyflate/ablation.txt):
+    could not appear. Measured in the VM (results/pyflate/ablation.txt; the
+    minimum of five repetitions per variant, the file also lists the medians):
 
-        baseline                                     1,125.2 ms   1.00x
-        optimized (all of 3.1-3.5)                     480.4 ms   2.34x
-        optimized, 3.1 reverted to the table scan      557.4 ms   2.02x
-        optimized, 3.3 reverted to the slice rebuild   641.7 ms   1.75x
-        optimized, 3.4 reverted to the per-byte loop   648.8 ms   1.73x
+        baseline                                     1,115.1 ms   1.00x
+        optimized (all of 3.1-3.5)                     475.4 ms   2.35x
+        optimized, 3.1 reverted to the table scan      560.7 ms   1.99x
+        optimized, 3.3 reverted to the slice rebuild   638.5 ms   1.75x
+        optimized, 3.4 reverted to the per-byte loop   637.1 ms   1.75x
 
-    Leave one out and the run costs 77.0 ms more without the canonical decoder,
-    161.3 ms more without the move-to-front change, and 168.4 ms more without
+    Leave one out and the run costs 85.3 ms more without the canonical decoder,
+    163.1 ms more without the move-to-front change, and 161.8 ms more without
     the RLE regex. These are leave-one-out differences, not a decomposition:
-    they do not multiply out to 2.34x, and each says only what the run costs
-    with that one change put back. 3.2 (the bit reader) and 3.5 (local names,
-    the bytearray) are woven through the decode loop and cannot be reverted on
-    their own, so what they are worth is whatever these rows do not explain.
+    they do not multiply out to 2.35x, and each says only what the run costs
+    with that one change put back. The largest run-to-run spread across the
+    variants is 52.5 ms, so the 1.3 ms between 3.3 and 3.4 is not resolved by
+    this measurement; the ~77 ms between either of them and 3.1 is. 3.2 (the
+    bit reader) and 3.5 (local names, the bytearray) are woven through the
+    decode loop and cannot be reverted on their own, so what they are worth is
+    whatever these rows do not explain.
 
     One thing in that table is worth saying out loud: the change we called
     algorithmic (3.1, the canonical decoder) is the smallest of the three, and
@@ -320,7 +346,7 @@ What we deliberately did not do.
     hardware is not that the algorithm was slow - it was not, and on this input
     the scan is only six entries long. It is that after all five changes, about
     half the run is still per-symbol interpreter work: a method call, a short
-    loop and two bit-buffer updates, 1,666 ns per symbol. The ablation sharpens
+    loop and two bit-buffer updates, ~1,680 ns per symbol. The ablation sharpens
     that argument rather than weakening it, because what paid best in software
     was removing per-operation interpreter overhead, and that overhead is
     exactly what a one-symbol-per-clock datapath does not pay.
@@ -350,94 +376,108 @@ inside bench_pyflake() also passes in every run.
     Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
     -cpu host -accel kvm. Measured by script_pyflate.sh; raw files in results/pyflate/.
 
-      pyperformance run --bench pyflate     1.120 +- 0.019 s  (n=20)
-      pyperf, baseline (vendored copy)  1.127 +- 0.013 s  (n=30)
-      pyperf, optimized                 483.5 +- 24.5 ms  (n=30)
-      speedup  2.33x   (57.1% less time; the assignment asks for 7%)
+      pyperformance run --bench pyflate     1.137 +- 0.038 s  (n=20)
+      pyperf, baseline (vendored copy)  1.141 +- 0.036 s  (n=30)
+      pyperf, optimized                 487.4 +- 28.4 ms  (n=30)
+      speedup  2.34x   (57.3% less time; the assignment asks for 7%)
 
     pyperf compare_to:
       +-----------+--------------+----------------------+
       | Benchmark | pyflate_base | pyflate_opt          |
       +===========+==============+======================+
-      | pyflate   | 1.13 sec     | 483 ms: 2.33x faster |
+      | pyflate   | 1.14 sec     | 487 ms: 2.34x faster |
       +-----------+--------------+----------------------+
 
     perf stat (worker run):
     counter                       baseline           optimized    ratio
-    task-clock                    4,593.52            2,067.22     2.22
-    cycles                  10,912,669,595       4,914,248,200     2.22
-    instructions            28,629,071,935      12,762,910,885     2.24
-    branches                 5,694,596,471       2,418,404,154     2.35
-    branch-misses               18,717,679          10,424,337     1.80
-    IPC (baseline): 2.623
-    IPC (optimized): 2.597
+    task-clock                    4,704.20            2,073.14     2.27
+    cycles                  11,174,970,711       4,881,419,501     2.29
+    instructions            28,802,725,505      12,776,899,982     2.25
+    branches                 5,733,096,535       2,427,162,884     2.36
+    branch-misses               19,358,154          11,184,240     1.73
+    IPC (baseline): 2.577
+    IPC (optimized): 2.617
     (IPC above is instructions/cycles of the three-run means. perf's own
-     'insn per cycle' line averages the per-run ratios and prints base 2.60, opt 2.61.)
+     'insn per cycle' line averages the per-run ratios and prints base 2.59, opt 2.59.)
+
+    Sampling used: perf record -e cpu-clock -F 997 -g
+    (the guest has no sampling PMU, so the default cycles event yields
+     no samples; see section 2)
 
     Flame graphs:
       results/pyflate/flame_pyflate_base_focus.svg
+      results/pyflate/flame_pyflate_base_perf.svg
       results/pyflate/flame_pyflate_base_pyspy.svg
       results/pyflate/flame_pyflate_opt_focus.svg
+      results/pyflate/flame_pyflate_opt_perf.svg
       results/pyflate/flame_pyflate_opt_pyspy.svg
 
 4.2 Where the time goes after the optimization (cProfile, optimized)
     Recomputed from results/pyflate/cprofile_opt.txt, shares of bench_pyflake's
-    0.851 s under the profiler:
+    0.858 s under the profiler:
                                 self     cum      calls
-  find_next_symbol              28.3%   51.0%    148,271
-  decode_huffman_block          18.1%   99.8%          1
-  readbits                      12.2%   12.3%    156,708
-  bwt_transform                  8.8%   11.8%          1
-  snoopbits                      6.9%   10.9%    148,271
-  bwt_reverse                    6.9%   18.7%          1
+  find_next_symbol              28.1%   50.8%    148,271
+  decode_huffman_block          18.6%   99.8%          1
+  readbits                      12.1%   12.2%    156,708
+  bwt_transform                  8.6%   11.5%          1
+  snoopbits                      7.1%   11.2%    148,271
+  bwt_reverse                    6.8%   18.3%          1
 
     Symbol decoding plus bit extraction is still about half the run even with
     the right algorithm, because each symbol still costs a Python method call, a
     loop of a few iterations and two bit-buffer updates. That is
-    find_next_symbol's 51.0% cumulative share, which already contains snoopbits
+    find_next_symbol's 50.8% cumulative share, which already contains snoopbits
     and the readbits calls made under it; adding those rows to it again would
-    count the same work twice. The inverse BWT is 18.7% - bwt_reverse's
-    cumulative share, which likewise already contains bwt_transform's 11.8% -
+    count the same work twice. The inverse BWT is 18.3% - bwt_reverse's
+    cumulative share, which likewise already contains bwt_transform's 11.5% -
     and it is a pointer chase through 400 KB. The first part is what hardware
     is good at; the second part is not.
 
     One caveat on all of these shares. cProfile's call counts are exact, but its
     time shares are not: it charges a fixed cost per call, so functions called
     hundreds of thousands of times carry profiler overhead that the one-call
-    frames do not. _mask's 655,017 calls are the clearest case. That biases the
-    shares against decode_huffman_block and towards the small hot functions, so
-    the 51.0% above is if anything an understatement of what the accelerator
-    replaces. The py-spy flame graphs, which sample rather than instrument, put
-    find_next_symbol at 52.6% and agree on the ordering.
+    frames do not. _mask's 655,017 calls in the baseline are the clearest case.
+    That biases the shares against decode_huffman_block and towards the small
+    hot functions, so the 50.8% above is if anything an understatement of what
+    the accelerator replaces. The py-spy flame graph, which samples rather than
+    instruments, puts find_next_symbol at 51.9% of the focused samples and
+    agrees on the ordering. The rest of this report takes 51.0% as the
+    accelerated share: a round figure between the two, which differ by 1.1
+    points, 5 ms of a 487 ms run.
 
 
 4.3 Reproducibility
     Three independent runs of these scripts in the same guest are kept, each
     made by extracting the tree into an empty directory and running them the
-    way a grader would. The shipped set is one of them; the other two are under
-    results/reproducibility/ (the second run) and results/reproducibility/run3/
-    (a full end-to-end run of the submission as it now stands).
+    way a grader would. The shipped set is the latest of them; the other two
+    are under results/reproducibility/ (the second run) and
+    results/reproducibility/run3/ (the third, a full end-to-end run of the
+    submission).
 
         run          pyflate            mdp
-        shipped      2.332x (483.5 ms)  3.803x (1.308 s)
+        shipped      2.341x (487.4 ms)  3.895x (1.309 s)
         second       2.385x (473.0 ms)  3.820x (1.305 s)
         third        2.316x (483.9 ms)  3.822x (1.308 s)
 
-    So mdp's ratio is stable to 0.5% across the three, and pyflate's spreads by
-    3.0% - 2.32x to 2.39x. pyperf's own standard deviation on the optimized
-    pyflate run is about 0.9%, so a 3% spread across separate boots of the
-    guest is a few sigma, not noise we can wave away. Nothing in the argument
-    turns on the third decimal - the claim is a factor of about 2.4 on pyflate
-    and about 3.8 on mdp, and all three runs support both.
-    scripts/compare_runs.py compares any two of them.
+    So mdp's ratio spreads by 2.0% across the three - 3.82x to 3.90x - and
+    pyflate's by 3.0% - 2.32x to 2.39x. pyperf's own standard deviation on the
+    optimized pyflate run is 5.8% in the shipped set (0.9% and 2.2% in the
+    other two), so a 3% spread across separate boots of the guest is inside
+    the scatter of a single run. Nothing in the argument turns on the third
+    decimal - the claim is a factor of about 2.3 to 2.4 on pyflate and about
+    3.8 to 3.9 on mdp, and all three runs support both.
+    scripts/compare_runs.py compares any two of them: against the shipped set
+    the largest wall-clock drift is 2.95% for the second run and 1.93% for the
+    third, and every perf stat counter drifts by less than 2.1% except the
+    branch-miss counts (up to 7.4%).
 
     A fourth run is deliberately excluded, and the reason is the point of the
     contention check. It reported mdp at 2.33 s against 1.30 s while executing
-    the same 31.4 billion instructions: the shared host was busy and "CPUs
+    the same 31.5 billion instructions: the shared host was busy and "CPUs
     utilized" had fallen from 1.00 to 0.58, so the wall clock measured the
     host's load rather than this code. Both scripts now read that figure from
     perf, print a warning below 0.95 and record it in
-    results/<benchmark>/contention.txt - 0.994 to 1.003 across the runs that
+    results/<benchmark>/contention.txt - 0.981 to 0.997 across the runs that
     are shipped. It is the one measurement error that would have been invisible
     in the numbers themselves.
 
@@ -453,7 +493,8 @@ inside bench_pyflake() also passes in every run.
     symbol buffer.
 
 5.2 Why this component
-    - It is the largest remaining share after the software fix (51.0%).
+    - It is the largest remaining share after the software fix (51.0%,
+      section 4.2).
     - It is bit-serial work: peek some bits, compare against a few limits,
       add, look up. A CPU spends hundreds of instructions per symbol doing
       that through the interpreter; hardware does the compares in parallel
@@ -617,41 +658,41 @@ inside bench_pyflake() also passes in every run.
 
 5.6 Expected performance (with the assumptions spelled out)
     What the accelerator replaces is find_next_symbol and the bit reads it
-    makes. In the optimized profile (section 4.2) find_next_symbol is 28.3% of
-    the run by itself and 51.0% cumulatively; the 22.7 points between them
-    are snoopbits (10.9% cumulative) plus the part of readbits (12.3%) that
+    makes. In the optimized profile (section 4.2) find_next_symbol is 28.1% of
+    the run by itself and 50.8% cumulatively; the 22.7 points between them
+    are snoopbits (11.2% cumulative) plus the part of readbits (12.2%) that
     is called under find_next_symbol.
     snoopbits is called from nowhere else (148,271 calls, one per symbol);
     readbits is called 156,708 times against 148,271 symbols, so all but 8,437
     of its calls are made under find_next_symbol and the rest is block-header
     parsing.
     So the cumulative figure already contains the bit extraction: the share to
-    use is 51.0%, and adding snoopbits and readbits to it would count the same
-    work twice.
+    use is the cumulative one - 51.0%, as section 4.2 settles it - and adding
+    snoopbits and readbits to it would count the same work twice.
 
-    Take the optimized run measured in the VM, 483 ms, of which that part is
-    51.0% = ~247 ms. In the accelerator the same work is 148,272 cycles:
+    Take the optimized run measured in the VM, 487 ms, of which that part is
+    51.0% = ~249 ms. In the accelerator the same work is 148,272 cycles:
         at 200 MHz   0.74 ms
         at 400 MHz   0.37 ms
     Add data movement: 66 KB in and 148,271 x 2 bytes out over PCIe or an AXI
     DMA is well under 0.1 ms, and the ~1,000 table-write cycles over MMIO are a
     few microseconds. Allow ~0.6 ms for DMA setup and the MMIO round trips, so
     the accelerated part is ~1.3 ms in total. The run becomes
-        483 - 247 + 1.3  =  ~238 ms     ->  ~2.0x over the optimized software,
-                                          ~4.7x over the shipped benchmark.
-    (The operands are rounded for display; with the measured 483.5 ms and its
-    51.0% the sum is 238.2 ms, which is the figure the ratios use.)
-    Per symbol the software spends 247 ms / 148,271 = ~1,666 ns, about 4,000
+        487 - 249 + 1.3  =  ~240 ms     ->  ~2.0x over the optimized software,
+                                          ~4.8x over the shipped benchmark.
+    (The operands are rounded for display; with the measured 487.4 ms and its
+    51.0% the sum is 240.1 ms, which is the figure the ratios use.)
+    Per symbol the software spends 249 ms / 148,271 = ~1,680 ns, about 4,000
     cycles at 2.4 GHz, against one cycle in hardware - three orders of
     magnitude on the accelerated part alone. The whole-program gain is bounded
     by Amdahl's law: the inverse BWT and the Python glue around the symbol
-    stream stay where they are, and they are what the remaining 236 ms is.
+    stream stay where they are, and they are what the remaining ~238 ms is.
 
     One assumption in that arithmetic is worth pricing rather than hiding. In
     this version the host drives tsel, so it writes the selector register once
     per 50 symbols: 148,271 / 50, rounded up, is 2,966 MMIO writes per block.
     At roughly a microsecond each that is about 3 ms - more than the decode
-    itself - which would move the projection from ~238 ms to ~241 ms. The
+    itself - which would move the projection from ~240 ms to ~243 ms. The
     end-to-end ratio still rounds to ~2.0x, because Amdahl's bound and not the
     accelerator is what sets it, but the host would then spend more time
     driving the accelerator than the accelerator spends decoding. It is why
@@ -663,7 +704,7 @@ inside bench_pyflake() also passes in every run.
     consumes the symbol buffer (move-to-front, the appends) costs what it costs
     today; DMA and MMIO latencies as above; no overlap between CPU and
     accelerator, so the accelerator's own time is added rather than hidden -
-    with overlap it disappears entirely and the bound becomes 483 - 247 = 236
+    with overlap it disappears entirely and the bound becomes 487 - 249 = 238
     ms. The selector list is assumed already in the accelerator (section 5.5
     explains that it is not, in this version, and what that would cost).
 
@@ -696,7 +737,7 @@ inside bench_pyflake() also passes in every run.
     shift, which is shorter. We did not run FPGA or ASIC timing, so any
     frequency here is an estimate. Section 5.6 does use it, so it is worth
     saying how little turns on it: the decode is 148,272 cycles, which is
-    0.74 ms at 200 MHz and 0.37 ms at 400 MHz, against a 483 ms run. Halving
+    0.74 ms at 200 MHz and 0.37 ms at 400 MHz, against a 487 ms run. Halving
     the clock moves the projected run by less than a millisecond and leaves
     the ratio at 2.0x. What the simulation establishes is throughput, not
     frequency: one symbol per cycle for all 148,271 symbols. The 200 MHz
@@ -709,7 +750,7 @@ inside bench_pyflake() also passes in every run.
     flip-flops and toggles one 64-bit shift, twenty 21-bit comparators, a
     20-to-5 priority encoder, one 22-bit add and a single read of a 13.9 kbit
     SRAM - one clock, 5 ns at 200 MHz. The CPU spends ~4,000 cycles of a 2.4 GHz
-    Haswell core on the same symbol, about 1.6 us. Taking a core under load at
+    Haswell core on the same symbol, about 1.7 us. Taking a core under load at
     the usual 5-15 W and being generous to the accelerator at 50 mW, that is
     roughly 10-25 uJ per symbol against roughly 0.25 nJ: four to five orders of
     magnitude, and the conclusion survives an order of magnitude of error in
@@ -737,7 +778,7 @@ The shipped benchmark is slow in the ordinary way a pure-Python decoder is slow:
 linear scan of the code table for every symbol, a bit reader that refills one byte
 at a time through the io stack, a move-to-front that rebuilds a list, and a final
 run-length pass that walks the output byte by byte. Replacing all of them in pure
-Python gives 2.33x in the course VM (1.13 s to 483 ms, 57.1% less time), with
+Python gives 2.34x in the course VM (1.14 s to 487 ms, 57.3% less time), with
 output identical to the original byte for byte, and the ablation in section 3.6
 says no single one of them dominates.
 
@@ -748,6 +789,6 @@ memory-bound and stays on the CPU. The proposed accelerator is ~13k gates plus
 5.4k flip-flops of table registers and 13.9 kbit of symbol SRAM. It decodes the
 whole benchmark block at one symbol per cycle in simulation with zero errors,
 changes one function in the software, and brings the run to roughly 2.0x over our
-optimized code and ~4.7x over the original - at which point the inverse BWT is the
+optimized code and ~4.8x over the original - at which point the inverse BWT is the
 largest single item left, and the next gain would have to come from somewhere
 other than the decoder.

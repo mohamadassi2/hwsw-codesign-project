@@ -92,10 +92,15 @@ identical, byte-for-byte in pyflate and bit-for-bit in mdp. That constraint is
 what makes the speedups mean anything.
 
 **3. Method.** py-spy for the flame graphs, cProfile for exact counts, perf
-stat for why. *Land:* `perf record` collected no samples in this guest and
-Python 3.10 has no perf trampoline, so perf could only ever have shown
-interpreter C frames — py-spy was the better tool anyway. Saying what did not
-work here costs ten seconds and buys credibility for the rest.
+stat for why, and `perf record` as root in the guide's form. *Land:* the
+hardware `cycles` event never samples in this guest — PMI in
+`/proc/interrupts` stays at 0 across a record — so `perf record -F 999 -g`
+runs on `cpu-clock`. It names the interpreter's C functions
+(`_PyEval_EvalFrameDefault` alone is 39% of the baseline pyflate worker) and
+no Python function, because Python 3.10 has no perf trampoline: perf answers
+"how much is interpreter overhead", py-spy answers "which Python function".
+Saying what did not work here costs ten seconds and buys credibility for the
+rest.
 
 ## Act 1 — pyflate (slides 4-9)
 
@@ -106,8 +111,8 @@ Huffman symbols, six tables, codes 2 to 15 bits.
 file. *Land:* the algorithm is what we measure and what we are allowed to
 change; the gate is the same 399,360 bytes, md5-checked on every run.
 
-**6. Baseline profile.** Point at the `find_next_symbol` tower. *Land:* 15.7%
-self, 49.3% cumulative — nearly half the run inside one function.
+**6. Baseline profile.** Point at the `find_next_symbol` tower. *Land:* 15.2%
+self, 48.8% cumulative — nearly half the run inside one function.
 
 **7. The problem.** This is the slide the whole talk turns on. The decoder
 walked the whole sorted table for every symbol, so the work scaled with table
@@ -118,17 +123,17 @@ are consecutive integers, so an entire length collapses to two numbers.
 **8. The fix.** `limit[L]` and `base[L]`: one compare per length instead of
 one per entry. Then the ablation — each of the five changes reverted in turn,
 md5-checked, re-timed in the VM. *Land:* the algorithmic change is the
-*smallest* of the three that matter (+77 ms, against +161 ms for
-move-to-front and +168 ms for the RLE regex). That is the honest reading, and
+*smallest* of the three that matter (+85.3 ms, against +163.1 ms for
+move-to-front and +161.8 ms for the RLE regex). That is the honest reading, and
 it is also the setup for the hardware: what justifies an accelerator is the
 half of the run that is still interpreter work after all five fixes.
 
-*If asked to see the code:* `benchmarks/pyflate/run_benchmark_opt.py` line 312, `find_next_symbol`, next to `benchmarks/pyflate/run_benchmark.py` line 224; the `limit`/`base` arrays it reads are built in `_build_canonical` at line 278. These files are frozen, so the line numbers do not move.
+*If asked to see the code:* `benchmarks/pyflate/run_benchmark_opt.py` line 291, `find_next_symbol`, next to `benchmarks/pyflate/run_benchmark.py` line 224; the `limit`/`base` arrays it reads are built in `_build_canonical` at line 264.
 
-**9. Result.** 1.127 s → 483.5 ms, 2.33×, n=30, ±0.9%. *Land:* IPC barely
-moved, 2.62 → 2.60. The processor was already running well — it was running
-too much. We removed 15.9 billion instructions, not stalls and not cache
-misses.
+**9. Result.** 1.141 s → 487 ms, 2.34×, n=30; pyperf's own ± is 3% on the
+baseline and 6% on the optimized run. *Land:* IPC barely moved, 2.58 → 2.62.
+The processor was already running well — it was running too much. We removed
+16.0 billion instructions, not stalls and not cache misses.
 
 ## Act 2 — mdp (slides 10-14)
 
@@ -151,9 +156,9 @@ is what makes bit-identity possible — both versions run in one process and
 their results are compared directly: same double, 0.8987358988699915,
 difference exactly zero.
 
-*If asked to see the code:* `benchmarks/mdp/run_benchmark_opt.py` line 313, the sweep, next to `benchmarks/mdp/run_benchmark.py` line 224 — the same loop with `dmin[sp]` replaced by `vmin[i]`; the cache is `getCritDist` at line 55. `python3 scripts/local_check.py all 1` runs both correctness gates in a few seconds (no venv needed). On CPython 3.12+ the mdp line reports a one-ulp difference and says why; the VM's 3.10 is bit-identical — report_mdp.txt section 3.
+*If asked to see the code:* `benchmarks/mdp/run_benchmark_opt.py` line 291, the sweep, next to `benchmarks/mdp/run_benchmark.py` line 224 — the same loop with `dmin[sp]` replaced by `vmin[i]`; the cache is `getCritDist` at line 55. `python3 scripts/local_check.py all 1` runs both correctness gates in a few seconds (no venv needed). On CPython 3.12+ the mdp line reports a one-ulp difference and says why; the VM's 3.10 is bit-identical — report_mdp.txt section 3.
 
-**14. Result.** 4.975 s → 1.308 s, 3.80×. *Land:* same story as pyflate — IPC
+**14. Result.** 5.098 s → 1.309 s, 3.90×. *Land:* same story as pyflate — IPC
 flat, instruction count down 3.8×. And say the negative result out loud: no
 hardware for mdp. One accelerator for one benchmark per the TA's ruling, and
 nothing here is bit-serial enough to earn it.
@@ -212,10 +217,10 @@ logic costs 49,804 cells; a comparator-free flat table would need 2^20 entries
 per bank. Say the caveat: frequency is inferred from a 98-level topological
 path, not static timing — no cell library, no place-and-route.
 
-**21. Expected gain.** Walk the subtraction, do not just show it: 483 ms
-optimized, 247 ms of it in `find_next_symbol`, the same work at 200 MHz is
-0.74 ms plus about 0.6 ms of DMA and table writes — so about 238 ms. 2.0× over
-the optimized run, 4.7× over the shipped benchmark, and ~4,000 CPU cycles per
+**21. Expected gain.** Walk the subtraction, do not just show it: 487 ms
+optimized, 249 ms of it in `find_next_symbol`, the same work at 200 MHz is
+0.74 ms plus about 0.6 ms of DMA and table writes — so about 240 ms. 2.0× over
+the optimized run, 4.8× over the shipped benchmark, and ~4,000 CPU cycles per
 symbol become one clock. *Land:* Amdahl sets the ceiling — the inverse BWT and
 the remaining interpreter overhead are the floor. That is a bound, not a
 headline.
@@ -244,12 +249,20 @@ not the BWT, corrupt streams, the table switch, and what sets the clock.
   individually too.
 - **"Did you try PyPy / a C extension / Cython?"** That replaces the benchmark
   instead of optimizing the code under test.
-- **"How much of this is reproducible?"** `scripts/check_all.sh` — 123 report
+- **"How much of this is reproducible?"** `scripts/check_all.sh` — 127 report
   figures and 85 slide figures recomputed from `results/`, plus a RUN_ID that
   ties the documents to the measurement files and a CODE_ID that ties the
   measurements to the code that produced them.
-- **"Did any perf sampling work?"** Software events (`task-clock`) do sample —
-  under the system interpreter, not under the venv one every capture in our
-  scripts used: 3,845 samples against 0 in `results/pyflate/perf_isolate.txt`.
-  So the empty capture was how we drove perf, not the guest; report section 2
-  has the bisect.
+- **"Did any perf sampling work?"** Yes, as root. The hardware `cycles`
+  event never samples here — PMI stays at 0 in
+  `results/pyflate/pmu_diagnosis.txt` — but the software clocks do:
+  `cpu-clock` 3,645 and `task-clock` 3,496 samples in
+  `results/pyflate/perf_events_probe.txt`. So the scripts record
+  `perf record -F 999 -g` on `cpu-clock`, as the guide does:
+  `results/pyflate/perf_report_base_dbg.txt` (131K samples under
+  `python3-dbg`) and, on the worker under the release interpreter,
+  `perf_top_base.txt` and `flame_pyflate_base_perf.svg`. An earlier version
+  of the scripts reported no working sampling event; that was a bug in the
+  probe (`head -1` under `pipefail` killed `perf script` with SIGPIPE), not
+  the guest. What perf shows is the interpreter's C frames, no Python names —
+  report section 2.

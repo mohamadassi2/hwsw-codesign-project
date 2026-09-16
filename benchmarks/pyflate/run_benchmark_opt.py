@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Our optimized version of pyperformance's bm_pyflate benchmark.
+"""Optimized version of pyperformance's bm_pyflate benchmark.
 
 Derived from benchmarks/pyflate/run_benchmark.py, which is vendored unmodified
 from pyperformance (MIT) and is itself Paul Sladen's pyflate; this file is
@@ -36,8 +36,8 @@ import pyperf
 
 int2byte = struct.Struct(">B").pack
 
-# Precomputed bit masks: the original called _mask() (a method call + shift + sub)
-# 650k times per decode; a list index is one bytecode.
+# MASKS[n] == (1 << n) - 1, precomputed: the mask is taken ~650k times per
+# decode and a list index is cheaper than the shift and subtract.
 MASKS = [(1 << i) - 1 for i in range(129)]
 # bzip2's final RLE stage: a run of 4 identical bytes followed by a repeat count.
 _RLE4 = re.compile(rb'(.)\1\1\1(.)', re.S)
@@ -49,30 +49,21 @@ class BitfieldBase(object):
         if isinstance(x, BitfieldBase):
             self.f = x.f
             self.data = x.data
-            # Both call sites construct straight after a byte-aligned
-            # readbits(16), and _more() only ever adds whole bytes, so x.bits
-            # is a multiple of 8 here. The rewind below assumes that.
+            # Bitfield is LSB-first and RBitfield MSB-first, so a bit buffer
+            # cannot be handed from one to the other: rewind pos to where x's
+            # buffered bytes start and begin empty. Both callers copy right
+            # after a byte-aligned readbits(16), so x.bits is a multiple of 8
+            # and the rewind is exact.
             if x.bits & 7:
-                # Not an assert: under python -O an assert disappears, and the
-                # rewind below would then silently round down to the wrong byte.
                 raise ValueError("copy-construct from a non-byte-aligned reader")
-            # Do NOT inherit x's bit buffer. Bitfield holds bits LSB-first and
-            # RBitfield MSB-first, so a buffer handed from one to the other
-            # would be read in the wrong order. The original got away with it
-            # only because it refilled one byte at a time, which left the
-            # buffer empty at every byte boundary; we refill eight. Both copy
-            # sites (gzip_main, bzip2_main) construct right after a byte
-            # aligned readbits(16), so rewinding to that boundary is exact.
             self.pos = x.pos - (x.bits >> 3)
             self.bits = 0
             self.bitfield = 0x0
             self.count = self.pos
         else:
             self.f = x
-            # One big read instead of one f.read(1) per byte (the original
-            # issued ~67k tiny reads through the io stack). Loop until EOF:
-            # a single read() only returns everything for a buffered regular
-            # file, and a short read would silently truncate the stream.
+            # Read the whole stream once instead of one f.read(1) per byte
+            # (~67k reads). Loop until EOF: read() may return less than asked.
             chunks = []
             while True:
                 c = x.read(1 << 20)
@@ -89,9 +80,7 @@ class BitfieldBase(object):
         pos = self.pos
         s = self.data[pos:pos + n]
         if not s:
-            # The original raised here too. Without it a truncated stream
-            # decodes zero bits forever: the all-zero canonical code is RUNA,
-            # so the run-length accumulator grows without bound.
+            # A truncated stream must fail here instead of looping forever.
             raise Exception("Length Error")
         self.pos = pos + len(s)
         self.count += len(s)
@@ -114,11 +103,8 @@ class BitfieldBase(object):
         while n >= self.bits and n > 7:
             n -= self.bits
             self.bits = 0
-            # The buffer must be cleared with the count, not just emptied of
-            # meaning: _more() ORs new bytes in at self.bits, so leftover bits
-            # here would be mixed into the next bytes of the stream. The
-            # original never hit this because it refilled one byte at a time
-            # and so always entered with an empty buffer; we refill eight.
+            # _more() merges new bytes into bitfield; clear stale bits so they
+            # do not mix in.
             self.bitfield = 0
             if not (n >> 3):
                 break          # nothing whole left to skip; _read(0) would raise
@@ -291,8 +277,8 @@ class HuffmanTable(object):
             count[x.bits] += 1
         first = 0
         index = 0
-        limit = [0] * (mb + 2)     # first[L] + count[L]
-        base = [0] * (mb + 2)      # index[L] - first[L]
+        limit = [0] * (mb + 2)     # codes of length L are < limit[L]
+        base = [0] * (mb + 2)      # symbol index = base[L] + code
         for L in range(1, mb + 1):
             limit[L] = first + count[L]
             base[L] = index - first
@@ -301,22 +287,12 @@ class HuffmanTable(object):
         self._limit = limit
         self._base = base
         self._syms = [x.code for x in self.table]
-        self._ready = True
-
-    def _find_symbol(self, bits, symbol, table):
-        for h in table:
-            if h.bits == bits and h.reverse_symbol == symbol:
-                return h.code
-        return -1
 
     def find_next_symbol(self, field, reversed=True):
         mb = self.max_bits
         if mb < 0:
-            # An all-zero code-length table leaves max_bits at -1. The original
-            # walked an empty self.table and fell through to this raise; here
-            # snoopbits(-1) would index MASKS from the end and reverse_bits
-            # would shift by a negative amount, so check first and fail the
-            # same way. DEFLATE really does emit empty distance trees.
+            # Empty table (all code lengths zero, legal for a DEFLATE distance
+            # tree): max_bits is -1, so raise here rather than snoopbits(-1).
             raise Exception("unfound symbol, even after end of table @%r"
                             % field.tell())
         v = field.snoopbits(mb)
@@ -543,8 +519,8 @@ def decode_huffman_block(b, out):
 
     nearly_there = bwt_reverse(b"".join(buffer), pointer)
     # Pointless/irritating run-length encoding step: a run of four equal bytes
-    # is followed by a count byte.  The regex walks left to right exactly like
-    # the original byte loop, but in C.
+    # is followed by a count byte. re.sub scans left to right without overlap,
+    # same as a byte loop, but in C.
     out.append(_RLE4.sub(lambda m: m.group(1) * (m.group(2)[0] + 4), nearly_there))
 
 # Sixteen bits of magic have been removed by the time we start decoding

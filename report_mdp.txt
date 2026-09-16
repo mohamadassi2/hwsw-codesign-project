@@ -69,46 +69,54 @@ Data structures and algorithm.
 ----------------------------------------------------------------------------------
 Tools as for pyflate: py-spy for the flame graphs (Python-level frames,
 rendered with the FlameGraph scripts), cProfile for exact call counts, perf
-stat for the hardware counters. perf record could not sample the benchmark
-here for the reason report_pyflate.txt section 2 isolates: our capture ran the
-virtual environment's interpreter, for which sampling returns nothing in this
-guest, so results/mdp/perf_event_chosen.txt records "none" and
-results/mdp/perf_base.folded is empty. The probe in
-results/mdp/perf_events_probe.txt shows the software events themselves do
-sample (cpu-clock 3,649 samples, task-clock 3,912) while the hardware cycles
-event never does. So the flame graphs in results/mdp/ are py-spy's.
+stat for the hardware counters, and perf record, run as root, on the software
+clock. The hardware cycles event never samples in this guest; the software
+clocks do (results/mdp/perf_events_probe.txt: cpu-clock 3,816 samples,
+task-clock 3,614). report_pyflate.txt section 2 gives the PMI explanation and
+the note on why an earlier version of the scripts reported no sampling event.
+The guide's own form, perf record -F 999 -g under python3-dbg, is in
+results/mdp/perf_report_base_dbg.txt (336K samples); the capture this report
+reads is the benchmark worker under the release interpreter with
+-e cpu-clock -F 997 -g, results/mdp/perf_top_base.txt (10K samples), where
+tuplehash is 36.1% of the samples, _PyEval_EvalFrameDefault 18.0%, long_hash
+6.4% and lookdict 4.8% - the sweep's nested-tuple dictionary keys, seen from
+the C side. perf names the interpreter's C functions, not Python functions
+(CPython 3.10 has no perf trampoline), so the flame graphs in results/mdp/
+that this report reads are py-spy's, and the shares below are cProfile's.
 
 Where the time goes (cProfile, one evaluate(), baseline). Recomputed from
 results/mdp/cprofile_base.txt by scripts/cprofile_shares.py; shares are of
-bench_mdp's cumulative time, 8.928 s under the profiler:
+bench_mdp's cumulative time, 8.927 s under the profiler:
                                        self     cum       calls
   Battle.evaluate                      16.8%  100.0%           1
-  <genexpr> sum(dmin[sp2]*p ...)       12.7%   12.7%   2,018,493
-  <genexpr> sum(dmax[sp2]*p ...)       12.0%   12.0%   2,018,493
-  Fraction._add                        10.6%   19.9%     360,472
-  builtins.sum                          8.7%   33.4%     521,459
-  Fraction.__new__                      6.3%    7.4%     489,681
-  Battle.getSuccessors                  5.4%   43.0%     784,243
-  Fraction forward()                    2.9%   24.7%     378,891
-  builtins.max                          2.5%    6.2%     312,640
-  getCritDist                           2.4%   23.3%       3,659
+  <genexpr> sum(dmin[sp2]*p ...)       12.8%   12.8%   2,018,493
+  <genexpr> sum(dmax[sp2]*p ...)       12.2%   12.2%   2,018,493
+  Fraction._add                        10.5%   19.8%     360,472
+  builtins.sum                          8.5%   33.5%     521,459
+  Fraction.__new__                      6.3%    7.3%     489,681
+  Battle.getSuccessors                  5.4%   42.9%     784,243
+  Fraction forward()                    2.9%   24.6%     378,891
+  builtins.max                          2.4%    6.1%     312,640
+  getCritDist                           2.5%   23.1%       3,659
 
 Reading it: a little over half the run is the value-iteration sweep itself
 (evaluate's own body, the two generator expressions and sum/max come to 52.7%),
-and about a fifth is Fraction arithmetic while the successor graph is built. The sweep is
-slow for a reason the flame graph does not show but the code does: dmin, dmax
-and frozen are dictionaries keyed by the state tuples, and every update does
-several lookups of a key that is a tuple of namedtuples - each lookup hashes
-the whole nested structure. getSuccessors() is called from inside the sweep
-for every state, twice per node (once for dmin and once for dmax), and the
-generator expressions are re-created each time. The Fraction cost comes from
-getCritDist being called 3,659 times with only THREE distinct argument tuples,
-recomputing the same exact distributions over and over.
+and about a fifth is Fraction arithmetic while the successor graph is built.
+The sweep is slow for a reason the py-spy flame graph does not show but the
+code and the perf capture do: dmin, dmax and frozen are dictionaries keyed by
+the state tuples, and every update does several lookups of a key that is a
+tuple of namedtuples - each lookup hashes the whole nested structure, which
+is what the tuplehash, long_hash and lookdict shares above measure.
+getSuccessors() is called from inside the sweep for every state, twice per
+node (once for dmin and once for dmax), and the generator expressions are
+re-created each time. The Fraction cost comes from getCritDist being called
+3,659 times with only THREE distinct argument tuples, recomputing the same
+exact distributions over and over.
 
 Hardware counters in the VM (results/mdp/perfstat_base.txt, perf stat -r 3
 over four loops of the worker; the before/after table is in 4.1): the baseline
-retires 118,599,910,811 instructions in 47,931,982,456 cycles, an IPC of 2.47,
-with 24,979,309,417 branches of which 0.53% mispredict. The IPC is healthy and
+retires 118,538,058,891 instructions in 48,372,566,976 cycles, an IPC of 2.45,
+with 24,945,970,884 branches of which 0.52% mispredict. The IPC is healthy and
 the branches predict well, so this is not a stalled or badly predicted
 workload - it is simply executing far more instructions than the problem
 needs, which is what section 3 removes.
@@ -123,21 +131,17 @@ shipped file is small and local.
     counterpart). The complete change is
       diff -u benchmarks/mdp/run_benchmark.py benchmarks/mdp/run_benchmark_opt.py
     and it lands in two functions:
-      Battle.evaluate   262-310 / -        3.1, number the states and build the
+      Battle.evaluate   250-288 / -        3.1, number the states and build the
                                            flat successor rows, once
-                        312-337 / 223-243  3.1, the sweep: the same loop over
+                        290-315 / 223-243  3.1, the sweep: the same loop over
                                            those rows; dmin[sp] has become
                                            vmin[i] and sum() a running total
-                        339-346 / -        3.1, write the values back into
+                        317-322 / -        3.1, write the values back into
                                            self.min / self.max / self.frozen
-      getCritDist        52-77  /  44-54   3.2, the cache dict and the memoized
+      getCritDist        52-74  /  44-54   3.2, the cache dict and the memoized
                                            function
-    The comment block at lines 246-261 of Battle.evaluate is the CPython 3.12
-    caveat discussed below in this section. The file's docstring (line 7)
-    points to that note "in _solve": no function of that name exists in the
-    file; the note is at the top of Battle.evaluate. The docstring stays as it
-    is because results/CODE_ID.txt fingerprints this file, and any edit - even
-    to a comment - would mean re-measuring everything in the VM.
+    The comment at lines 243-249 of Battle.evaluate is the CPython 3.12 caveat
+    discussed below in this section; the file's docstring (line 7) points to it.
 
 3.1 Value iteration on integer-indexed flat lists
     After topoSort, evaluate() assigns each state a small integer once and
@@ -191,53 +195,59 @@ Correctness. scripts/local_check.py runs both versions:
     Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
     -cpu host -accel kvm. Measured by script_mdp.sh; raw files in results/mdp/.
 
-      pyperformance run --bench mdp     4.995 +- 0.043 s  (n=20)
-      pyperf, baseline (vendored copy)  4.975 +- 0.013 s  (n=18)
-      pyperf, optimized                 1.308 +- 0.009 s  (n=18)
-      speedup  3.80x   (73.7% less time; the assignment asks for 7%)
+      pyperformance run --bench mdp     5.082 +- 0.078 s  (n=20)
+      pyperf, baseline (vendored copy)  5.098 +- 0.085 s  (n=18)
+      pyperf, optimized                 1.309 +- 0.008 s  (n=18)
+      speedup  3.90x   (74.3% less time; the assignment asks for 7%)
 
     pyperf compare_to:
       +-----------+----------+------------------------+
       | Benchmark | mdp_base | mdp_opt                |
       +===========+==========+========================+
-      | mdp       | 4.97 sec | 1.31 sec: 3.80x faster |
+      | mdp       | 5.10 sec | 1.31 sec: 3.90x faster |
       +-----------+----------+------------------------+
 
     perf stat (worker run):
     counter                       baseline           optimized    ratio
-    task-clock                   20,157.30            5,399.80     3.73
-    cycles                  47,931,982,456      12,824,430,095     3.74
-    instructions           118,599,910,811      31,402,469,870     3.78
-    branches                24,979,309,417       5,942,112,524     4.20
-    branch-misses              133,043,913          39,515,371     3.37
-    IPC (baseline): 2.474
-    IPC (optimized): 2.449
+    task-clock                   20,338.11            5,361.75     3.79
+    cycles                  48,372,566,976      12,739,769,949     3.80
+    instructions           118,538,058,891      31,517,938,272     3.76
+    branches                24,945,970,884       5,939,388,417     4.20
+    branch-misses              130,229,466          39,009,550     3.34
+    IPC (baseline): 2.451
+    IPC (optimized): 2.474
     (IPC above is instructions/cycles of the three-run means. perf's own
-     'insn per cycle' line averages the per-run ratios and prints base 2.47, opt 2.46.)
+     'insn per cycle' line averages the per-run ratios and prints base 2.45, opt 2.46.)
+
+    Sampling used: perf record -e cpu-clock -F 997 -g
+    (the guest has no sampling PMU, so the default cycles event yields
+     no samples; see section 2)
 
     Flame graphs:
       results/mdp/flame_mdp_base_focus.svg
+      results/mdp/flame_mdp_base_perf.svg
       results/mdp/flame_mdp_base_pyspy.svg
       results/mdp/flame_mdp_opt_focus.svg
+      results/mdp/flame_mdp_opt_perf.svg
       results/mdp/flame_mdp_opt_pyspy.svg
 
 4.2 After the optimization (cProfile, optimized)
-    Recomputed from results/mdp/cprofile_opt.txt, shares of bench_mdp's 2.370 s
+    Recomputed from results/mdp/cprofile_opt.txt, shares of bench_mdp's 2.393 s
     under the profiler:
                                        self     cum       calls
-  Battle.evaluate (the sweep)          35.0%   99.9%           1
-  Fraction._add                         8.4%   15.9%      75,304
-  Fraction.__new__                      7.2%    8.5%     137,825
-  _applyActionSide1                     6.2%   34.0%       5,983
-  applyHPChange                         3.2%   10.6%      54,430
-  builtins.max                          3.1%    3.2%     312,640
-  namedtuple._replace                   2.1%    6.0%      54,486
-  Battle.getSuccessors                  1.1%   56.1%       9,642
+  Battle.evaluate (the sweep)          34.9%   99.9%           1
+  Fraction._add                         8.5%   16.0%      75,304
+  Fraction.__new__                      7.3%    8.6%     137,825
+  _applyActionSide1                     6.1%   33.9%       5,983
+  applyHPChange                         3.2%   10.5%      54,430
+  builtins.max                          3.2%    3.2%     312,640
+  namedtuple._replace                   2.2%    5.9%      54,486
+  Battle.getSuccessors                  1.1%   55.7%       9,642
 
-    The sweep (evaluate's own 35.0%, plus builtins.max) is now the honest
+    The sweep (evaluate's own 34.9%, plus builtins.max) is now the honest
     cost of the algorithm - a few million multiply-adds and maxes in the
     interpreter. The rest is building the successor graph (getSuccessors,
-    56.1% cumulative); a third of the run (_applyActionSide1, 34.0%
+    55.7% cumulative); a third of the run (_applyActionSide1, 33.9%
     cumulative) is constructing the states with exact Fractions - each state
     is built once, so memoization does not help there - and namedtuple._replace
     for the hp updates.
@@ -249,17 +259,19 @@ Correctness. scripts/local_check.py runs both versions:
     results/reproducibility/run3/.
 
         run          speedup   optimized
-        shipped      3.803x    1.308 s
+        shipped      3.895x    1.309 s
         second       3.820x    1.305 s
         third        3.822x    1.308 s
 
-    The ratio holds to 0.5% across the three, which is inside pyperf's own
-    spread on this benchmark. (pyflate is less stable - 3.0% across the same
-    three runs; report_pyflate.txt section 4.3 says so.) Compare any two with
+    The ratio holds to 2.0% across the three; the drift is in the baseline
+    (5.098 s here against 4.986 s and 5.000 s, just over one standard
+    deviation of pyperf's +- 0.085 s), the optimized time moves by 0.3%.
+    (pyflate is less stable - 3.0% across the same three runs;
+    report_pyflate.txt section 4.3 says so.) Compare any two with
     scripts/compare_runs.py.
 
     A fourth run, made while the shared host was busy, is excluded: it put mdp
-    at 2.33 s against 1.30 s while executing the same 31.4 billion instructions,
+    at 2.33 s against 1.30 s while executing the same 31.5 billion instructions,
     because "CPUs utilized" had fallen from 1.00 to 0.58 - the wall clock moved
     and the instruction count did not. script_mdp.sh records that figure for
     every run in results/mdp/contention.txt and warns below 0.95, so the reader
@@ -291,8 +303,8 @@ that remains is not a datapath problem.
 The benchmark's cost was not the value iteration as an algorithm but how it was
 indexed and accumulated: dictionary lookups keyed by nested tuples inside the
 hottest loop, plus exact-arithmetic distributions recomputed thousands of times.
-Indexing the graph once and memoizing the distributions gives 3.80x in the course
-VM (4.975 s to 1.308 s, 73.7% less time). On the VM's CPython 3.10 the result is
+Indexing the graph once and memoizing the distributions gives 3.90x in the course
+VM (5.098 s to 1.309 s, 74.3% less time). On the VM's CPython 3.10 the result is
 the same IEEE-754 double as the original, bit for bit; on CPython 3.12 and later
 it is the original that moves, by about one ulp, because sum() switched to
 compensated summation there - section 3 explains the trade and why we kept the

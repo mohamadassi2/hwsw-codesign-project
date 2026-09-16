@@ -1,1 +1,1 @@
-none
+-e cpu-clock -F 997 -g

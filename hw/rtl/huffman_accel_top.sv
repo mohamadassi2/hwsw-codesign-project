@@ -5,8 +5,8 @@
 //   1. write the NTAB tables (limit/base rows + symbol entries),
 //   2. stream the compressed bytes in and the 9-bit symbols out (DMA/FIFO),
 //   3. drive `tsel` from the block's selector list, one change per 50 symbols.
-// The MTF / RLE / BWT stages that follow stay in software: after the
-// canonical-decode fix they are cheap, and BWT is a memory-bound pointer
+// The MTF / RLE / BWT stages that follow stay in software: MTF and RLE are a
+// small share of the optimized profile, and BWT is a memory-bound pointer
 // chase that gains nothing from a datapath.
 
 module huffman_accel_top #(
@@ -54,19 +54,10 @@ module huffman_accel_top #(
     logic               peek_valid;
     logic [4:0]         len;
 
-    // `in_last` accompanies the final beat, AXI-stream style, and the flush is
-    // the handshake on that beat.
-    //
-    // An earlier version also flushed on `in_last & ~in_valid`, to support a
-    // host that holds LAST as a level after the last beat. That cannot work:
-    // the hardware cannot tell "LAST held after the final beat" from "LAST
-    // presented for a final beat the producer has not delivered yet", and a
-    // single bubble cycle then sets `eof_q` for good. With the stream still
-    // arriving, the decoder ran on a short buffer, raised `underrun` and
-    // halted. It also fired during table programming for the small directed
-    // vector sets, where the stream is one word and LAST is high from reset
-    // while `run` is still low - so `done` asserted before a single input word
-    // had been accepted.
+    // `in_last` rides on the final beat, AXI-stream TLAST style: flush on that
+    // beat's handshake only.  LAST may stay high afterwards, but a flush on
+    // LAST without the handshake would fire on a producer bubble before the
+    // last word arrives (and during table programming, when run is low).
     logic flush_c;
     assign flush_c = in_last & in_valid & in_ready;
 
@@ -92,12 +83,11 @@ module huffman_accel_top #(
         .err(err), .underrun(underrun)
     );
 
-    // The host polls these instead of guessing from the absence of symbols.
     assign busy = run & ~done & ~err & ~underrun;
 
     always_ff @(posedge clk or negedge rst_n) begin
-        // Count accepted symbols, not cycles in which one was offered: under
-        // backpressure the same symbol is presented for several cycles.
+        // Count accepted symbols: under backpressure the same symbol is
+        // offered for several cycles.
         if (!rst_n) sym_count <= 32'd0;
         else if (sym_valid && out_ready) sym_count <= sym_count + 32'd1;
     end

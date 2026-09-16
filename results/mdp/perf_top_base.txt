@@ -1,0 +1,337 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 10K of event 'cpu-clock'
+# Event count (approx.): 10344031817
+#
+# Overhead  Shared Object         Symbol                                                 IPC   [IPC Coverage]
+# ........  ....................  .....................................................  ....................
+#
+    36.13%  python3.10            [.] tuplehash.lto_priv.0                               -      -            
+            |
+            ---tuplehash.lto_priv.0
+
+    18.01%  python3.10            [.] _PyEval_EvalFrameDefault                           -      -            
+            |
+            ---_PyEval_EvalFrameDefault
+               |          
+                --17.71%--0
+
+     6.38%  python3.10            [.] long_hash.lto_priv.0                               -      -            
+            |
+            ---long_hash.lto_priv.0
+
+     4.79%  python3.10            [.] lookdict.lto_priv.0                                -      -            
+            |
+            ---lookdict.lto_priv.0
+
+     2.67%  python3.10            [.] tuplerichcompare.lto_priv.0                        -      -            
+            |
+            ---tuplerichcompare.lto_priv.0
+               |          
+               |--0.88%--0x557afe04dba0
+               |          
+                --0.74%--0x557b17c71060
+
+     1.86%  python3.10            [.] dict_subscript.lto_priv.0                          -      -            
+            |
+            ---dict_subscript.lto_priv.0
+               |          
+                --1.65%--0x557afe04dba0
+
+     1.51%  python3.10            [.] _PyEval_MakeFrameVector                            -      -            
+            |
+            ---_PyEval_MakeFrameVector
+               |          
+                --1.17%--0x557afe04c340
+
+     1.46%  python3.10            [.] listiter_next.lto_priv.0                           -      -            
+            |
+            ---listiter_next.lto_priv.0
+               0
+
+     1.43%  python3.10            [.] frame_dealloc.lto_priv.0                           -      -            
+            |
+            ---frame_dealloc.lto_priv.0
+               |          
+                --1.29%--0x557afe049ec0
+
+     1.04%  python3.10            [.] _PyLong_GCD                                        -      -            
+            |
+            ---_PyLong_GCD
+               0x557afe051320
+
+     0.95%  python3.10            [.] lookdict_unicode_nodummy.lto_priv.0                -      -            
+            |
+            ---lookdict_unicode_nodummy.lto_priv.0
+               |          
+                --0.73%--0x557afe04d7c0
+
+     0.91%  python3.10            [.] _PyObject_GenericGetAttrWithDict                   -      -            
+            |
+            ---_PyObject_GenericGetAttrWithDict
+               |          
+                --0.69%--0x557afe04d7c0
+
+     0.90%  python3.10            [.] tupledealloc.lto_priv.0                            -      -            
+            |
+            ---tupledealloc.lto_priv.0
+               |          
+                --0.77%--0x557afe04dba0
+
+     0.85%  python3.10            [.] gen_iternext.lto_priv.0                            -      -            
+            |
+            ---gen_iternext.lto_priv.0
+               |          
+                --0.63%--0x557afe049ec0
+
+     0.81%  python3.10            [.] _PyObject_MakeTpCall                               -      -            
+            |
+            ---_PyObject_MakeTpCall
+               |          
+                --0.61%--0x557afe04dba0
+
+     0.74%  python3.10            [.] PyObject_RichCompare                               -      -            
+            |
+            ---PyObject_RichCompare
+
+     0.60%  python3.10            [.] super_getattro.lto_priv.0                          -      -            
+            |
+            ---super_getattro.lto_priv.0
+               |          
+                --0.57%--0x557afe04dba0
+
+     0.58%  python3.10            [.] subtype_dealloc.lto_priv.0                         -      -            
+            |
+            ---subtype_dealloc.lto_priv.0
+               |          
+                --0.54%--0x557b17a21a30
+
+     0.55%  python3.10            [.] _PyObject_GetMethod                                -      -            
+            |
+            ---_PyObject_GetMethod
+
+     0.47%  python3.10            [.] _PyDict_GetItemIdWithError                         -      -            
+     0.45%  python3.10            [.] PyNumber_Multiply                                  -      -            
+     0.44%  python3.10            [.] PyFunction_NewWithQualName                         -      -            
+     0.42%  python3.10            [.] func_dealloc.lto_priv.0                            -      -            
+     0.41%  python3.10            [.] float_mul.lto_priv.0                               -      -            
+     0.41%  python3.10            [.] gen_dealloc.lto_priv.0                             -      -            
+     0.40%  python3.10            [.] PyObject_GetItem                                   -      -            
+     0.40%  python3.10            [.] _PyObject_GenericSetAttrWithDict                   -      -            
+     0.39%  python3.10            [.] object_dealloc.lto_priv.0                          -      -            
+     0.38%  python3.10            [.] long_div.lto_priv.0                                -      -            
+     0.37%  python3.10            [.] _PyFunction_Vectorcall                             -      -            
+     0.36%  python3.10            [.] PyObject_SetItem                                   -      -            
+     0.34%  python3.10            [.] long_mul.lto_priv.0                                -      -            
+     0.33%  python3.10            [.] insertdict.lto_priv.0                              -      -            
+     0.33%  python3.10            [.] set_contains.lto_priv.0                            -      -            
+     0.33%  python3.10            [.] type_getattro.lto_priv.0                           -      -            
+     0.32%  python3.10            [.] PyType_GenericAlloc                                -      -            
+     0.31%  python3.10            [.] convertsimple.lto_priv.0                           -      -            
+     0.29%  python3.10            [.] PyObject_GetAttr                                   -      -            
+     0.29%  python3.10            [.] PyObject_Hash                                      -      -            
+     0.28%  python3.10            [.] builtin_sum.lto_priv.0                             -      -            
+     0.26%  python3.10            [.] list_iter.lto_priv.0                               -      -            
+     0.26%  python3.10            [.] property_descr_get.lto_priv.0                      -      -            
+     0.25%  python3.10            [.] gen_new_with_qualname.lto_priv.0                   -      -            
+     0.25%  python3.10            [.] listiter_dealloc.lto_priv.0                        -      -            
+     0.24%  python3.10            [.] float_dealloc.lto_priv.0                           -      -            
+     0.24%  python3.10            [.] slot_tp_new.lto_priv.0                             -      -            
+     0.22%  python3.10            [.] lookup_maybe_method.lto_priv.0                     -      -            
+     0.20%  python3.10            [.] PyTuple_New                                        -      -            
+     0.19%  python3.10            [.] PyDict_GetItemWithError                            -      -            
+     0.19%  python3.10            [.] _PyLong_New                                        -      -            
+     0.18%  python3.10            [.] cfunction_vectorcall_FASTCALL.lto_priv.0           -      -            
+     0.18%  python3.10            [.] vgetargs1_impl.lto_priv.0                          -      -            
+     0.17%  python3.10            [.] PyLong_FromLong                                    -      -            
+     0.17%  python3.10            [.] min_max.lto_priv.0                                 -      -            
+     0.16%  python3.10            [.] _PyStack_UnpackDict.lto_priv.0                     -      -            
+     0.16%  python3.10            [.] lookdict_unicode.lto_priv.0                        -      -            
+     0.16%  python3.10            [.] _PyObject_LookupSpecial                            -      -            
+     0.16%  python3.10            [.] _PyStack_AsDict                                    -      -            
+     0.16%  python3.10            [.] free_keys_object.lto_priv.0                        -      -            
+     0.15%  python3.10            [.] PyMember_SetOne                                    -      -            
+     0.15%  python3.10            [.] PyObject_GC_Del                                    -      -            
+     0.15%  python3.10            [.] insert_to_emptydict.lto_priv.0                     -      -            
+     0.14%  python3.10            [.] PyIter_Next                                        -      -            
+     0.13%  python3.10            [.] PyNumber_Add                                       -      -            
+     0.13%  python3.10            [.] _PyType_Lookup                                     -      -            
+     0.13%  python3.10            [.] deduce_unreachable                                 -      -            
+     0.13%  python3.10            [.] gc_collect_main.lto_priv.0                         -      -            
+     0.13%  python3.10            [.] math_gcd.lto_priv.0                                -      -            
+     0.13%  python3.10            [.] method_get.lto_priv.0                              -      -            
+     0.13%  python3.10            [.] super_dealloc.lto_priv.0                           -      -            
+     0.12%  libc.so.6             [.] __memset_avx2_unaligned_erms                       -      -            
+     0.12%  python3.10            [.] object_isinstance.lto_priv.0                       -      -            
+     0.11%  python3.10            [.] PyObject_GetIter                                   -      -            
+     0.11%  python3.10            [.] PyObject_SetAttr                                   -      -            
+     0.11%  python3.10            [.] dict_dealloc.lto_priv.0                            -      -            
+     0.11%  python3.10            [.] super_init.lto_priv.0                              -      -            
+     0.11%  python3.10            [.] vgetargskeywords.lto_priv.0                        -      -            
+     0.10%  python3.10            [.] tupletraverse.lto_priv.0                           -      -            
+     0.09%  python3.10            [.] cfunction_call.lto_priv.0                          -      -            
+     0.09%  python3.10            [.] tp_new_wrapper.lto_priv.0                          -      -            
+     0.09%  python3.10            [.] tupleiter_dealloc.lto_priv.0                       -      -            
+     0.09%  python3.10            [.] tuplesubscript.lto_priv.0                          -      -            
+     0.09%  python3.10            [.] visit_reachable.lto_priv.0                         -      -            
+     0.08%  python3.10            [.] _PyObject_FastCallDictTstate                       -      -            
+     0.08%  python3.10            [.] binary_op1.lto_priv.0                              -      -            
+     0.08%  python3.10            [.] tuple_iter.lto_priv.0                              -      -            
+     0.07%  python3.10            [.] PyFloat_FromDouble                                 -      -            
+     0.07%  python3.10            [.] _PyObject_VectorcallTstate.lto_priv.7.lto_priv.0   -      -            
+     0.07%  python3.10            [.] float_add.lto_priv.0                               -      -            
+     0.07%  python3.10            [.] getset_get.lto_priv.0                              -      -            
+     0.07%  python3.10            [.] map_next.lto_priv.0                                -      -            
+     0.07%  python3.10            [.] update_one_slot.lto_priv.0                         -      -            
+     0.06%  libc.so.6             [.] __strchr_avx2                                      -      -            
+     0.06%  python3.10            [.] PyLong_AsLong                                      -      -            
+     0.06%  python3.10            [.] builtin_isinstance.lto_priv.0                      -      -            
+     0.06%  python3.10            [.] convert_to_double.lto_priv.0                       -      -            
+     0.06%  python3.10            [.] dictiter_iternextitem.lto_priv.0                   -      -            
+     0.06%  python3.10            [.] long_add.lto_priv.0                                -      -            
+     0.06%  python3.10            [.] meth_dealloc.lto_priv.0                            -      -            
+     0.06%  python3.10            [.] object_new.lto_priv.0                              -      -            
+     0.06%  python3.10            [.] tupleiter_next.lto_priv.0                          -      -            
+     0.05%  libc.so.6             [.] __memmove_avx_unaligned_erms                       -      -            
+     0.05%  python3.10            [.] PyMem_Free                                         -      -            
+     0.05%  python3.10            [.] PyType_IsSubtype                                   -      -            
+     0.05%  python3.10            [.] _Py_Dealloc                                        -      -            
+     0.05%  python3.10            [.] dict_pop.lto_priv.0                                -      -            
+     0.05%  python3.10            [.] list_sort_impl.lto_priv.0                          -      -            
+     0.05%  python3.10            [.] method_vectorcall.lto_priv.0                       -      -            
+     0.05%  python3.10            [.] slot_nb_add.lto_priv.0                             -      -            
+     0.04%  python3.10            [.] PyArg_ParseTuple                                   -      -            
+     0.04%  python3.10            [.] cfunction_vectorcall_FASTCALL_KEYWORDS.lto_priv.0  -      -            
+     0.04%  python3.10            [.] cfunction_vectorcall_O.lto_priv.0                  -      -            
+     0.04%  python3.10            [.] dict_traverse.lto_priv.0                           -      -            
+     0.04%  python3.10            [.] find_empty_slot.lto_priv.0                         -      -            
+     0.04%  python3.10            [.] float_richcompare.lto_priv.0                       -      -            
+     0.04%  python3.10            [.] object_init.lto_priv.0                             -      -            
+     0.04%  python3.10            [.] subtype_traverse.lto_priv.0                        -      -            
+     0.04%  [unknown]             [k] 0xffffffffa5cc428a                                 -      -            
+     0.03%  python3.10            [.] PyNumber_InPlaceAdd                                -      -            
+     0.03%  python3.10            [.] PyObject_Free                                      -      -            
+     0.03%  python3.10            [.] PyTraceBack_Here                                   -      -            
+     0.03%  python3.10            [.] _PyObject_Malloc.lto_priv.0                        -      -            
+     0.03%  python3.10            [.] dictresize.lto_priv.0                              -      -            
+     0.03%  python3.10            [.] func_traverse.lto_priv.0                           -      -            
+     0.03%  python3.10            [.] list_dealloc.lto_priv.0                            -      -            
+     0.03%  python3.10            [.] method_dealloc.lto_priv.0                          -      -            
+     0.03%  python3.10            [.] r_object                                           -      -            
+     0.03%  python3.10            [.] vectorcall_maybe.constprop.0                       -      -            
+     0.03%  python3.10            [.] weakref_richcompare.lto_priv.0                     -      -            
+     0.03%  [unknown]             [k] 0xffffffffa61869b7                                 -      -            
+     0.03%  [unknown]             [k] 0xffffffffa6186f27                                 -      -            
+     0.02%  libc.so.6             [.] __strlen_avx2                                      -      -            
+     0.02%  libc.so.6             [.] __strncmp_avx2                                     -      -            
+     0.02%  libc.so.6             [.] _int_free                                          -      -            
+     0.02%  libc.so.6             [.] malloc                                             -      -            
+     0.02%  python3.10            [.] PyArg_UnpackTuple                                  -      -            
+     0.02%  python3.10            [.] PyCode_NewWithPosOnlyArgs                          -      -            
+     0.02%  python3.10            [.] PyDict_New                                         -      -            
+     0.02%  python3.10            [.] PyDict_SetDefault                                  -      -            
+     0.02%  python3.10            [.] PyLong_AsLongAndOverflow                           -      -            
+     0.02%  python3.10            [.] PyMem_Realloc                                      -      -            
+     0.02%  python3.10            [.] PyNumber_Index                                     -      -            
+     0.02%  python3.10            [.] PyObject_CallOneArg.lto_priv.30.lto_priv.0         -      -            
+     0.02%  python3.10            [.] PyObject_Malloc                                    -      -            
+     0.02%  python3.10            [.] PyObject_Realloc                                   -      -            
+     0.02%  python3.10            [.] PyObject_SelfIter                                  -      -            
+     0.02%  python3.10            [.] _PyObject_GetAttrId                                -      -            
+     0.02%  python3.10            [.] builtin_max.lto_priv.0                             -      -            
+     0.02%  python3.10            [.] dictitems_iter.lto_priv.0                          -      -            
+     0.02%  python3.10            [.] long_long_meth.lto_priv.0                          -      -            
+     0.02%  python3.10            [.] object_richcompare.lto_priv.0                      -      -            
+     0.02%  python3.10            [.] rangeiter_next.lto_priv.0                          -      -            
+     0.02%  python3.10            [.] slice_dealloc.lto_priv.0                           -      -            
+     0.02%  python3.10            [.] zip_next.lto_priv.0                                -      -            
+     0.02%  [unknown]             [k] 0xffffffffa5e8cd0a                                 -      -            
+     0.02%  [unknown]             [k] 0xffffffffa6189cd9                                 -      -            
+     0.01%  ld-linux-x86-64.so.2  [.] _dl_relocate_object                                -      -            
+     0.01%  libc.so.6             [.] cfree@GLIBC_2.2.5                                  -      -            
+     0.01%  python3.10            [.] BaseException_dealloc.lto_priv.0                   -      -            
+     0.01%  python3.10            [.] BaseException_new.lto_priv.0                       -      -            
+     0.01%  python3.10            [.] PyArg_ParseTupleAndKeywords                        -      -            
+     0.01%  python3.10            [.] PyErr_Format                                       -      -            
+     0.01%  python3.10            [.] PyList_Append                                      -      -            
+     0.01%  python3.10            [.] PyNumber_Negative                                  -      -            
+     0.01%  python3.10            [.] PyObject_IsTrue                                    -      -            
+     0.01%  python3.10            [.] PyObject_LengthHint                                -      -            
+     0.01%  python3.10            [.] PySequence_Tuple                                   -      -            
+     0.01%  python3.10            [.] PyTuple_Pack                                       -      -            
+     0.01%  python3.10            [.] PyUnicode_RichCompare                              -      -            
+     0.01%  python3.10            [.] PyWeakref_NewRef                                   -      -            
+     0.01%  python3.10            [.] _PyArg_UnpackKeywords                              -      -            
+     0.01%  python3.10            [.] _PyDict_SetItemId                                  -      -            
+     0.01%  python3.10            [.] _PyNumber_Index                                    -      -            
+     0.01%  python3.10            [.] _PyObject_CallNoArg.lto_priv.11.lto_priv.0         -      -            
+     0.01%  python3.10            [.] _PyObject_Free.lto_priv.0                          -      -            
+     0.01%  python3.10            [.] _PyObject_GC_NewVar                                -      -            
+     0.01%  python3.10            [.] _PyObject_GC_Resize                                -      -            
+     0.01%  python3.10            [.] _PyObject_SetAttrId                                -      -            
+     0.01%  python3.10            [.] _PyPegen_expect_token                              -      -            
+     0.01%  python3.10            [.] _PyTuple_FromArray                                 -      -            
+     0.01%  python3.10            [.] _PyTuple_Resize                                    -      -            
+     0.01%  python3.10            [.] _PyUnicode_FromUCS1.lto_priv.0                     -      -            
+     0.01%  python3.10            [.] _Py_Mangle                                         -      -            
+     0.01%  python3.10            [.] _Py_NewReference                                   -      -            
+     0.01%  python3.10            [.] _in_weak_set.lto_priv.0                            -      -            
+     0.01%  python3.10            [.] binary_iop1.lto_priv.0                             -      -            
+     0.01%  python3.10            [.] builtin_len.lto_priv.0                             -      -            
+     0.01%  python3.10            [.] code_dealloc.lto_priv.0                            -      -            
+     0.01%  python3.10            [.] compiler_nameop.lto_priv.0                         -      -            
+     0.01%  python3.10            [.] dict_keys_inorder.lto_priv.0                       -      -            
+     0.01%  python3.10            [.] dictview_dealloc.lto_priv.0                        -      -            
+     0.01%  python3.10            [.] list_slice.lto_priv.0                              -      -            
+     0.01%  python3.10            [.] list_subscript.lto_priv.0                          -      -            
+     0.01%  python3.10            [.] list_vectorcall.lto_priv.0                         -      -            
+     0.01%  python3.10            [.] lookdict_index.lto_priv.0                          -      -            
+     0.01%  python3.10            [.] lookdict_split.lto_priv.0                          -      -            
+     0.01%  python3.10            [.] method_vectorcall_VARARGS.lto_priv.0               -      -            
+     0.01%  python3.10            [.] module_getattro.lto_priv.0                         -      -            
+     0.01%  python3.10            [.] named_expression_rule.lto_priv.0                   -      -            
+     0.01%  python3.10            [.] object_recursive_isinstance.part.0                 -      -            
+     0.01%  python3.10            [.] range_from_array.lto_priv.0                        -      -            
+     0.01%  python3.10            [.] siphash24.lto_priv.0                               -      -            
+     0.01%  python3.10            [.] slot_tp_richcompare.lto_priv.0                     -      -            
+     0.01%  python3.10            [.] sm_descr_get.lto_priv.0                            -      -            
+     0.01%  python3.10            [.] starunpack_helper.lto_priv.0                       -      -            
+     0.01%  python3.10            [.] tuple_new.lto_priv.0                               -      -            
+     0.01%  python3.10            [.] tuplegetter_descr_get.lto_priv.0                   -      -            
+     0.01%  python3.10            [.] type_vectorcall.lto_priv.0                         -      -            
+     0.01%  python3.10            [.] unicode_dealloc.lto_priv.0                         -      -            
+     0.01%  python3.10            [.] unicode_decode_utf8.lto_priv.0                     -      -            
+     0.01%  python3.10            [.] unicode_subscript.lto_priv.0                       -      -            
+     0.01%  python3.10            [.] unsafe_float_compare.lto_priv.0                    -      -            
+     0.01%  python3.10            [.] vectorcall_method.lto_priv.0                       -      -            
+     0.01%  python3.10            [.] weakref_hash.lto_priv.0                            -      -            
+     0.01%  python3.10            [.] zip_dealloc.lto_priv.0                             -      -            
+     0.01%  python3.10            [.] zip_traverse.lto_priv.0                            -      -            
+     0.01%  python3.10            [.] 0x000000000006efc0                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5c928d4                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5cc645b                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5ce056d                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5d5b5b0                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5e556fe                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5e5840f                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5e829a7                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5e8b7ca                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5e8cb46                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5e96cbe                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5eab897                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5ed2a23                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5ed9236                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5edc7a1                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5edd62e                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5eff1c4                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa5faf79d                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa655299d                                 -      -            
+     0.01%  [unknown]             [k] 0xffffffffa655e965                                 -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

@@ -1,10 +1,10 @@
-"""Our optimized version of pyperformance's bm_mdp benchmark.
+"""Optimized version of pyperformance's bm_mdp benchmark.
 
 Derived from benchmarks/mdp/run_benchmark.py, which is vendored unmodified from
 pyperformance (MIT); this file is therefore a derivative work under the same
 terms. See THIRD-PARTY.md. The changes are described in report_mdp.txt
 section 3; the value stream is bit-identical to the original on the course
-VM's CPython 3.10 (see the note on CPython 3.12's sum() in _solve).
+VM's CPython 3.10 (see the note on CPython 3.12's sum() in Battle.evaluate).
 """
 import collections
 from collections import defaultdict
@@ -53,10 +53,8 @@ _CRITDIST_CACHE = {}
 
 
 def getCritDist(L, p, A1, A2, D1, D2, B, stab, te):
-    # The same (level, crit-probability, stats, power) tuple is requested
-    # thousands of times per evaluation; the Fraction arithmetic below is the
-    # expensive part, so memoize the finished distribution.  Arithmetic is
-    # unchanged (still exact Fractions), only repeated.
+    # Memoize: the same argument tuple comes up thousands of times per
+    # evaluate(), and the Fraction arithmetic below is the expensive part.
     key = (L, p, A1, A2, D1, D2, B, stab, te)
     hit = _CRITDIST_CACHE.get(key)
     if hit is not None:
@@ -70,8 +68,7 @@ def getCritDist(L, p, A1, A2, D1, D2, B, stab, te):
         mult /= len(vals)
         for x in vals:
             dist[x] += mult
-    # store a plain dict: the callers only iterate .items(), and a defaultdict
-    # would silently grow if any future caller read a missing key
+    # cache a plain dict, so a missing-key read can never grow the shared entry
     dist = dict(dist)
     _CRITDIST_CACHE[key] = dist
     return dist
@@ -243,29 +240,17 @@ class Battle(object):
         dmin, dmax, frozen = self.min, self.max, self.frozen
         stateps = topoSort([initial_statep], self.getSuccessorsList)
 
-        # --- Build an integer-indexed view of the state graph once. ---------
-        # The original keys dmin/dmax/frozen by nested namedtuple states, so
-        # every value-iteration step re-hashes deep tuples several times.
-        # Here each state gets a small int; the sweep below then only touches
-        # flat lists.  Sweep order, in-place (Gauss-Seidel) update, freezing
-        # rule and floating-point operation order are all kept identical, so
-        # the result is bit-for-bit the same as the original on the course VM's
-        # CPython 3.10.  One caveat, on newer interpreters only: the original
-        # accumulates with sum(), and CPython 3.12 (gh-100425) changed sum() to
-        # use compensated summation for floats, while the loop below keeps a
-        # plain running total.  On 3.12+ the ORIGINAL therefore moves by about
-        # an ulp and the two differ in the last bit; both stay far inside the
-        # benchmark's own 1e-6 gate.  Using sum() here instead would restore
-        # exact equality everywhere at a cost of roughly a fifth of the
-        # speedup, which is not a trade worth making for a project whose
-        # numbers all come from one interpreter.
+        # Number the states and run the sweep over flat lists instead of dicts
+        # keyed by nested namedtuples. Sweep order, in-place update, freezing
+        # rule and floating-point operation order are unchanged, so the result
+        # is bit-identical to the original on the course VM's CPython 3.10.
+        # (On 3.12+ the original's sum() uses compensated summation, so the two
+        # differ by about one ulp, far inside the benchmark's 1e-6 check; using
+        # sum() here too would cost about a fifth of the speedup.)
         index = {}
         for sp in stateps:
             index[sp] = len(index)
-        # Rows below are appended per stateps entry, so row i is the right row
-        # only if index[stateps[i]] == i, i.e. stateps has no duplicates. It
-        # does not (4,823 states, 4,823 unique), but the rewrite is silently
-        # wrong if that ever changes, so state it.
+        # row i below belongs to stateps[i], so stateps must have no duplicates
         if len(index) != len(stateps):
             raise AssertionError("stateps contains duplicates; the int index would be wrong")
         succ_i = []      # successor indices per state
@@ -273,26 +258,22 @@ class Battle(object):
         choice = []
         for sp in stateps:
             if sp[0] == 4:
-                succ_i.append(()); succ_p.append(None); choice.append(False)
+                succ_i.append(())
+                succ_p.append(None)
+                choice.append(False)
                 continue
             succ = self.getSuccessors(sp)
             if sp[0] == 0:
-                ids = []
-                for sp2 in succ:
-                    if sp2 not in index:
-                        index[sp2] = len(index)
-                    ids.append(index[sp2])
-                succ_i.append(tuple(ids)); succ_p.append(None); choice.append(True)
+                succ_i.append(tuple(index[sp2] for sp2 in succ))
+                succ_p.append(None)
+                choice.append(True)
             else:
-                ids, ps = [], []
-                for sp2, p in succ:
-                    if sp2 not in index:
-                        index[sp2] = len(index)
-                    ids.append(index[sp2]); ps.append(p)
-                succ_i.append(tuple(ids)); succ_p.append(tuple(ps)); choice.append(False)
+                succ_i.append(tuple(index[sp2] for sp2, _ in succ))
+                succ_p.append(tuple(p for _, p in succ))
+                choice.append(False)
         n = len(index)
-        vmin = [0.0] * n              # defaultdict(float) default
-        vmax = [1.0] * n              # defaultdict(lambda: 1.0) default
+        vmin = [0.0] * n              # self.min default
+        vmax = [1.0] * n              # self.max default
         fz = [False] * n
         for sp, v in dmin.items():
             if sp in index:
@@ -303,10 +284,7 @@ class Battle(object):
         for sp in frozen:
             if sp in index:
                 fz[index[sp]] = True
-        # succ_i/succ_p/choice are only filled for stateps, so the sweep walks
-        # `order` (= the stateps indices) and never range(n); any state that
-        # entered `index` merely as a successor has a value but no row.
-        order = [index[sp] for sp in stateps]
+        order = range(n)
         i0 = index[initial_statep]
 
         itercount = 0
@@ -336,8 +314,7 @@ class Battle(object):
                     vmax[i] = vmin[i] = (a + b) / 2
                     fz[i] = True
 
-        # Write the converged values back so self.min/self.max/self.frozen
-        # keep the same meaning they had in the original.
+        # Copy the result back into self.min / self.max / self.frozen.
         for sp, i in index.items():
             dmin[sp] = vmin[i]
             dmax[sp] = vmax[i]

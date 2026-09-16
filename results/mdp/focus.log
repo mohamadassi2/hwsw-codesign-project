@@ -1,2 +1,2 @@
-bench_mdp: kept 9836 of 9892 samples (99.4%), dropped 56 outside it
-bench_mdp: kept 2717 of 2780 samples (97.7%), dropped 63 outside it
+bench_mdp: kept 9850 of 9896 samples (99.5%), dropped 46 outside it
+bench_mdp: kept 2734 of 2784 samples (98.2%), dropped 50 outside it

@@ -1,2 +1,2 @@
-bench_pyflake: kept 8715 of 8786 samples (99.2%), dropped 71 outside it
-bench_pyflake: kept 3843 of 3928 samples (97.8%), dropped 85 outside it
+bench_pyflake: kept 8703 of 8753 samples (99.4%), dropped 50 outside it
+bench_pyflake: kept 3845 of 3913 samples (98.3%), dropped 68 outside it

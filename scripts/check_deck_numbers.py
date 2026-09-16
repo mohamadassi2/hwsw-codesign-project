@@ -31,6 +31,22 @@ def mean(path):
     return statistics.mean(v), len(v)
 
 
+def cprofile_shares(path, want):
+    """(self%, cumulative%) of one function, as shares of the benchmark function"""
+    rows, den = [], None
+    for m in re.finditer(r"^\s+\d+(?:/\d+)?\s+([\d.]+)\s+[\d.]+\s+([\d.]+)\s+[\d.]+\s+(.+)$",
+                         open(path, encoding="utf-8").read(), re.M):
+        rows.append((float(m.group(1)), float(m.group(2)), m.group(3).strip()))
+    for _, cum, label in rows:
+        if "(bench_pyflake)" in label or "(bench_mdp)" in label:
+            den = cum
+            break
+    for own, cum, label in rows:
+        if label.endswith("(" + want + ")"):
+            return own / den * 100, cum / den * 100
+    raise SystemExit(f"{path}: no {want} row")
+
+
 def perfstat(path):
     r = {}
     for line in open(path):
@@ -179,10 +195,17 @@ def main():
         check(label, needle.replace(",", "") in present or needle in txt)
 
     # ---- the baseline slide must carry the BASELINE cProfile figures ----------
+    # Recomputed from the profile, not hardcoded: the slide showed the previous
+    # run's shares through a re-measure because this gate spelled them out.
     rep = open(os.path.join(ROOT, "report_pyflate.txt"), encoding="utf-8").read()
-    check("slide 6 quotes the baseline cProfile shares (15.7% self, 49.3% cumulative)",
-          "15.7% self and 49.3%" in re.sub(r"\s+", " ", txt))
-    check("those figures are the report's section 2 numbers", "15.7%" in rep and "49.3%" in rep)
+    base_self, base_cum = cprofile_shares(f"{ROOT}/results/pyflate/cprofile_base.txt", "find_next_symbol")
+    check(f"slide 6 quotes the baseline cProfile shares ({base_self:.1f}% self, {base_cum:.1f}% cumulative)",
+          f"{base_self:.1f}% self and {base_cum:.1f}%" in re.sub(r"\s+", " ", txt))
+    check("those figures are the report's section 2 numbers",
+          f"{base_self:.1f}%" in rep and f"{base_cum:.1f}%" in rep)
+    outline = open(os.path.join(ROOT, "docs", "presentation_outline.md"), encoding="utf-8").read()
+    check("the speaker guide quotes the same two shares",
+          f"{base_self:.1f}%" in outline and f"{base_cum:.1f}%" in outline)
 
     # ---- the shares on the "what remains" slide come from the folded stacks ----
     # 60% / 30% is the self-plus-helpers double count that report section 5.6 rules out.

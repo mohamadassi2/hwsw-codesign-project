@@ -41,7 +41,7 @@ FP
     echo "      The benchmarks have been rerun here, so the figures below will"
     echo "      disagree with the documents by however much the two runs differ."
     echo "      To check the submission as shipped:  git checkout -- results/"
-    echo "      To adopt this run:                   python3 scripts/fill_reports.py"
+    echo "      To adopt this run:                   python3 scripts/fill_reports.py && python3 scripts/stamp_results.py"
     echo "                                           then update the slides to match."
   fi
 fi

@@ -4,15 +4,16 @@ Final project for *HW/SW Co-design* (00460882, Technion).
 Mohamad Assi (212343594), Ido Sefi (208008698).
 
 Two benchmarks from the pyperformance suite, **pyflate** and **mdp**, profiled
-with py-spy flame graphs and `perf stat` counters, optimized in pure Python with
-byte-identical output, and, for pyflate, a hardware accelerator for the
-canonical-Huffman symbol decoder, written in SystemVerilog and verified against
-the benchmark's real compressed block.
+with `perf record` as root in the setup guide's form, py-spy flame graphs and
+`perf stat` counters, optimized in pure Python with byte-identical output, and,
+for pyflate, a hardware accelerator for the canonical-Huffman symbol decoder,
+written in SystemVerilog and verified against the benchmark's real compressed
+block.
 
 | | baseline | optimized | improvement | output |
 |---|---|---|---|---|
-| pyflate | 1.127 s | 483.5 ms | **2.33× — 57.1% less time** | byte-identical, md5 `afa004a6…` |
-| mdp     | 4.975 s | 1.308 s | **3.80× — 73.7% less time** | bit-identical result |
+| pyflate | 1.141 s | 487 ms | **2.34× — 57.3% less time** | byte-identical, md5 `afa004a6…` |
+| mdp     | 5.098 s | 1.309 s | **3.90× — 74.3% less time** | bit-identical result |
 
 Measured inside the course QEMU/KVM guest (Ubuntu 22.04, one vCPU, Xeon
 E5-2630 v3) by the two scripts below; the raw files are in `results/`, and
@@ -60,6 +61,7 @@ scripts/table_stats.py               called by script_pyflate.sh: what the shipp
 scripts/ablation.py                  called by script_pyflate.sh: what each pyflate optimization is worth on its own
 scripts/summarize_results.py         prints results/ as the tables the reports quote (read-only)
 scripts/fill_reports.py              rewrites section 4.1 of each report and the Amdahl line in pyflate 5.6 from results/ (already run for the shipped run; gate 2 verifies it)
+scripts/stamp_results.py             refreshes results/RUN_ID.txt and results/CODE_ID.txt after a re-measure
 scripts/cprofile_shares.py           prints the per-function shares the reports' cProfile tables quote, from results/<b>/cprofile_*.txt (read-only)
 hw/rtl/*.sv                          the accelerator: bit reader, decoder, top
 hw/tb/tb_huffman.sv                  self-checking testbench on the real benchmark block
@@ -103,17 +105,26 @@ the numbered sections of the script itself (`# ---- 0. environment` through
    two `perf` sysctls the guest needs (`kptr_restrict=0`,
    `perf_event_paranoid=-1`: without them `perf report` shows no kernel symbols
    and empty call graphs); then a probe of which `perf` sampling events
-   actually fire in this guest (`pmu_diagnosis.txt`, `perf_events_probe.txt`).
+   actually fire in this guest (`pmu_diagnosis.txt`, `perf_events_probe.txt`:
+   the hardware `cycles` event never samples - PMI stays at 0 across a record -
+   while the software clocks `cpu-clock` and `task-clock` do).
 1. baseline: `pyperformance run --bench <b>` itself
    (`<b>_pyperformance_baseline.json`), then the vendored copy through the same
    pyperf runner (`<b>_base.json`) - that is what we diff against.
-2. profile the baseline: `perf record` (collects nothing in this guest -
-   `perf_top_{base,opt}.txt` is what it leaves behind; report_pyflate.txt
-   section 2 says why) and `py-spy` flame graphs, re-rooted at the benchmark
-   function by `scripts/focus_folded.py` (`flame_<b>_base_{pyspy,focus}.svg`).
+2. profile the baseline: `perf record -F 999 -g` as root on `cpu-clock`, in
+   the guide's form under `python3-dbg` (`perf_report_base_dbg.txt`) and, for
+   cleaner attribution, on the benchmark worker under the release interpreter
+   with `-e cpu-clock -F 997 -g` (`perf_top_base.txt`,
+   `flame_<b>_base_perf.svg`); then `py-spy` flame graphs, re-rooted at the
+   benchmark function by `scripts/focus_folded.py`
+   (`flame_<b>_base_{pyspy,focus}.svg`). perf names the interpreter's C
+   functions but no Python function (CPython 3.10 has no perf trampoline), so
+   the Python-level view is py-spy's; report_pyflate.txt section 2 has the
+   detail.
 3. optimized: the same runner and the same profiles on `run_benchmark_opt.py`
-   (`<b>_opt.json`, `flame_<b>_opt_{pyspy,focus}.svg`), then cProfile on both
-   for the per-function shares the reports quote (`cprofile_{base,opt}.txt`).
+   (`<b>_opt.json`, `perf_report_opt_dbg.txt`, `perf_top_opt.txt`,
+   `flame_<b>_opt_{perf,pyspy,focus}.svg`), then cProfile on both for the
+   per-function shares the reports quote (`cprofile_{base,opt}.txt`).
    pyflate only: `scripts/table_stats.py` (what the shipped table scan costs on
    this input, `table_stats.txt`) and `scripts/ablation.py` (what each
    optimization is worth on its own, `ablation.txt`).

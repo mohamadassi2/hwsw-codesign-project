@@ -47,9 +47,7 @@ module huffman_decoder #(
     input  logic [TSW-1:0]       tsel,        // active table this symbol
     input  logic [MAXBITS-1:0]   peek,        // next MAXBITS bits, MSB first
     input  logic                 peek_valid,
-    // 7 bits is $clog2(BUFW+1) for the BUFW=64 the top instantiates. It is
-    // written literally rather than derived because the decoder does not take
-    // BUFW as a parameter; a larger buffer would need this widened with it.
+    // 7 bits = $clog2(BUFW+1) for the top's BUFW=64 (BUFW is not a parameter here)
     input  logic [6:0]           avail,       // bits really in the buffer
     input  logic                 out_ready,   // symbol consumer can take one
     input  logic                 enable,      // decode a symbol this cycle
@@ -61,12 +59,9 @@ module huffman_decoder #(
     output logic                 underrun     // sticky: a code ran past end of stream
 );
     // ---- per-length rows: limit[L], base[L] --------------------------------
-    // These are REGISTER FILES, not SRAM, and are marked so that synthesis
-    // counts them as the flip-flops they are.  limit_r is read at all MAXBITS
-    // code lengths in the same cycle (that is the whole point of the parallel
-    // compare) and base_r is read asynchronously; no SRAM macro offers twenty
-    // read ports, so leaving them as inferred memories would hide their real
-    // cost.  Only symtab below is a genuine single-port SRAM.
+    // limit_r is read at all MAXBITS lengths in one cycle and base_r
+    // asynchronously, so these are flip-flops, not SRAM; mem2reg makes
+    // synthesis count them as such.  Only symtab below is a real SRAM.
     (* mem2reg *) logic [CW-1:0]        limit_r [NTAB][MAXBITS+1];
     (* mem2reg *) logic signed [BW-1:0] base_r  [NTAB][MAXBITS+1];
     // ---- symbol table -------------------------------------------------------
@@ -74,8 +69,7 @@ module huffman_decoder #(
 
     always_ff @(posedge clk) begin
         if (tbl_we) begin
-            // tbl_len is five bits but only 1..MAXBITS are real rows; ignore the
-            // rest rather than writing off the end of the array.
+            // rows exist only for 1..MAXBITS; an out-of-range tbl_len is ignored
             if (!tbl_kind && tbl_len <= MAXBITS[4:0]) begin
                 limit_r[tbl_sel][tbl_len] <= tbl_limit;
                 base_r [tbl_sel][tbl_len] <= tbl_base;
@@ -86,11 +80,9 @@ module huffman_decoder #(
     end
 
     // ---- parallel compare: one comparator per code length ------------------
-    // `fits` is the end-of-stream guard, folded in here rather than applied to
-    // the encoder's output. It only depends on `avail`, which is a register, so
-    // it is computed alongside the compares and costs nothing on the path from
-    // `peek` to `len`. Testing it after the priority encoder instead cost
-    // twenty gate levels for no benefit.
+    // `fits` guards the end of stream: a code may not run past the bits really
+    // left.  `avail` is a register, so masking here costs nothing on the
+    // peek -> len path; masking after the priority encoder cost 20 gate levels.
     logic [MAXBITS:1] hit_raw, fits, hit;
     logic [CW-1:0]    code [MAXBITS+1];
     always_comb begin
@@ -106,17 +98,15 @@ module huffman_decoder #(
     logic [4:0] len_c;
     logic       found, found_raw;
 
-    // A code matched but did not fit: the stream ended part-way through it.
-    // Derived from a priority-encoder pass rather than from (|hit_raw), because
-    // a reduction OR over an unprogrammed table row yields X, and `!short_c`
-    // then makes the err assignment below unreachable - the decoder would
-    // livelock on a corrupt table instead of halting. `if (hit_raw[L])` treats
-    // X as false, which is the same rule `found` already uses.
+    // found_raw: some length matched, ignoring `fits`.  A loop, not (|hit_raw):
+    // an unprogrammed row makes the OR X, which would keep err from ever
+    // setting; `if (hit_raw[L])` treats X as false, the same rule `found` uses.
     always_comb begin
         found_raw = 1'b0;
         for (int L = MAXBITS; L >= 1; L--)
             if (hit_raw[L]) found_raw = 1'b1;
     end
+    // short_c: a code matched but the stream ended part-way through it.
     logic short_c;
     assign short_c = found_raw && !found;
 
@@ -132,28 +122,21 @@ module huffman_decoder #(
     assign idx_s = base_r[tsel][len_c] + $signed({1'b0, code[len_c]});
     assign idx   = idx_s[IDXW-1:0];
 
-    // A decode error is sticky and halts the engine. Without that the failing
-    // symbol consumes no bits, so the same bits are presented again the next
-    // cycle and the decoder livelocks on a corrupt stream.
-    // idx must land inside the symbol table. For a well-formed canonical table
-    // it always does; a corrupt one would otherwise return a wrong symbol
-    // silently instead of raising err.
+    // A corrupt table can push idx outside symtab; flag it instead of
+    // returning a wrong symbol silently.
     logic idx_ok;
     assign idx_ok = (idx_s >= 0) && (idx_s < BW'(NSYM));
 
-    // The symbol register is a one-deep output buffer. A new decode may only
-    // start when it is free - either empty, or being accepted this cycle - so a
-    // consumer that stalls holds the whole engine instead of losing symbols.
-    // With out_ready tied high this is always true and costs no throughput.
+    // sym is a one-deep output buffer: a new decode starts only when it is
+    // empty or being taken this cycle, so backpressure stalls the engine
+    // instead of dropping symbols.  With out_ready tied high it never stalls.
     logic err_q, underrun_q, fire, take, out_free;
     assign out_free  = !sym_valid || out_ready;
     assign fire      = enable && peek_valid && out_free && !err_q && !underrun_q;
-    // `take` drives `len`, which the bit reader consumes in the SAME cycle, so
-    // it must stay on the short path: enable, the compare tree and the priority
-    // encoder, and nothing else. The index range check is
-    // deliberately NOT here - it sits after the base adder, and putting it in
-    // this path lengthened the critical path from 67 to 122 gate levels. It is
-    // applied one stage later instead, where there is a whole clock for it.
+    // `len` is consumed by the bit reader in the same cycle, so `take` stays on
+    // the short path: enable, the compare tree and the priority encoder.  idx_ok
+    // gates only the register write below, where it has a whole clock; on this
+    // path it raised the critical path from 67 to 122 gate levels.
     assign take      = fire && found;
     assign len       = take ? len_c : 5'd0;
     assign len_valid = take;
@@ -163,15 +146,15 @@ module huffman_decoder #(
         if (!rst_n) begin
             sym <= '0; sym_valid <= 1'b0; err_q <= 1'b0; underrun_q <= 1'b0;
         end else begin
-            // Read only on a real decode: idx is X while no length matched
-            // (row 0 of base_r is never programmed), and latching that would
-            // put X on a top-level output for no reason.
+            // idx is X when nothing matched (row 0 is never programmed); do not latch it
             if (take && idx_ok)
                 sym <= symtab[tsel][idx];
-            // Hold the symbol until the consumer takes it. A decode whose index
-            // left the table produces no symbol and raises err instead.
+            // hold sym_valid until the consumer takes it
             if (take && idx_ok)  sym_valid <= 1'b1;
             else if (out_ready)  sym_valid <= 1'b0;
+            // err and underrun are sticky and stop the engine: a failed decode
+            // consumes no bits, so without the halt the same bits would be
+            // retried forever.
             if (fire && ((!found && !short_c) || (take && !idx_ok)))
                 err_q <= 1'b1;
             if (fire && short_c)

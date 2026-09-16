@@ -1,18 +1,16 @@
 // bitreader.sv -- MSB-first bit buffer feeding the Huffman decoder.
 //
 // Holds up to BUFW bits left-aligned (bit BUFW-1 is the next bit of the
-// stream, exactly like pyflate's RBitfield).  Every cycle it exposes the next
-// MAXBITS bits on `peek`; the decoder answers with `consume` (0..MAXBITS) and
-// the buffer barrel-shifts them out in the same cycle.  Refill is INW bits at
-// a time from a simple valid/ready stream, so at one symbol per cycle the
-// buffer never starves for codes up to INW bits.
+// stream, like pyflate's RBitfield).  Every cycle it exposes the next MAXBITS
+// bits on `peek`; the decoder answers with `consume` (0..MAXBITS) and the
+// buffer barrel-shifts them out in the same cycle.  Refill is INW bits at a
+// time from a valid/ready stream, so at one symbol per cycle the buffer never
+// starves for codes up to INW bits.
 //
-// `flush` marks end of input: from then on missing bits read as zero, which is
-// what the software decoder does too (it pads at EOF).  Padding is why `level`
-// is exported: after a flush the decoder must not emit a symbol whose code is
-// longer than the bits that are really left, or it manufactures a symbol out of
-// the zero padding.  `done` says the stream is finished and every bit consumed,
-// which is what tells the host the block is over rather than stuck.
+// `flush` marks end of input; after it, missing bits read as zero (pyflate
+// pads at EOF the same way).  `level` lets the decoder refuse a code longer
+// than the bits really left, so the zero padding never becomes a symbol.
+// `done` = flushed and every bit consumed.
 
 module bitreader #(
     parameter MAXBITS = 20,   // widest code the decoder may ask to see
@@ -34,9 +32,8 @@ module bitreader #(
     output logic               done         // flushed and the buffer is empty
 );
 `ifndef SYNTHESIS
-    // The refill assumes a whole word always fits beside a full peek window.
-    // Violating it makes (BUFW - INW - cnt_d) wrap and the refill silently
-    // shifts to zero, so fail loudly at elaboration instead.
+    // A whole word must fit beside a full peek window; otherwise the reader can
+    // reach a level where it can neither refill nor show MAXBITS bits, and hangs.
     initial if (BUFW < MAXBITS + INW)
         $fatal(1, "bitreader: BUFW (%0d) must be >= MAXBITS + INW (%0d)", BUFW, MAXBITS + INW);
 `endif
@@ -44,18 +41,16 @@ module bitreader #(
     logic [$clog2(BUFW+1)-1:0]  cnt_q, cnt_d, cnt_after;
     logic                       eof_q;
 
-    // Level after this cycle's consume. Saturating, because peek_valid also
-    // holds after flush with as little as one bit left while the decoder may
-    // still ask to consume up to MAXBITS; an unguarded subtraction wraps the
-    // counter and the reader then reports a full buffer of zeros forever.
+    // Bits left after this cycle's consume.  Saturating: after a flush
+    // peek_valid holds with fewer than MAXBITS bits, so consume may exceed
+    // cnt_q, and a wrapped count would read as a full buffer of zeros forever.
     assign cnt_after = (cnt_q > consume) ? (cnt_q - consume) : '0;
 
-    // Accept a refill when there is room for a whole word AFTER the consume.
-    // Testing cnt_q instead would refuse a refill in the very cycle that makes
-    // room, which costs throughput once codes get long (measured: 0.84
-    // symbols/cycle at 19-bit codes, 1.000 with this form). There is no
-    // combinational loop: consume comes from the decoder, which depends on
-    // peek and peek_valid, and both are functions of the registers only.
+    // Room for a whole word after this cycle's consume.  Testing cnt_q would
+    // refuse the refill in the cycle that makes room and drop long codes to
+    // 0.84 symbols/cycle (19-bit codes); this form holds 1.000.  No
+    // combinational loop: consume depends only on peek, peek_valid and level,
+    // which come from registers.
     assign in_ready = (cnt_after + INW <= BUFW);
 
     always_comb begin
@@ -81,8 +76,6 @@ module bitreader #(
     assign peek       = buf_q[BUFW-1 -: MAXBITS];   // zeros beyond cnt_q
     assign peek_valid = (cnt_q >= MAXBITS) || (eof_q && cnt_q != 0);
     assign level      = cnt_q;
-    // Finished: the input said there is no more, and nothing is left to decode.
-    // Without this the engine simply stops driving sym_valid and the host cannot
-    // tell a completed block from a hang.
+    // Lets the host tell a finished block from a hang.
     assign done       = eof_q && (cnt_q == 0);
 endmodule
