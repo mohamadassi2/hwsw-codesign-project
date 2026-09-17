@@ -12,7 +12,7 @@ Two kinds of check:
 Run it after filling the reports:  python3 scripts/check_report_numbers.py
 Exit status is non-zero if anything fails, so it can gate a commit.
 """
-import glob, hashlib, json, os, re, statistics, sys
+import bz2, glob, hashlib, json, os, re, statistics, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FAIL = []
@@ -27,6 +27,15 @@ def check(name, cond, detail=""):
         FAIL.append(name + "  " + detail)
     else:
         FAIL.append(name)
+
+
+def input_facts():
+    """The benchmark input's own numbers. report_pyflate.txt quotes the compressed
+    size, the decompressed size and the md5; all three are properties of the file
+    the repository ships, so decompress it and check rather than trusting a copy."""
+    raw = open(os.path.join(ROOT, "benchmarks", "pyflate", "data", "interpreter.tar.bz2"), "rb").read()
+    out = bz2.decompress(raw)
+    return len(raw), len(out), hashlib.md5(out).hexdigest()
 
 
 def _flat(t):
@@ -99,6 +108,15 @@ _flat_pf = _flat(_pf)
 _flat_md = _flat(_md)
 _concl = _pf[_pf.rindex("6. Conclusion"):] if "6. Conclusion" in _pf else ""
 
+# the testbench run section 5 quotes throughout, read once
+_simlog = results("rtl_sim_guest.log")
+_sl = open(_simlog, encoding="utf-8").read() if os.path.exists(_simlog) else ""
+_msim = re.search(r"decoded (\d+) symbols in (\d+) cycles", _sl)
+_mbits = re.search(r"total bits consumed:\s*(\d+)", _sl)
+_sym = int(_msim.group(1)) if _msim else None
+_cyc = int(_msim.group(2)) if _msim else None
+_bits = int(_mbits.group(1)) if _mbits else None
+
 _pf_base = mean_of(results("pyflate", "pyflate_base.json"))
 _pf_opt = mean_of(results("pyflate", "pyflate_opt.json"))
 _md_base = mean_of(results("mdp", "mdp_base.json"))
@@ -112,6 +130,17 @@ _pf_base3 = mean_of(results("reproducibility", "run3", "pyflate", "pyflate_base.
 _pf_opt3 = mean_of(results("reproducibility", "run3", "pyflate", "pyflate_opt.json"))
 _md_base3 = mean_of(results("reproducibility", "run3", "mdp", "mdp_base.json"))
 _md_opt3 = mean_of(results("reproducibility", "run3", "mdp", "mdp_opt.json"))
+
+# ------------------------------------------------- the input's own numbers
+# The three figures that define what "correct" means for pyflate were quoted
+# and never recomputed. They belong to the file the repository ships, so open it.
+_in_bytes, _out_bytes, _out_md5 = input_facts()
+check(f"pyflate: the report's compressed size is the input's ({_in_bytes:,} bytes)",
+      f"{_in_bytes:,}" in _pf)
+check(f"pyflate: the report's decompressed size is the input's ({_out_bytes:,} bytes)",
+      f"{_out_bytes:,}" in _pf)
+check(f"pyflate: the report's md5 is the input's ({_out_md5[:8]}...)",
+      _out_md5[:8] in _pf, f"expected {_out_md5}")
 
 # ---------------------------------------------------------------- measured
 for b, base, opt, rep in (("pyflate", _pf_base, _pf_opt, _pf), ("mdp", _md_base, _md_opt, _md)):
@@ -200,17 +229,22 @@ for _name, _body in (("report_pyflate.txt", _pf), ("report_mdp.txt", _md)):
         check(f"{_name} cites {_svg} and it exists", _found, "no such file under results/")
 
 # ---------------------------------------------------------------- derived: accelerator
-SYMBOLS, CYCLES = 148271, 148272
-check("hw: symbols/cycle claim", abs(SYMBOLS / CYCLES - 1.0) < 0.001,
-      f"{SYMBOLS/CYCLES:.4f}")
-check("hw: report states both symbol and cycle counts",
-      "148,271" in _pf and "148,272" in _pf)
-for f, mhz in (("0.74", 200), ("0.37", 400)):
-    got = CYCLES / (mhz * 1e6) * 1e3
-    check(f"hw: {mhz} MHz decode time", abs(got - float(f)) < 0.01, f"{got:.3f} ms vs {f}")
-BITS = 531571
-check("hw: average bits per symbol", abs(BITS / SYMBOLS - 3.59) < 0.01,
-      f"{BITS/SYMBOLS:.3f}")
+# Everything here used to be script constants compared with script constants -
+# the decode times divided 148272 by a frequency and compared the answer to the
+# string "0.74" on the same line, so the report could have said any number at
+# all and this gate would still have passed. Read the simulation log, derive the
+# figures from it, and require the report to state what comes out.
+check("hw: results/rtl_sim_guest.log records a run to read these from",
+      _sym is not None and _bits is not None)
+if _sym and _cyc and _bits:
+    check("hw: symbols/cycle claim", abs(_sym / _cyc - 1.0) < 0.001, f"{_sym/_cyc:.4f}")
+    for mhz in (200, 400):
+        _ms = _cyc / (mhz * 1e6) * 1e3
+        check(f"hw: {mhz} MHz decode time ({_ms:.2f} ms)", f"{_ms:.2f}" in _pf,
+              f"{_cyc:,} cycles at {mhz} MHz is {_ms:.2f} ms; the report does not say so")
+    _bps = _bits / _sym
+    check(f"hw: average bits per symbol ({_bps:.2f})", f"{_bps:.2f}" in _pf,
+          f"{_bits:,} bits over {_sym:,} symbols is {_bps:.2f}")
 
 # 62% was a double-counted share; it may appear only in the sentence that retracts it
 _retract = "earlier draft of this report did exactly that and quoted ~62%"
@@ -370,36 +404,31 @@ for b, rep, base, opt in (("pyflate", _pf, _pf_base, _pf_opt), ("mdp", _md, _md_
 # ---------------------------------------------------------------- simulation
 # the symbol and cycle counts quoted throughout section 5 come from the
 # testbench run recorded in results/rtl_sim_guest.log
-_simlog = results("rtl_sim_guest.log")
-if os.path.exists(_simlog):
-    _sl = open(_simlog, encoding="utf-8").read()
-    _msim = re.search(r"decoded (\d+) symbols in (\d+) cycles", _sl)
-    if _msim:
-        _sym, _cyc = int(_msim.group(1)), int(_msim.group(2))
-        check(f"the report quotes the simulated symbol count ({_sym:,})", f"{_sym:,}" in _pf,
-              "from results/rtl_sim_guest.log")
-        check(f"the report quotes the simulated cycle count ({_cyc:,})", f"{_cyc:,}" in _pf,
-              "from results/rtl_sim_guest.log")
-        # the counts are written a dozen times; every 148,xxx in the report must be one of the two
-        _seen = set(re.findall(r"\b148,\d{3}\b", _pf))
-        _wrong = sorted(_seen - {f"{_sym:,}", f"{_cyc:,}"})
-        check("no other 148,xxx figure appears in the report", not _wrong,
-              f"found {_wrong}, but the only real values are {_sym:,} and {_cyc:,}")
-        # per-symbol CPU cost: the accelerated 51.0% of the optimized run, divided
-        # by the symbols, at the guest's 2.4 GHz
-        if _pf_opt:
-            _cps = _pf_opt * 0.510 / _sym * 2.4e9
-            _want_cps = f"{round(_cps, -2):,.0f}"
-            check(f"the per-symbol CPU cost recomputes ({_want_cps} cycles)",
-                  _want_cps in _pf,
-                  f"{_pf_opt * 1e3:.0f} ms x 51.0% / {_sym:,} at 2.4 GHz")
-            # every CPU-cost sentence must state it; only those sentences, because
-            # 5.7 also quotes 3.6 and 1 cycles/symbol for the two decoder designs
-            _states = (set(re.findall(r"~([\d,]+) cycles of a 2\.4 GHz", _pf))
-                       | set(re.findall(r"~([\d,]+) CPU cycles per symbol", _pf)))
-            _bad = sorted(v for v in _states if v != _want_cps)
-            check("every per-symbol cycle figure in the report is the computed one",
-                  not _bad, f"found {_bad}, expected {_want_cps}")
+if _sym and _cyc:
+    check(f"the report quotes the simulated symbol count ({_sym:,})", f"{_sym:,}" in _pf,
+          "from results/rtl_sim_guest.log")
+    check(f"the report quotes the simulated cycle count ({_cyc:,})", f"{_cyc:,}" in _pf,
+          "from results/rtl_sim_guest.log")
+    # the counts are written a dozen times; every 148,xxx in the report must be one of the two
+    _seen = set(re.findall(r"\b148,\d{3}\b", _pf))
+    _wrong = sorted(_seen - {f"{_sym:,}", f"{_cyc:,}"})
+    check("no other 148,xxx figure appears in the report", not _wrong,
+          f"found {_wrong}, but the only real values are {_sym:,} and {_cyc:,}")
+    # per-symbol CPU cost: the accelerated 51.0% of the optimized run, divided
+    # by the symbols, at the guest's 2.4 GHz
+    if _pf_opt:
+        _cps = _pf_opt * 0.510 / _sym * 2.4e9
+        _want_cps = f"{round(_cps, -2):,.0f}"
+        check(f"the per-symbol CPU cost recomputes ({_want_cps} cycles)",
+              _want_cps in _pf,
+              f"{_pf_opt * 1e3:.0f} ms x 51.0% / {_sym:,} at 2.4 GHz")
+        # every CPU-cost sentence must state it; only those sentences, because
+        # 5.7 also quotes 3.6 and 1 cycles/symbol for the two decoder designs
+        _states = (set(re.findall(r"~([\d,]+) cycles of a 2\.4 GHz", _pf))
+                   | set(re.findall(r"~([\d,]+) CPU cycles per symbol", _pf)))
+        _bad = sorted(v for v in _states if v != _want_cps)
+        check("every per-symbol cycle figure in the report is the computed one",
+              not _bad, f"found {_bad}, expected {_want_cps}")
 
 # ---------------------------------------------------------------- cited files
 # every repository path either report names must exist

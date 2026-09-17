@@ -5,9 +5,13 @@
 #      ratio will differ from the VM figures the documents quote,
 #   2. every derived number in the two reports recomputes from results/,
 #   3. every number on the slides recomputes from results/ and the docs,
-#   4. how far the shipped run drifts from the independent rerun in
+#   4. that those two checkers still hold as many of the documents' figures as
+#      they did - mutation-testing them the way tb/mutate.sh tests the testbench,
+#      because a passing gate count says how many assertions ran, not how many
+#      figures are actually held to anything,
+#   5. how far the shipped run drifts from the independent rerun in
 #      results/reproducibility/ (printed for the reader; compare_runs.py does not fail on it).
-# Exit status is non-zero if any of steps 1-3 fails.
+# Exit status is non-zero if any of steps 1-4 fails.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # Prefer the venv the benchmark scripts create; fall back to the system python3
@@ -45,7 +49,7 @@ FP
     echo "                                           then update the slides to match."
   fi
 fi
-echo "== 1/4 optimizations vs originals (speedup timed on this machine; the shipped VM figures are in results/)"; $PY scripts/local_check.py all "${REPS:-3}"
+echo "== 1/5 optimizations vs originals (speedup timed on this machine; the shipped VM figures are in results/)"; $PY scripts/local_check.py all "${REPS:-3}"
 # On success print only a checker's summary line; on failure print the summary
 # and the FAIL lines (or the last 20 lines if the checker crashed).
 run_gate() {
@@ -57,7 +61,8 @@ run_gate() {
     return 1
   fi
 }
-run_gate "== 2/4 report numbers" scripts/check_report_numbers.py
-run_gate "== 3/4 slide numbers"  scripts/check_deck_numbers.py
-echo "== 4/4 drift against the independent rerun (reported, not gated)"; $PY scripts/compare_runs.py results results/reproducibility | tail -1
+run_gate "== 2/5 report numbers" scripts/check_report_numbers.py
+run_gate "== 3/5 slide numbers"  scripts/check_deck_numbers.py
+echo "== 4/5 what those gates actually cover"; $PY scripts/mutate_gates.py --quiet
+echo "== 5/5 drift against the independent rerun (reported, not gated)"; $PY scripts/compare_runs.py results results/reproducibility | tail -1
 echo "all checks passed"

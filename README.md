@@ -17,7 +17,7 @@ block.
 
 Measured inside the course QEMU/KVM guest (Ubuntu 22.04, one vCPU, Xeon
 E5-2630 v3) by the two scripts below; the raw files are in `results/`, and
-`scripts/check_all.sh` recomputes every figure in this table, the reports and
+`scripts/check_all.sh` recomputes the figures in this table, the reports and
 the slides from them. Both improvements are far above the 7% the assignment
 asks for.
 
@@ -33,7 +33,7 @@ What we run live at the presentation (about a minute in total, standard library 
 
     python3 scripts/local_check.py                   # both benchmarks: same output as the original, and the speedup
     (cd hw && make sim)                              # the RTL decodes the benchmark's real block: 148271 symbols, 0 errors, PASS
-    python3 scripts/check_report_numbers.py | head -1 # every figure in the reports recomputed from results/: PASS <n>   FAIL 0
+    python3 scripts/check_report_numbers.py | head -1 # the reports' figures recomputed from results/: PASS <n>   FAIL 0
 
 That `make sim` line is line 7 of `results/rtl_sim_guest.log` - the same testbench
 run inside the course VM. `local_check.py` needs no venv (it supplies its own
@@ -51,11 +51,18 @@ THIRD-PARTY.md                       what in here is not ours, and under what te
 benchmarks/<b>/run_benchmark.py      the benchmark exactly as pyperformance ships it
 benchmarks/<b>/run_benchmark_opt.py  our optimized version, same pyperf runner
 benchmarks/pyflate/data/             the benchmark input (interpreter.tar.bz2)
-scripts/check_all.sh                 the one command to run live: gates (1)-(3) below in order, then the drift line (4)
+scripts/check_all.sh                 the one command to run live: gates (1)-(4) below in order, then the drift line (5)
 scripts/local_check.py               (1) optimized == original: pyflate byte-for-byte, mdp to the last bit, plus a rough speedup
-scripts/check_report_numbers.py      (2) every figure the reports quote recomputes from results/, or it fails
+scripts/check_report_numbers.py      (2) figures the reports quote, recomputed from results/, or it fails
 scripts/check_deck_numbers.py        (3) the same for the slides, the block diagram and this README
-scripts/compare_runs.py              (4) drift between the shipped run and either rerun in results/reproducibility/ (printed, not gated)
+scripts/mutate_gates.py              (4) what (2) and (3) actually cover: change one figure in a document and
+                                     see whether the checker notices, the way tb/mutate.sh tests the testbench.
+                                     A passing gate count counts assertions, not coverage. Today it holds 74 of
+                                     the 84 figures on the slides, 45 of 294 in report_pyflate.txt and 26 of 133
+                                     in report_mdp.txt; the rest are constants of the bzip2 format, assumptions
+                                     the slide labels as assumptions, or figures a report states more than once
+                                     where one copy still satisfies the check. It fails if any of those drops.
+scripts/compare_runs.py              (5) drift between the shipped run and either rerun in results/reproducibility/ (printed, not gated)
 scripts/focus_folded.py              called by both script_*.sh: re-roots py-spy stacks at the benchmark function
 scripts/table_stats.py               called by script_pyflate.sh: what the shipped table scan costs on this input
 scripts/ablation.py                  called by script_pyflate.sh: what each pyflate optimization is worth on its own
