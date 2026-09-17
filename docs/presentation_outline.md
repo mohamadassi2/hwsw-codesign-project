@@ -241,7 +241,10 @@ path, not static timing — no cell library, no place-and-route.
 
 **21. Expected gain.** Walk the subtraction, do not just show it: 487 ms
 optimized, 249 ms of it in `find_next_symbol`, the same work at 200 MHz is
-0.74 ms plus about 0.6 ms of DMA and table writes — so about 240 ms. 2.0× over
+0.74 ms plus about 0.6 ms of DMA setup and transfers — so about 240 ms. Say
+that 200 MHz is an assumption this RTL does not reach, before anyone asks, and
+that halving it moves the answer by under a millisecond: the bound is Amdahl's,
+not the clock's. 2.0× over
 the optimized run, 4.8× over the shipped benchmark, and ~4,000 CPU cycles per
 symbol become one clock. *Land:* Amdahl sets the ceiling — the inverse BWT and
 the remaining interpreter overhead are the floor. That is a bound, not a

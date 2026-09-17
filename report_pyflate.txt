@@ -700,7 +700,10 @@ inside bench_pyflake() also passes in every run.
     snoopbits and readbits to it would count the same work twice.
 
     Take the optimized run measured in the VM, 487 ms, of which that part is
-    51.0% = ~249 ms. In the accelerator the same work is 148,272 cycles:
+    51.0% = ~249 ms. In the accelerator the same work is 148,272 cycles. Both
+    clocks below are assumptions, and 5.7 shows neither is reachable by the RTL
+    as it stands - which is why that section also shows how little the answer
+    turns on them:
         at 200 MHz   0.74 ms
         at 400 MHz   0.37 ms
     Add data movement: 66 KB in and 148,271 x 2 bytes out over PCIe or an AXI
