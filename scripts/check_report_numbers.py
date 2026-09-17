@@ -344,6 +344,39 @@ if os.path.exists(_abl):
         check(f"section 3.6 quotes the ablation figure for '{_lbl[:38]}' ({_v:,.1f} ms)",
               f"{_v:,.1f}" in _pf, "from results/pyflate/ablation.txt")
 
+    # The table rows were gated; the contributions drawn from them were not, and
+    # they are what 3.6 concludes with - that the algorithmic change is the
+    # smallest of the three. Take them from the artifact's own lines rather than
+    # subtracting the rounded table rows: the generator works from the raw
+    # timings, so 637.1 - 475.4 is 161.7 here and 161.8 there.
+    _contrib = {m.group(1): float(m.group(2))
+                for m in re.finditer(r"^\s+(\d\.\d)\s+worth\s+([\d.]+) ms", _a, re.M)}
+    check(f"ablation.txt states a contribution per separable change ({len(_contrib)})",
+          len(_contrib) >= 3)
+    for _k, _v in sorted(_contrib.items()):
+        check(f"section 3.6 quotes what {_k} is worth ({_v:.1f} ms)",
+              f"{_v:.1f}" in _pf, "from the contribution block of ablation.txt")
+    if len(_contrib) >= 3:
+        # Scoped to 3.6, not the whole report: "1.3" also appears in the Amdahl
+        # line, so a containment check against the whole file passes even when
+        # 3.6 states the gap wrongly - the flaw the deck's want() had.
+        _s36x = _flat(_sect(_pf, "3.6 Which of those five actually earned the speedup"))
+        _v = sorted(_contrib.values())                     # smallest is 3.1
+        _tie = f"{_v[2] - _v[1]:.1f}"                      # the two largest, 1.3 ms apart
+        check(f"section 3.6 quotes the gap it calls unresolved ({_tie} ms)",
+              f"{_tie} ms" in _s36x, "the difference between the two largest contributions")
+        _gap = round(((_v[1] - _v[0]) + (_v[2] - _v[0])) / 2)
+        check(f"section 3.6 quotes the gap it calls resolved (~{_gap} ms)",
+              f"~{_gap} ms" in _s36x,
+              "between the algorithmic change and the other two")
+        _m = re.search(r"spread across variants: ([\d.]+) ms", _a)
+        check("ablation.txt states its run-to-run spread", bool(_m))
+        if _m:
+            check(f"section 3.6 quotes the spread it reasons against ({_m.group(1)} ms)",
+                  _m.group(1) in _pf, "the resolution limit of this measurement")
+            check(f"3.6's unresolved gap really is below that spread "
+                  f"({_tie} < {_m.group(1)})", float(_tie) < float(_m.group(1)))
+
 _ts = results("pyflate", "table_stats.txt")
 if os.path.exists(_ts):
     _t = open(_ts, encoding="utf-8").read()
