@@ -41,9 +41,9 @@ that passed on a decoder emitting nothing but X is the best story here.
 
 ## Live demo (three commands, under half a minute of running)
 
-Have a terminal open in the repository before the talk. Neither command needs
+Have a terminal open in the repository before the talk. None of them needs
 the venv; the second needs Icarus Verilog (`brew install icarus-verilog` /
-`apt install iverilog`). Both write only to ignored directories, so nothing in
+`apt install iverilog`). They write only to ignored directories, so nothing in
 the tree changes.
 
 **On slide 13 or 14 — both benchmarks still produce the original answer, about
@@ -283,8 +283,8 @@ not the BWT, corrupt streams, the table switch, and what sets the clock.
   individually too.
 - **"Did you try PyPy / a C extension / Cython?"** That replaces the benchmark
   instead of optimizing the code under test.
-- **"How much of this is reproducible?"** `scripts/check_all.sh` — 127 report
-  figures and 85 slide figures recomputed from `results/`, plus a RUN_ID that
+- **"How much of this is reproducible?"** `scripts/check_all.sh` — every report and
+  slide figure recomputed from `results/`, plus a RUN_ID that
   ties the documents to the measurement files and a CODE_ID that ties the
   measurements to the code that produced them.
 - **"Did any perf sampling work?"** Yes, as root. The hardware `cycles`

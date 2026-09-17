@@ -1,5 +1,5 @@
 # Generic synthesis of huffman_accel_top with Yosys 0.68+post.
-# RTL fingerprint: 53f74172488e0651024ad3645df2f09b  (3 files under hw/rtl/)
+# RTL fingerprint: 3b4366cc243a1d77f03b0bfade531375  (3 files under hw/rtl/)
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.

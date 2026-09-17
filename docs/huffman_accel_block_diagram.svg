@@ -108,7 +108,7 @@
   <!-- footer numbers -->
   <rect x="310" y="505" width="830" height="42" rx="5" fill="#fff" stroke="#bbb"/>
   <text x="725" y="522" text-anchor="middle" fill="#333">Measured in simulation (hw/tb, Icarus Verilog): 148,271 / 148,271 symbols correct · 148,272 cycles · 1.00 symbol/cycle · 3.6 bits/symbol average</text>
-  <text x="725" y="540" text-anchor="middle" fill="#333">Critical path per cycle: peek → 21-bit compare → 20:5 priority encode → barrel shift.   Symbol path adds one registered SRAM read.</text>
+  <text x="725" y="540" text-anchor="middle" fill="#333">Decode loop, closed every cycle: peek → 21-bit compare → 20:5 priority encode → barrel shift.   Symbol path adds one registered SRAM read.</text>
   <text x="590" y="575" text-anchor="middle" fill="#a64" font-size="12">Per code length L: first[L] = smallest code of length L · count[L] = how many codes have length L · index[L] = where those symbols start in syms[]</text>
   <text x="590" y="618" text-anchor="middle" fill="#a00" font-size="12">hw/rtl implements the shaded datapath and its raw ports (tbl_*, in_*, run, tsel, sym_*). The register block, the address decode and the DMA are the proposed wrapper around it, not RTL in this submission.</text>
   <text x="590" y="600" text-anchor="middle" fill="#666" font-size="12">Blue = decode pipeline (huffman_decoder.sv + bitreader.sv) · Brown = per-block tables written by software · Grey = control</text>

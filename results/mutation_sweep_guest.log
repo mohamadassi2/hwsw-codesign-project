@@ -1,5 +1,5 @@
 suite: make sim_all
-RTL fingerprint: 53f74172488e0651024ad3645df2f09b  (3 files under hw/rtl/)
+RTL fingerprint: 3b4366cc243a1d77f03b0bfade531375  (3 files under hw/rtl/)
 control (no mutation): all simulations passed
 [symbol output driven to X] KILLED   (suite exit 2)  decoded 63 symbols in 64 cycles (0.984 symbols/cycle), 63 errors FAIL (63 errors) 
 [sym_valid stuck low] KILLED   (suite exit 2)  TIMEOUT: decoded 0/63 symbols in 20253 cycles FAIL (timeout) 

@@ -34,22 +34,24 @@ word. Mutations 19 and 20 exist only because those two runs do.
 
 ## Result with `make sim_all`: 19 of 20 killed, 1 unreachable
 
-RTL fingerprint: 53f74172488e0651024ad3645df2f09b  (3 files under hw/rtl/)
-The score below was measured on that RTL, in the course VM on 15 September
+RTL fingerprint: 3b4366cc243a1d77f03b0bfade531375  (3 files under hw/rtl/)
+The score below was measured on that RTL, in the course VM on 17 September
 2026; the run is results/mutation_sweep_guest.log, and tb/mutate.sh prints the
 fingerprint at the top of it. scripts/check_report_numbers.py recomputes the
 fingerprint and fails if hw/rtl/ has changed since.
 
 One line per injected bug, taken from results/mutation_sweep_guest.log. `make
 sim_all` runs the six directed sets before the 148,271-symbol benchmark block,
-so most bugs are caught by a small set first and the verdict names that run;
-the earlier version of this table quoted the benchmark run for five of them,
-from a sweep made before the suite was reordered. The verdict names what
-noticed it: `timeout` is
-the testbench watchdog, a set name or plusarg (`+bp`, `+last_level +bubble`)
-names the run that failed, and a number comes from an assertion in
-`tb_huffman.sv` - 148,271 is the symbol count of the benchmark block, so
-`148,271 errors` means every symbol came out wrong.
+so most bugs are caught by a small set first and the verdict names that run.
+Five verdicts here were corrected against that log: rows 1, 4 and 11 had quoted
+the benchmark run, and rows 6 and 17 had named the wrong failure - all from a
+sweep made before the suite was reordered.
+
+The verdict names what noticed it: `timeout` is the testbench watchdog, a set
+name or plusarg (`+bp`, `+last_level +bubble`) names the run that failed, and a
+number comes from an assertion in `tb_huffman.sv`. The directed sets are small,
+so `63 errors on vectors_lengths` means every symbol of that 63-symbol set came
+out wrong.
 
 | # | mutation | verdict |
 |---|---|---|

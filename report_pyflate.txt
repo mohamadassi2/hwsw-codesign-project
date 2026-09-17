@@ -297,8 +297,8 @@ public behaviour are unchanged; the output is byte-identical.
     (lines 397-401) fills a preallocated bytearray by index instead of
     appending each byte to a list and converting the list at the end, and
     bwt_transform (368-370 / 300-302) hoists base[symbol] into a local so the
-    inner loop reads and writes it once per byte instead of twice - the same
-    idea, over the same 400 KB.
+    inner loop reads it once per byte instead of twice - the same idea, over
+    the same 400 KB.
 
 What we deliberately did not do.
   - No C extension, numpy, or the stdlib bz2 module: that would replace the
@@ -318,7 +318,9 @@ What we deliberately did not do.
     implementation and times the result; every variant is checked against the
     benchmark's own md5 before it is timed, so a variant that decoded wrongly
     could not appear. Measured in the VM (results/pyflate/ablation.txt; the
-    minimum of five repetitions per variant, the file also lists the medians):
+    minimum of five repetitions per variant, the file also lists the medians).
+    As in report_mdp.txt 3.3, these rows are timed in one process to compare
+    with each other, so the 2.35x here is not section 4.1's 2.34x restated:
 
         baseline                                     1,115.1 ms   1.00x
         optimized (all of 3.1-3.5)                     475.4 ms   2.35x
@@ -441,9 +443,8 @@ inside bench_pyflake() also passes in every run.
     count the same work twice. The inverse BWT is 18.3% - bwt_reverse's
     cumulative share, which likewise already contains bwt_transform's 11.5% -
     and it is a pointer chase through 400 KB. py-spy puts it higher, at 25% of
-    the focused samples, which is the figure the slides quote; the two
-    profilers differ here for the same reason they differ on the Huffman
-    share, and neither changes which half is a datapath problem. The first part is what hardware
+    the focused samples, which is the figure the slides quote. Neither figure
+    changes which half is a datapath problem. The first part is what hardware
     is good at; the second part is not.
 
     One caveat on all of these shares. cProfile's call counts are exact, but its

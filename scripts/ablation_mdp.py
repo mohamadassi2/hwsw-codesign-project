@@ -6,11 +6,11 @@ by nested namedtuples with flat lists indexed by integers, and 3.2 memoizes
 getCritDist. Each variant below is the optimized module with exactly one of them
 put back, so the gap to the full optimized row is what that change is worth.
 
-Both revert by substituting source rather than by patching a function. 3.1
-cannot be a patch because the baseline's evaluate() would then run against the
-baseline module's globals, taking the unmemoized getCritDist with it and
-reverting both changes at once; splicing its source into the optimized module
-keeps 3.2 in place, which is the point of a leave-one-out row.
+Both revert by substituting source, so each variant is a whole module built the
+same way. A function patch would also work for 3.1 - the sweep reaches
+getCritDist through self.getSuccessors, which resolves on the instance's class
+rather than through the globals a patched-in function carries - but doing both
+the same way keeps the two rows comparable.
 
 Timings must come from the course VM like every other timing in this project.
 

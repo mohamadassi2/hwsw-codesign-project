@@ -102,9 +102,9 @@ bench_mdp's cumulative time, 8.927 s under the profiler:
   getCritDist                           2.5%   23.1%       3,659
 
 Reading it: a little over half the run is the value-iteration sweep itself
-(evaluate's own body, the two generator expressions the profiler separates out
-- the sum() pair on the chance-node path; the max() pair costs far less - and
-sum/max come to 52.7%),
+(evaluate's own body, the four generator expressions cProfile separates out -
+the sum() pair on the chance-node path dominates, the max() pair on the
+choice-node path costs about a seventh as much - and sum/max come to 52.7%),
 and about a fifth is Fraction arithmetic while the successor graph is built.
 The sweep is slow for a reason the py-spy flame graph does not show but the
 code and the perf capture do: dmin, dmax and frozen are dictionaries keyed by
@@ -199,7 +199,10 @@ Correctness. scripts/local_check.py runs both versions:
     every variant is checked against the benchmark's own tolerance before it is
     timed, so a variant that computed the wrong value could not appear.
     Measured in the VM (results/mdp/ablation.txt; the minimum of five
-    repetitions per variant, the file also lists the medians):
+    repetitions per variant, the file also lists the medians). These rows are
+    timed in one process to compare with each other; the 3.83x here is not a
+    second headline figure, and differs from section 4.1's 3.90x because that
+    one is pyperf's mean over thirty values in its own worker processes:
 
         baseline                                     5,007.1 ms   1.00x
         optimized (both 3.1 and 3.2)                 1,307.9 ms   3.83x
@@ -223,10 +226,13 @@ Correctness. scripts/local_check.py runs both versions:
     often the same arguments recur, and the profile put that at 3,659 calls
     with three distinct argument tuples.
 
-    Both variants here revert by substituting source, not by patching a
-    function. Patching Battle.evaluate would have taken the baseline module's
-    globals with it, reverting the memo at the same time, so the 3.1 row would
-    have measured both changes at once.
+    Both variants revert by substituting source, so each one is a whole module
+    built the same way. For 3.1 a function patch would in fact have worked:
+    the sweep reaches getCritDist through self.getSuccessors, which resolves on
+    the instance's class, not through the module globals a patched-in function
+    would carry - checked by patching it and finding the memo still populated.
+    That is the opposite of pyflate's move-to-front, where the optimized decode
+    loop inlines the work and no patch can reach it.
 
 
 4. Performance comparison
