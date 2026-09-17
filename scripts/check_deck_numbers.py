@@ -148,6 +148,31 @@ def main():
     check(f"PMI stays at 0 across a record: measured {pmi}",
           pmi and set(pmi) == {"0"} and "PMI" in txt)
 
+    # ---- how much talk the deck actually holds --------------------------------
+    # The guide tells the presenter how long the slides take to read, and that
+    # figure was hand-typed and had drifted twice. Count it instead: the words
+    # in the paragraphs and bullets of slides 1-22, since 23 is backup the guide
+    # says not to narrate, and code blocks and tables are pointed at, not read.
+    body = []
+    for sec in re.split(r'(?=<section class="s[ "])', open(DECK, encoding="utf-8").read())[1:23]:
+        for m in re.finditer(r"<(p|li)\b[^>]*>(.*?)</\1>", sec, re.S):
+            body.append(m.group(2))
+    spoken = " ".join(body)
+    spoken = re.sub(r"<svg.*?</svg>", " ", spoken, flags=re.S)
+    spoken = re.sub(r"<[^>]+>|&[a-z]+;", " ", spoken)
+    nwords = len(re.findall(r"[A-Za-z][A-Za-z'\u2019-]*", spoken))
+    guide = open(f"{ROOT}/docs/presentation_outline.md", encoding="utf-8").read()
+    check(f"the guide's word count is the deck's ({nwords} narrated words "
+          f"-> about {round(nwords, -2):,})",
+          f"about {round(nwords, -2):,} words of prose" in re.sub(r"\s+", " ", guide))
+    # and the read-aloud estimate that follows from it, at the guide's own pace
+    _mins = {10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen",
+             15: "fifteen", 16: "sixteen", 17: "seventeen", 18: "eighteen"}
+    _m = round(nwords / 100)
+    check(f"the guide's read-aloud estimate follows from it "
+          f"({nwords} words at the 100 wpm it assumes is ~{_m} min)",
+          _m not in _mins or f"roughly {_mins[_m]} minutes read aloud" in re.sub(r"\s+", " ", guide))
+
     # ---- the correctness gate, recomputed from the input the benchmark ships --
     # Slide 5 promises 399,360 bytes and an md5. Both are properties of
     # benchmarks/pyflate/data/interpreter.tar.bz2, so decompress it and look,

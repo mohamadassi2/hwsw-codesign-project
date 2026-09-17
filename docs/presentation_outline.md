@@ -24,9 +24,9 @@ hardware arrives only after the software has run out of room.
 | 23 | questions — backup, do not narrate | — |
 
 The minutes above are the target pacing and come to 21, which is the slot. The
-words on the slides do not fill it on their own: about 1,300 words of prose,
+words on the slides do not fill it on their own: about 1,500 words of prose,
 plus ten code blocks and tables that are pointed at rather than read, is
-roughly thirteen minutes read aloud, and the three live commands add two. The
+roughly fifteen minutes read aloud, and the three live commands add two. The
 gap is the part you say and the slide does not — why each change was the right one,
 what the profile looked like before you believed it, what you would do next.
 Treat the slides as the floor of the talk, not the script; a slide you can

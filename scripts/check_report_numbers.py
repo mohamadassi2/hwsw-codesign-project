@@ -449,6 +449,29 @@ if _sym and _cyc:
         check(f"5.2 states the selector traffic it used to deny ({_sel:,} writes)",
               "nothing shared with the CPU" not in _flat_pf and f"{_sel:,}" in _pf,
               f"{_sym:,} symbols is {_sel:,} selector writes")
+
+# ---- mdp: the sweep's share, which was an orphan figure ---------------------
+# "sum/max come to 52.7%" appeared once in the repository and reconstructed from
+# no denominator in any profile. Recompute the three numbers the sentence needs.
+_mcp = results("mdp", "cprofile_base.txt")
+if os.path.exists(_mcp):
+    _r = [(float(m.group(1)), float(m.group(2)), m.group(3).strip())
+          for m in re.finditer(r"^\s+\d+(?:/\d+)?\s+([\d.]+)\s+[\d.]+\s+([\d.]+)\s+[\d.]+\s+(.+)$",
+                               open(_mcp, encoding="utf-8").read(), re.M)]
+    _den = next((c for _, c, l in _r if "(bench_mdp)" in l), 0)
+    if _den:
+        # The artifact prints the profile twice, sorted two ways, so every
+        # function appears in it twice: take the first row for each name or the
+        # shares come out doubled.
+        def _first(sub):
+            return next((c for _, c, l in _r if sub in l), 0.0)
+        _ev = next((o for o, _, l in _r if "(evaluate)" in l), 0.0)
+        _sm = _first("builtins.sum") + _first("builtins.max")
+        for _label, _v in (("evaluate's own body", 100 * _ev / _den),
+                           ("sum and max together", 100 * _sm / _den),
+                           ("the sweep in total", 100 * (_ev + _sm) / _den)):
+            check(f"mdp: {_label} recomputes ({_v:.1f}%)", f"{_v:.1f}%" in _flat_md,
+                  f"from {_mcp.split('/')[-1]}")
         # a reordering left this pointing the wrong way: the MMIO paragraph is above
         check("5.6's pointer to the MMIO paragraph points the right way",
               "the paragraph below prices what it costs the host" not in _flat_pf,
