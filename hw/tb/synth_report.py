@@ -35,6 +35,9 @@ for path in rtl_files:
     fp.update(hashlib.md5(open(path, "rb").read()).hexdigest().encode())
 
 print(f"""# Generic synthesis of huffman_accel_top with {ver}.
+# Run in the course VM. The Yosys it packages is 0.9, which predates
+# `for (int i = ...)` and cannot parse this RTL, so the run uses a
+# pip-installed yowasp-yosys in the same guest - hence the version above.
 # RTL fingerprint: {fp.hexdigest()}  ({len(rtl_files)} files under hw/rtl/)
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
