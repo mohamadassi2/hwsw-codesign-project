@@ -118,7 +118,9 @@ def block(b):
         "    Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with",
         "    -cpu host -accel kvm. Measured by script_%s.sh; raw files in results/%s/." % (b, b),
         "",
-        f"      pyperformance run --bench {b}     {fmt(fw) if fw else '(not produced)'}",
+        # --fast is what script_<b>.sh passes; without it here the n=20 reads as
+        # the runner's default rigour, which it is not
+        f"      pyperformance run --bench {b} --fast  {fmt(fw) if fw else '(not produced)'}",
         f"      pyperf, baseline (vendored copy)  {fmt(base)}",
         f"      pyperf, optimized                 {fmt(opt)}",
         f"      speedup  {sp:.2f}x   ({pct:.1f}% less time; the assignment asks for 7%)",
@@ -191,10 +193,21 @@ def main():
         newtot = opt_ms - part + accel
         p = os.path.join(ROOT, "report_pyflate.txt")
         t = open(p).read()
-        t = re.sub(r"Take the optimized run [^,]*, [\d.]+ ms, of which the",
-                   f"Take the optimized run measured in the VM, {opt_ms:.0f} ms, of which the", t)
-        t = re.sub(r"Huffman-and-bit-extraction part is ~\d+% = ~[\d.]+ ms",
-                   f"that part is\n    {frac}% = ~{part:.0f} ms", t)
+        # One substitution, matching the sentence as it stands and rewriting it
+        # into the same shape. These used to be two, and the second rewrote the
+        # text into a form neither pattern could match again: after the first
+        # run both went dead, so a later re-measure updated the arithmetic line
+        # and the two ratios below while leaving their own operands - the
+        # optimized time and the accelerated share - at the previous run's
+        # values. The report would then print a sum that does not add up.
+        # Checked by re-running this function twice over its own output.
+        t, _n = re.subn(r"Take the optimized run measured in the VM, [\d.]+ ms, of\s+"
+                        r"which that part is\s+[\d.]+% = ~[\d.]+ ms",
+                        f"Take the optimized run measured in the VM, {opt_ms:.0f} ms, "
+                        f"of which that part is\n    {frac}% = ~{part:.0f} ms", t)
+        if _n != 1:
+            raise SystemExit("fill_reports: the 5.6 sentence no longer matches "
+                             "(%d hits); fix the pattern rather than the report" % _n)
         t = re.sub(r"[\d.]+ - [\d.]+ \+ [\d.]+\s+=\s+~?[\d.]+ ms",
                    f"{opt_ms:.0f} - {part:.0f} + {accel:.1f}  =  ~{newtot:.0f} ms", t)
         t = re.sub(r"~[\d.]+x over the optimized software",

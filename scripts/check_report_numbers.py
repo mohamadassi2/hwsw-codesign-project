@@ -942,6 +942,42 @@ for _b, _rep, _files in (("pyflate", _pf, ("pyflate_base.json", "pyflate_opt.jso
               f"{min(_la):.2f} to {max(_la):.2f}" in _flat(_rep),
               "from the pyperf JSONs the wall clocks come from")
 
+# fill_reports.py rewrites the reports from results/, and two of its five
+# substitutions had gone dead: one rewrote the text into a shape neither pattern
+# could match again, so a later re-measure updated an arithmetic line while
+# leaving its own operands at the previous run's values. A pattern that matches
+# nothing is a substitution that will not fire, so read the patterns out of the
+# source and require each to match the report it rewrites.
+def _sub_patterns(path):
+    """The literal regex of every re.sub/re.subn call in a module."""
+    import ast
+    out = []
+    for node in ast.walk(ast.parse(open(path, encoding="utf-8").read())):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            continue
+        if node.func.attr not in ("sub", "subn") or not node.args:
+            continue
+        first = node.args[0]
+        if isinstance(first, ast.Constant) and isinstance(first.value, str):
+            out.append(first.value)
+        elif isinstance(first, ast.BinOp):          # a pattern built by concatenation
+            try:
+                out.append(ast.literal_eval(first))
+            except Exception:
+                pass
+    return out
+
+
+_frp = _sub_patterns(os.path.join(ROOT, "scripts", "fill_reports.py"))
+check("fill_reports.py's substitutions are readable (%d found)" % len(_frp), len(_frp) >= 4)
+for _rx in _frp:
+    try:
+        _hits = len(re.findall(_rx, _pf)) + len(re.findall(_rx, _md))
+    except re.error:
+        continue
+    check("fill_reports.py's pattern /%s/ still matches a report" % _rx[:44], _hits > 0,
+          "it would never fire, so a re-measure would leave that figure stale")
+
 check("README explains the repository layout, as the brief requires",
       re.search(r"^## Layout", open(os.path.join(ROOT, "README.md"), encoding="utf-8").read(), re.M)
       is not None)
@@ -952,7 +988,7 @@ check("README explains the repository layout, as the brief requires",
 # passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
 # and still print FAIL 0. So count them. If an artifact goes missing, the count
 # drops and this fails, naming what to look for.
-MIN_CHECKS = 249
+MIN_CHECKS = 254
 _ran = len(OK) + len(FAIL)
 if _ran < MIN_CHECKS:
     FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "
