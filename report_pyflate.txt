@@ -467,9 +467,11 @@ inside bench_pyflake() also passes in every run.
 4.3 Reproducibility
     Three independent runs in the same guest are kept, each made by extracting
     the tree into an empty directory and running the scripts the way a grader
-    would. The shipped set is the latest of them; the other two are under
-    results/reproducibility/ (the second run) and results/reproducibility/run3/
-    (the third, a full end-to-end run of the submission).
+    would. The shipped set is the latest, and the only complete one: it carries
+    every artifact the scripts produce. The other two are under
+    results/reproducibility/ (the second run, which keeps the profiles too) and
+    results/reproducibility/run3/ (the third, kept only for what the table below
+    reads - the pyperf JSONs, perf stat and the contention check).
 
     The two earlier runs predate the 15 September revision, so they are a
     reproducibility check on the measurement, not a byte-identical rerun: the
@@ -564,7 +566,9 @@ inside bench_pyflake() also passes in every run.
     done        1 b    out  input flushed, buffer empty, no symbol waiting
     underrun    1 b    out  sticky: the stream ended part-way through a code
     sym_count   32 b   out  symbols accepted by the output since reset
-    Internal, between the two modules: peek (20 b) and len (5 b, 1..20).
+    Internal, between the two modules: peek (20 b) and len (5 b, 0..20 - zero
+    on any cycle where no code matched, which is what tells the bit reader to
+    shift nothing).
     Operating frequency: an estimate, not a timing result. ~200 MHz on an FPGA
     and ~400 MHz on an ASIC, neither reachable by this RTL as it stands - the
     longest path is 98 gate levels, and the part of it inside the decode loop -
@@ -578,11 +582,19 @@ inside bench_pyflake() also passes in every run.
                         bits (peek) every cycle; the decoder answers with len
                         and the buffer barrel-shifts len bits out in the same
                         cycle; refills 32 bits per cycle when there is room.
-                        After the last word it pads with zeros, like the
-                        software reader at EOF.
+                        After the last word it pads with zeros; the software
+                        reader instead raises, so `level` is what stops the
+                        padding becoming a symbol.
     huffman_decoder.sv  For every code length L = 1..20 at the same time:
-                        code_L = peek >> (20 - L); hit_L = code_L < limit[tsel][L].
-                        A priority encoder picks the smallest L with a hit; that
+                        code_L = peek >> (20 - L), and L hits when both
+                        code_L < limit[tsel][L] and L <= the bits really left in
+                        the buffer. The second term is the end-of-stream guard:
+                        without it the zero padding after the last word matches
+                        a short code and the decoder emits symbols that are not
+                        in the stream. It is one of the injected mutations
+                        (hw/tb/MUTATIONS.md, "short-code guard removed at end of
+                        stream") and the testbench catches it.
+                        A priority encoder picks the smallest L that hits; that
                         is len, combinational, fed straight back to the bit
                         reader. idx = base[tsel][len] + code_len goes to the
                         symbol memory and the symbol comes out one clock later.
@@ -749,9 +761,9 @@ inside bench_pyflake() also passes in every run.
     today; DMA and MMIO latencies as above; no overlap between CPU and
     accelerator, so the accelerator's own time is added rather than hidden -
     with overlap it disappears entirely and the bound becomes 487 - 249 = 238
-    ms. The selector list is assumed already in the accelerator; the paragraph
-    below prices what it costs the host to drive it instead, which is what this
-    design does.
+    ms. The selector list is assumed already in the accelerator; the MMIO
+    paragraph above prices what it costs the host to drive it instead, which is
+    what this design does.
 
 5.7 Performance / area / power trade-offs
     Area (docs/synthesis_yosys.txt, generic 2-input gates).
@@ -849,7 +861,8 @@ What is left is different in kind. About half of it is per-symbol bit work -
 find_next_symbol and the bit reads under it - which is what a small datapath does
 in one clock, and about a quarter is a pointer-chasing inverse BWT, which is
 memory-bound and stays on the CPU. The proposed accelerator is ~13k gates plus
-5.4k flip-flops of table registers and 13.9 kbit of symbol SRAM. It decodes the
+5.4k flip-flops - mostly the limit/base register files, and also the bit buffer,
+the counters and the status flags (5.7) - and 13.9 kbit of symbol SRAM. It decodes the
 whole benchmark block at one symbol per cycle in simulation with zero errors,
 changes one function in the software, and brings the run to roughly 2.0x over our
 optimized code and ~4.8x over the original - at which point the inverse BWT is the

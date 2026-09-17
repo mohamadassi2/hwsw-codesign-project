@@ -27,7 +27,11 @@ def slide_text():
     for a, b in (("&nbsp;", " "), ("&times;", "x"), ("&rarr;", "->"), ("&mdash;", "-"),
                  ("&plusmn;", "+-"), ("&lt;", "<"), ("&gt;", ">"), ("&amp;", "&")):
         s = s.replace(a, b)
-    return s
+    # One space everywhere, so a check for a phrase - and especially a check that
+    # a retracted figure is absent - cannot be defeated by where the markup put a
+    # line break. A negative check against unflattened text passes the moment the
+    # phrase wraps, which is the retracted figure back and nobody told.
+    return re.sub(r"\s+", " ", s)
 
 
 def mean(path):
@@ -283,7 +287,7 @@ def main():
     rep = open(os.path.join(ROOT, "report_pyflate.txt"), encoding="utf-8").read()
     base_self, base_cum = cprofile_shares(f"{ROOT}/results/pyflate/cprofile_base.txt", "find_next_symbol")
     check(f"slide 6 quotes the baseline cProfile shares ({base_self:.1f}% self, {base_cum:.1f}% cumulative)",
-          f"{base_self:.1f}% self and {base_cum:.1f}%" in re.sub(r"\s+", " ", txt))
+          f"{base_self:.1f}% self and {base_cum:.1f}%" in txt)
     check("those figures are the report's section 2 numbers",
           f"{base_self:.1f}%" in rep and f"{base_cum:.1f}%" in rep)
     outline = open(os.path.join(ROOT, "docs", "presentation_outline.md"), encoding="utf-8").read()

@@ -2,7 +2,7 @@
 # Run in the course VM. The Yosys it packages is 0.9, which predates
 # `for (int i = ...)` and cannot parse this RTL, so the run uses a
 # pip-installed yowasp-yosys in the same guest - hence the version above.
-# RTL fingerprint: 753aafda9d1118f1d90ed59159d783ab  (3 files under hw/rtl/)
+# RTL fingerprint: b9b7b945a71f8a400d828afc3dedf189  (3 files under hw/rtl/)
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.

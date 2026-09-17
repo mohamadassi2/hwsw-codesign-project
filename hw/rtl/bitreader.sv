@@ -7,9 +7,11 @@
 // time from a valid/ready stream, so at one symbol per cycle the buffer never
 // starves for codes up to INW bits.
 //
-// `flush` marks end of input; after it, missing bits read as zero (pyflate
-// pads at EOF the same way).  `level` lets the decoder refuse a code longer
-// than the bits really left, so the zero padding never becomes a symbol.
+// `flush` marks end of input; after it, missing bits read as zero.  The
+// software reader does not do this - pyflate's _read raises when the file is
+// empty - so the padding is the hardware's own answer to running out, and
+// `level` is what keeps it from becoming a symbol: the decoder refuses a code
+// longer than the bits really left.
 // `done` = flushed and every bit consumed.
 
 module bitreader #(
@@ -41,9 +43,13 @@ module bitreader #(
     logic [$clog2(BUFW+1)-1:0]  cnt_q, cnt_d, cnt_after;
     logic                       eof_q;
 
-    // Bits left after this cycle's consume.  Saturating: after a flush
-    // peek_valid holds with fewer than MAXBITS bits, so consume may exceed
-    // cnt_q, and a wrapped count would read as a full buffer of zeros forever.
+    // Bits left after this cycle's consume.  Saturating, though this design
+    // never reaches the saturation: the decoder only takes a code whose whole
+    // length is in the buffer (`fits[L]` in huffman_decoder.sv), so consume is
+    // never more than cnt_q.  The guard belongs to the reader's own interface,
+    // for a consumer that makes no such promise, and a wrapped count would read
+    // as a full buffer of zeros forever.  hw/tb/MUTATIONS.md records removing
+    // it as the one injected bug no test can catch, for this reason.
     assign cnt_after = (cnt_q > consume) ? (cnt_q - consume) : '0;
 
     // Room for a whole word after this cycle's consume.  Testing cnt_q would

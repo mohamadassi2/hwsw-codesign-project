@@ -69,7 +69,10 @@ module huffman_decoder #(
 
     always_ff @(posedge clk) begin
         if (tbl_we) begin
-            // rows exist only for 1..MAXBITS; an out-of-range tbl_len is ignored
+            // rows are 0..MAXBITS wide; a tbl_len above MAXBITS is dropped.
+            // Row 0 is inside that range rather than rejected, but software
+            // never programs it (see the idx comment below) and the compare
+            // loop runs 1..MAXBITS, so it is never read on a cycle that emits.
             if (!tbl_kind && tbl_len <= MAXBITS[4:0]) begin
                 limit_r[tbl_sel][tbl_len] <= tbl_limit;
                 base_r [tbl_sel][tbl_len] <= tbl_base;

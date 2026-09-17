@@ -203,6 +203,42 @@ Attacking it again, at the end
     mutation score was checked the same loose way and is now checked at every
     place the report states it.
 
+Turning the checkers on themselves
+  - "A passing gate count is not coverage. Measure what the gates actually
+    hold." scripts/mutate_gates.py does to check_report_numbers.py and
+    check_deck_numbers.py what tb/mutate.sh does to the testbench: change one
+    figure a document states and see whether a checker notices. On the tree as
+    it then stood, 126 of the 168 numbers on the slides could be changed with
+    both checkers green. Three causes. want() asked whether a number appeared
+    anywhere in the deck, so any one copy of a repeated figure satisfied it -
+    2.34x is on two slides, 487 ms on four. Some gates compared a constant to a
+    constant: rewriting the report to say the decode takes 9.99 ms left the
+    suite passing. And some figures had no gate at all. The slides are at 74 of
+    84 now; the reports are at 46 of 299 and 26 of 133, and the script prints
+    that rather than letting the gate count imply otherwise.
+  - The tool had the defect it was built to find. Its first version scored 84
+    of 84, because a checker that fails on the unmutated tree "catches" every
+    mutation. It runs a control first now, exactly as tb/mutate.sh does, and
+    both failure modes are tested.
+  - "A negative check on raw text is not a check." The gate asserting the
+    retracted 19.4 kbit figure is absent searched the report as written. Put
+    the figure back with the line break falling between "19.4" and "kbit" and
+    the gate still passed. Every such check now runs against the collapsed
+    text, in both checkers.
+
+  - The recurring shape, and the one worth remembering: the paragraph that
+    motivates a decision is the one most likely to be wrong, because it is
+    written first and re-read least. Five times the summary kept an early,
+    looser claim that a later section had already corrected. 5.2 justified the
+    accelerator with "hundreds of instructions per symbol" where 5.6 prices the
+    same work at ~4,000 cycles - about ten thousand instructions - and said the
+    interface shares nothing with the CPU during the run, which our own
+    register map contradicts 2,966 times per block. 5.6 priced the host traffic
+    and then re-checked only one of the two ratios it moves. The conclusion
+    called all 5,441 flip-flops table registers, which 5.7 spends a paragraph
+    saying they are not. 4.3 called a run kept only for its timings a full
+    end-to-end run of the submission. Each is now stated correctly and gated.
+
 What we did with all of this
   Every change suggested by the assistant was read, and the ones that
   changed behaviour were run against the original before being kept: the

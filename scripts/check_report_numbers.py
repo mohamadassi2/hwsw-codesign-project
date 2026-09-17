@@ -325,8 +325,11 @@ if os.path.exists(syn):
               _flat_pf.count("2,768") == _flat_pf.count("An earlier draft quoted 2,768 cells"),
               f"{_flat_pf.count('2,768')} mention(s)")
         for stale in ("52,952", "19.4 kbit"):
+            # against the flattened text: "19.4 kbit" is two words, and a check
+            # for its absence in the raw text passes the moment the report wraps
+            # between them - a retracted figure would be back and unreported.
             check(f"the superseded synthesis figure {stale} is gone from the report",
-                  stale not in _pf, "it assumed a 20-read-port SRAM")
+                  stale not in _flat_pf, "it assumed a 20-read-port SRAM")
 
 # ---------------------------------------------------------------- ablation
 # section 3.6 quotes the per-optimization times from results/pyflate/ablation.txt
@@ -446,6 +449,21 @@ if _sym and _cyc:
         check(f"5.2 states the selector traffic it used to deny ({_sel:,} writes)",
               "nothing shared with the CPU" not in _flat_pf and f"{_sel:,}" in _pf,
               f"{_sym:,} symbols is {_sel:,} selector writes")
+        # a reordering left this pointing the wrong way: the MMIO paragraph is above
+        check("5.6's pointer to the MMIO paragraph points the right way",
+              "the paragraph below prices what it costs the host" not in _flat_pf,
+              "the paragraph that prices it comes earlier, not later")
+        # The conclusion used to call all 5,441 flip-flops "table registers",
+        # which 5.7 spends a paragraph saying they are not.
+        check("the conclusion does not attribute every flip-flop to the tables",
+              "flip-flops of table registers" not in _flat_pf,
+              "5.7 says the bit buffer, counters and status flags are in that count too")
+        # run3 keeps timings only; calling it a full run of the submission was
+        # wrong twice over - it predates the 15 September revision as well.
+        _r3 = glob.glob(os.path.join(ROOT, "results", "reproducibility", "run3", "*", "*"))
+        check(f"4.3 does not call run3 a full end-to-end run ({len(_r3)} files in it)",
+              "full end-to-end run of the submission" not in _flat_pf,
+              "it holds the pyperf JSONs, perf stat and contention, not the profiles")
         # 5.6 prices that traffic at ~5 ms and must then re-check BOTH headline
         # ratios against it, not only the one that survives it. It gave the
         # vs-optimized ratio alone, leaving ~4.8x standing where ~4.7x is right.
