@@ -210,3 +210,8 @@ is why the file's header says 0.68 and not 0.9.
 The history is meant to be read: baseline vendored → pyflate optimization →
 mdp optimization → scripts → RTL + testbench → docs/synthesis. Each commit
 message states what was measured and why the change was made.
+
+Half of it was committed under a GitHub noreply identity whose display name is
+a typo, so `git shortlog` used to show two contributors where there is one.
+`.mailmap` maps them to one canonical name; rewriting the commits to fix it
+would change every hash and throw away the history this section is pointing at.

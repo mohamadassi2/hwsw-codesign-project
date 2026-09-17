@@ -1,0 +1,9 @@
+# Canonical identities, so `git log`, `git shortlog` and `git blame` show one
+# name per person. Half the history was committed under a GitHub noreply
+# identity whose display name is a typo of the author's own name; rewriting 147
+# commits to fix it would change every hash and throw away the development
+# history this repository is meant to show, which is what .mailmap exists to
+# avoid. Nothing about the commits themselves changes.
+#
+#   <canonical name> <canonical email> <name as committed> <email as committed>
+Mohamad Assi <mohamdassitv@gmail.com> mohamd Assi <117400492+mohamadassi2@users.noreply.github.com>
