@@ -24,7 +24,7 @@ asks for.
 ## Start here
 
 1. `report_pyflate.txt`, `report_mdp.txt` - the two reports, sections in the assignment's order
-2. `docs/presentation.html` - the deck (open in a browser); `docs/presentation_outline.md` is the speaker guide
+2. `docs/presentation.html` - the deck (one self-contained file: open it in a browser, no network needed); `docs/presentation_outline.md` is the speaker guide
 3. `benchmarks/<b>/run_benchmark_opt.py` - the optimized code; `run_benchmark.py` beside it is the untouched original
 4. `hw/rtl/huffman_decoder.sv` - the accelerator; `docs/hw_sw_interface.md` - its register map
 5. `results/` - the course-VM measurements every number above comes from
@@ -71,7 +71,8 @@ hw/tb/synth_report.py                turns a yosys run into docs/synthesis_yosys
 hw/gen_vectors.py                    dumps tables / bit stream / expected symbols from the software
 hw/synth.ys                          the yosys script `make synth` runs
 hw/Makefile                          `make vectors`, `make sim`, `make sim_all`, `make synth`
-docs/presentation.html               the project presentation (open in a browser)
+docs/presentation.html               the project presentation (one self-contained file, fonts and
+                                     figures embedded; needs no network)
 docs/presentation_outline.md         the slide-by-slide plan behind it
 docs/hw_sw_interface.md              register map, data flow, the one software change
 docs/huffman_accel_block_diagram.svg block diagram
