@@ -125,7 +125,11 @@ def main():
     ]
     for label, which, lo, med, spread in rows:
         out.append("  %-44s %10.1f %10.1f %8.2fx" % (label, lo, med, base_ms / lo))
-    out += ["", "What each change is worth (reverted row minus the full optimized row):"]
+    noise = max(r[4] for r in rows)
+    out += ["",
+            "  Largest run-to-run spread across variants: %.1f ms - a contribution" % noise,
+            "  smaller than that is not resolved by this measurement.",
+            "", "What each change is worth (reverted row minus the full optimized row):"]
     for label, which, lo, med, spread in rows[2:]:
         out.append("    %-6s worth %6.1f ms, i.e. %.2fx of the overall %.2fx"
                    % (which, lo - full_ms, lo / full_ms, base_ms / full_ms))

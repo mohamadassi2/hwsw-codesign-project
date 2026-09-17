@@ -542,6 +542,10 @@ if os.path.exists(_mabl):
         _which, _ms = _m.group(1), _m.group(2)
         check(f"report_mdp.txt 3.3 quotes the measured {_which} contribution ({_ms} ms)",
               _ms in _sec33, "from results/mdp/ablation.txt")
+    _msp = re.search(r"spread across variants: ([\d.]+) ms", _a)
+    if _msp:
+        check(f"report_mdp.txt 3.3 quotes the measured run-to-run spread ({_msp.group(1)} ms)",
+              _msp.group(1) in _sec33, "from results/mdp/ablation.txt")
     for _m in re.finditer(r"^  (\S.*?)\s{2,}([\d,]+\.\d)\s+[\d,]+\.\d\s+([\d.]+)x$", _a, re.M):
         _row = _m.group(2).replace(",", "")
         check(f"report_mdp.txt 3.3 quotes the {_m.group(1).strip()[:34]} row ({_row} ms)",

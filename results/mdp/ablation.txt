@@ -7,13 +7,16 @@ tolerance before it is timed, so a row that computed the wrong value could
 not appear here.
 
   variant                                        min (ms)     median   vs base
-  baseline (as pyperformance ships it)             5034.2     5044.4     1.00x
-  optimized (both 3.1 and 3.2)                     1299.0     1307.3     3.88x
-  optimized, 3.1 reverted to the dict sweep        4201.0     4212.0     1.20x
-  optimized, 3.2 reverted to recomputing           2137.4     2138.5     2.36x
+  baseline (as pyperformance ships it)             5007.1     5018.6     1.00x
+  optimized (both 3.1 and 3.2)                     1307.9     1309.6     3.83x
+  optimized, 3.1 reverted to the dict sweep        4158.7     4193.2     1.20x
+  optimized, 3.2 reverted to recomputing           2141.6     2148.3     2.34x
+
+  Largest run-to-run spread across variants: 126.7 ms - a contribution
+  smaller than that is not resolved by this measurement.
 
 What each change is worth (reverted row minus the full optimized row):
-    3.1    worth 2902.0 ms, i.e. 3.23x of the overall 3.88x
-    3.2    worth  838.4 ms, i.e. 1.65x of the overall 3.88x
+    3.1    worth 2850.8 ms, i.e. 3.18x of the overall 3.83x
+    3.2    worth  833.7 ms, i.e. 1.64x of the overall 3.83x
 
   reps per variant: 5, minimum reported (medians in the table above).

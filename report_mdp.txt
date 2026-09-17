@@ -10,7 +10,7 @@ Files that belong to this report
   script_mdp.sh                         environment, baseline, flame graphs, optimized run, comparison
   scripts/local_check.py                in-process correctness check used in section 3
   scripts/compare_runs.py               drift between two independent runs (section 4.3)
-  results/reproducibility/              the independent from-scratch rerun in the guest
+  results/reproducibility/              two further from-scratch runs in the guest
   results/mdp/                          what script_mdp.sh wrote in the course VM
 
 To show it live (any machine with python3, no packages needed; a few seconds):
@@ -201,17 +201,17 @@ Correctness. scripts/local_check.py runs both versions:
     Measured in the VM (results/mdp/ablation.txt; the minimum of five
     repetitions per variant, the file also lists the medians):
 
-        baseline                                     5,034.2 ms   1.00x
-        optimized (both 3.1 and 3.2)                 1,299.0 ms   3.88x
-        optimized, 3.1 reverted to the dict sweep    4,201.0 ms   1.20x
-        optimized, 3.2 reverted to recomputing       2,137.4 ms   2.36x
+        baseline                                     5,007.1 ms   1.00x
+        optimized (both 3.1 and 3.2)                 1,307.9 ms   3.83x
+        optimized, 3.1 reverted to the dict sweep    4,158.7 ms   1.20x
+        optimized, 3.2 reverted to recomputing       2,141.6 ms   2.34x
 
-    Leave one out and the run costs 2,902.0 ms more without the flat-list
-    sweep and 838.4 ms more without the memoized distributions. As in pyflate
+    Leave one out and the run costs 2,850.8 ms more without the flat-list
+    sweep and 833.7 ms more without the memoized distributions. As in pyflate
     these are leave-one-out differences, not a decomposition - they do not
-    multiply out to 3.88x - but here they are far apart enough to order
-    confidently: the largest spread across the variants is 167.0 ms, and the
-    gap between the two changes is 2,063.6 ms.
+    multiply out to 3.83x - but here they are far apart enough to order
+    confidently: the largest run-to-run spread across the variants is
+    126.7 ms, and the gap between the two changes is 2,017.1 ms.
 
     The shape is the opposite of pyflate's. There the change we called the
     algorithmic one turned out to be the smallest of the three that could be
