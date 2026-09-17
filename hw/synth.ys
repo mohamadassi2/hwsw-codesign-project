@@ -14,7 +14,10 @@
 read_verilog -DSYNTHESIS -sv rtl/bitreader.sv rtl/huffman_decoder.sv rtl/huffman_accel_top.sv
 hierarchy -check -top huffman_accel_top
 proc; flatten; opt
-memory -nomap                       # the (* mem2reg *) tables become flops here
+memory -nomap                       # leave symtab as a memory cell - this is the only
+                                    # difference from configuration 2's memory_map.
+                                    # limit_r and base_r are already flops by here:
+                                    # (* mem2reg *) makes `proc` above do that.
 techmap
 abc -g AND,NAND,OR,NOR,XOR,XNOR,ANDNOT,ORNOT,MUX   # generic 2-input gates + MUX
 opt_clean

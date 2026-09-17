@@ -38,7 +38,14 @@ run() {   # run NAME 'sed-expression' FILE
   local out rc
   out=$(make $SUITE 2>&1) && rc=0 || rc=$?
   mv "$file.orig" "$file"
-  local summary; summary=$(echo "$out" | grep -E 'decoded|errors|PASS|FAIL|TIMEOUT|X on' | tail -2 | tr '\n' ' ' | cut -c1-150)
+  # `|| true`, because of `set -o pipefail` above: a mutation that breaks
+  # compilation prints "make: *** [build/tb] Error 16", which matches none of
+  # these words, and a grep that matches nothing would fail the pipeline, fail
+  # the assignment and take the whole sweep down with it - no verdict for that
+  # mutation, no error, and the remaining ones never run. The output would look
+  # like a clean partial sweep.
+  local summary; summary=$(echo "$out" | grep -E 'decoded|errors|PASS|FAIL|TIMEOUT|X on' | tail -2 | tr '\n' ' ' | cut -c1-150 || true)
+  [ -n "$summary" ] || summary="(no recognisable line in the suite output)"
   # The suite's exit status is the verdict, not the log: the badidx set decodes
   # zero symbols on purpose, so "decoded 0 symbols" is a pass there.
   if [ "$rc" -ne 0 ]; then echo "[$name] KILLED   (suite exit $rc)  $summary"
@@ -49,7 +56,22 @@ echo "suite: make $SUITE"
 # Stamp the RTL these results describe, so a recorded score cannot outlive the
 # code it was measured on (the same check docs/synthesis_yosys.txt carries).
 echo "RTL fingerprint: $(for f in rtl/*.sv; do md5sum "$f" | cut -d" " -f1; done | tr -d "\n" | md5sum | cut -d" " -f1)  ($(ls rtl/*.sv | wc -l) files under hw/rtl/)"
-echo "control (no mutation): $( (rm -rf build; make $SUITE 2>&1) | grep -E 'all simulations passed|FAILED' | tail -1)"
+# The control, and it has to be able to stop the sweep. This used to be one
+# echo with the make inside a command substitution, so the status belonged to
+# echo and was always 0: if the unmutated suite failed, every mutation below
+# would report KILLED for that reason alone and the sweep would print a perfect
+# score that meant nothing. scripts/mutate_gates.py does the same check and its
+# comment says it does it "as hw/tb/mutate.sh runs one" - now true.
+rm -rf build
+if ctl=$(make $SUITE 2>&1); then
+  echo "control (no mutation): $(echo "$ctl" | grep -E 'all simulations passed|FAILED' | tail -1 || true)"
+else
+  ctl_rc=$?
+  echo "control (no mutation): FAILED - make $SUITE exits $ctl_rc on the unmutated RTL." >&2
+  echo "  Every mutation below would be recorded KILLED for that reason alone, so the" >&2
+  echo "  sweep would say nothing. Fix the tree first." >&2
+  exit 1
+fi
 run "symbol output driven to X"         's/sym <= symtab\[tsel\]\[idx\];/sym <= '"'"'x;/'                          rtl/huffman_decoder.sv
 run "sym_valid stuck low"               's/if (take \&\& idx_ok)  sym_valid <= 1.b1;/if (1'"'"'b0)               sym_valid <= 1'"'"'b1;/' rtl/huffman_decoder.sv
 run "hit compare < changed to <="       's/code\[L\] < limit_r\[tsel\]\[L\]/code[L] <= limit_r[tsel][L]/'       rtl/huffman_decoder.sv

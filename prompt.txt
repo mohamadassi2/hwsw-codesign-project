@@ -214,7 +214,7 @@ Turning the checkers on themselves
     2.34x is on two slides, 487 ms on four. Some gates compared a constant to a
     constant: rewriting the report to say the decode takes 9.99 ms left the
     suite passing. And some figures had no gate at all. The slides are at 74 of
-    84 now; the reports are at 59 of 299 and 34 of 135, and the script prints
+    84 now; the reports are at 62 of 299 and 37 of 135, and the script prints
     that rather than letting the gate count imply otherwise. The floors in
     mutate_gates.py are the one place those three numbers live; a gate makes
     README and this file quote them, because the sentence you are reading had

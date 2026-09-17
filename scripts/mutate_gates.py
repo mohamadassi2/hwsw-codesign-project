@@ -18,7 +18,8 @@ temporary directory and mutated there.
     python3 scripts/mutate_gates.py            # both documents, summary + misses
     python3 scripts/mutate_gates.py --quiet    # just the summary and the exit code
 
-Exit status is non-zero if an ungated number is not in ALLOWED below.
+Exit status is non-zero if any document's covered count falls below its floor
+in FLOORS below - the mechanism is a ratchet, not a list of permitted misses.
 """
 import os, re, shutil, subprocess, sys, tempfile
 
@@ -36,14 +37,14 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #       bits, 14 bits per bank), the 7% the assignment asks for, or an
 #       assumption the slide labels as one (200 MHz, 0.6 ms of DMA). None is a
 #       measurement, so there is nothing under results/ to recompute them from.
-#   report_pyflate.txt  59 of 299, report_mdp.txt  34 of 135. The reports are
+#   report_pyflate.txt  62 of 299, report_mdp.txt  37 of 135. The reports are
 #       checked with `"1.141" in report`, which one copy of a repeated figure
 #       satisfies for all of them - the same flaw the deck had until want()
 #       started counting. Fixing it means teaching those 87 checks to count too.
 FLOORS = {
     "docs/presentation.html": 74,
-    "report_pyflate.txt": 59,
-    "report_mdp.txt": 34,
+    "report_pyflate.txt": 62,
+    "report_mdp.txt": 37,
 }
 
 

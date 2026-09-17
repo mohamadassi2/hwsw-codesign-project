@@ -44,7 +44,14 @@ def _flat(t):
 
 
 def _sect(text, head, span=2600):
-    """the body of one numbered subsection, so a check can be tied to it"""
+    """The body of one numbered subsection, so a check can be tied to it.
+
+    The end is the next blank-line-blank-line or the next top-level heading;
+    `span` is only the fallback for a document with neither, and on these two
+    reports it has never applied. Call sites used to pass tuned values, which
+    read as a window size and were not one - report_pyflate's 4.3 is 3,434
+    characters and the call passed 3,200, so a reader adding a gate there would
+    have written around a truncation that does not happen."""
     i = text.find(head)
     if i < 0:
         return ""
@@ -194,7 +201,7 @@ if _md_base and _md_opt:
 # ratio, and the spread the section states, is recomputed and looked for
 # inside that section only.
 if _pf_base and _pf_opt and _pf_base2 and _pf_opt2:
-    _rep = _flat(_sect(_pf, "4.3 Reproducibility", 3200))
+    _rep = _flat(_sect(_pf, "4.3 Reproducibility"))
     if _pf_base3 and _pf_opt3:
         check("reproducibility: the third run's pyflate ratio is quoted",
               f"{_pf_base3/_pf_opt3:.3f}x" in _rep, f"{_pf_base3/_pf_opt3:.3f}x")
@@ -213,7 +220,7 @@ if _pf_base and _pf_opt and _pf_base2 and _pf_opt2:
           f"{_pf_base2/_pf_opt2:.3f}x" in _rep, f"{_pf_base2/_pf_opt2:.3f}x, in section 4.3")
 if _md_base and _md_opt and _md_base2 and _md_opt2:
     # section 4.3 lists the runs as a table; every ratio must appear in it
-    _mrep = _flat(_sect(_md, "4.3 Reproducibility", 3200))
+    _mrep = _flat(_sect(_md, "4.3 Reproducibility"))
     check("reproducibility: mdp quotes the shipped ratio",
           f"{_md_base/_md_opt:.3f}x" in _mrep, f"{_md_base/_md_opt:.3f}x, in section 4.3")
     check("reproducibility: mdp quotes the second run's ratio",
@@ -410,7 +417,7 @@ if _pf_base and _pf_opt:
           f"expected {_round} ms")
     # no stale optimized time anywhere else; section 4.3 lists the other runs'
     # times on purpose, so it is skipped
-    _outside_43 = _pf.replace(_sect(_pf, "4.3 Reproducibility", 3200), "")
+    _outside_43 = _pf.replace(_sect(_pf, "4.3 Reproducibility"), "")
     for _stale in ("473.0", "473"):
         if _stale != _exact and _stale != _round:
             check(f"no stale optimized time '{_stale}' outside section 4.3",
@@ -489,9 +496,9 @@ if _sym and _cyc:
 # so one copy satisfies them all, and the copy that drifts is the one nobody
 # reads twice: the summary written first and the conclusion written last. Five
 # defects found by hand were exactly that. These look inside those two sections.
-_S1 = _flat(_sect(_pf, "1. Overview", 3000))
+_S1 = _flat(_sect(_pf, "1. Overview"))
 _S6 = _flat(_concl)
-_M1 = _flat(_sect(_md, "1. Overview", 3000))
+_M1 = _flat(_sect(_md, "1. Overview"))
 _M6 = _flat(_md[_md.rindex("6. Conclusion"):]) if "6. Conclusion" in _md else ""
 check("the four report sections the summary gates read are all present",
       all((_S1, _S6, _M1, _M6)))
@@ -647,10 +654,10 @@ for b, rep, base, opt in (("pyflate", _pf, _pf_base, _pf_opt), ("mdp", _md, _md_
     if not (base and opt):
         continue
     _want = f"{base / opt:.2f}x"
-    _body = rep.replace(_sect(rep, "4.3 Reproducibility", 3200), "")
+    _body = rep.replace(_sect(rep, "4.3 Reproducibility"), "")
     for _abl in ("3.6 Which of those five actually earned the speedup",
                  "3.3 Which of the two earned the speedup"):
-        _body = _body.replace(_sect(_body, _abl, 3000), "")
+        _body = _body.replace(_sect(_body, _abl), "")
     _found = re.findall(r"(?<![\d.])(\d\.\d\d)x(?![\d.])", _body)
     _bad = sorted({v + "x" for v in _found} - {_want})
     check(f"report_{b}.txt: every headline ratio outside 4.3 is the measured {_want}",
@@ -750,7 +757,7 @@ if all(os.path.exists(f) for f in _measured_files):
 _mabl = results("mdp", "ablation.txt")
 if os.path.exists(_mabl):
     _a = open(_mabl, encoding="utf-8").read()
-    _sec33 = _flat(_sect(_md, "3.3 Which of the two earned the speedup", 3000)).replace(",", "")
+    _sec33 = _flat(_sect(_md, "3.3 Which of the two earned the speedup")).replace(",", "")
     for _m in re.finditer(r"^\s+(3\.\d)\s+worth\s+([\d.]+) ms", _a, re.M):
         _which, _ms = _m.group(1), _m.group(2)
         check(f"report_mdp.txt 3.3 quotes the measured {_which} contribution ({_ms} ms)",
@@ -942,6 +949,66 @@ for _b, _rep, _files in (("pyflate", _pf, ("pyflate_base.json", "pyflate_opt.jso
               f"{min(_la):.2f} to {max(_la):.2f}" in _flat(_rep),
               "from the pyperf JSONs the wall clocks come from")
 
+# ---- figures a triage pass found ungated, each reproduced from its artifact --
+# The spread each report states beside its mean, the percentage it derives from
+# the two means, the ablation's own "vs base" column, and the cProfile shares
+# sections 2, 4.2 and 5.x quote. None of these was recomputed anywhere.
+def _spread(path):
+    """(mean, stdev) over every value in a pyperf JSON"""
+    if not os.path.exists(path):
+        return None
+    d = json.load(open(path))
+    v = [x for b in d["benchmarks"] for r in b["runs"] for x in r.get("values", [])]
+    return (statistics.mean(v), statistics.stdev(v)) if len(v) > 1 else None
+
+
+for _b, _rep, _base_f, _opt_f, _bfmt, _ofmt in (
+        ("pyflate", _pf, "pyflate_base.json", "pyflate_opt.json", "{:.3f}", "{:.1f}"),
+        ("mdp", _md, "mdp_base.json", "mdp_opt.json", "{:.3f}", "{:.3f}")):
+    _sb, _so = _spread(results(_b, _base_f)), _spread(results(_b, _opt_f))
+    check(f"{_b}: both timing JSONs carry enough values for a spread",
+          _sb is not None and _so is not None)
+    if _sb and _so:
+        _bs = _bfmt.format(_sb[1])
+        _os = _ofmt.format(_so[1] * (1e3 if _b == "pyflate" else 1))
+        check(f"{_b}: the report states the baseline spread ({_bs})", _bs in _rep,
+              "statistics.stdev over every value in the baseline JSON")
+        check(f"{_b}: the report states the optimized spread ({_os})", _os in _rep,
+              "statistics.stdev over every value in the optimized JSON")
+
+# the ablation artifact prints its own ratio column; the reports quote it
+for _b in ("pyflate", "mdp"):
+    _ap = results(_b, "ablation.txt")
+    if not os.path.exists(_ap):
+        continue
+    _rep = _pf if _b == "pyflate" else _md
+    _ratios = re.findall(r"^  .+?\s{2,}[\d.]+\s+[\d.]+\s+([\d.]+)x$",
+                         open(_ap, encoding="utf-8").read(), re.M)
+    check(f"{_b}: ablation.txt prints a ratio per variant ({len(_ratios)})", len(_ratios) >= 3)
+    for _r in sorted(set(_ratios)):
+        if _r == "1.00":
+            continue                      # the baseline row, ungated by construction
+        check(f"{_b}: the report quotes the ablation ratio {_r}x", f"{_r}x" in _rep,
+              "from the 'vs base' column of ablation.txt")
+
+# cProfile shares the reports print in their tables
+for _b, _rep, _tag, _fns in (
+        # not bench_pyflake: it is the denominator, so its share is 100% by
+        # construction and a gate on it asserts nothing
+        ("pyflate", _pf, "base", ("snoopbits",)),
+        ("pyflate", _pf, "opt", ("find_next_symbol", "snoopbits", "readbits")),
+        ("mdp", _md, "base", ("getCritDist",))):
+    for _fn in _fns:
+        _r = _cprof(results(_b, f"cprofile_{_tag}.txt"), _fn)
+        if not _r:
+            continue
+        _self, _cum, _calls = _r
+        check(f"{_b}/{_tag}: the report quotes {_fn}'s cumulative share ({_cum:.1f}%)",
+              f"{_cum:.1f}%" in _rep, f"from cprofile_{_tag}.txt")
+        if _fn == "getCritDist":
+            check(f"mdp: the report quotes getCritDist's call count ({int(_calls):,})",
+                  f"{int(_calls):,}" in _rep, "the ncalls column of cprofile_base.txt")
+
 # fill_reports.py rewrites the reports from results/, and two of its five
 # substitutions had gone dead: one rewrote the text into a shape neither pattern
 # could match again, so a later re-measure updated an arithmetic line while
@@ -988,7 +1055,7 @@ check("README explains the repository layout, as the brief requires",
 # passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
 # and still print FAIL 0. So count them. If an artifact goes missing, the count
 # drops and this fails, naming what to look for.
-MIN_CHECKS = 254
+MIN_CHECKS = 274
 _ran = len(OK) + len(FAIL)
 if _ran < MIN_CHECKS:
     FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "
