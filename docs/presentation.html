@@ -83,8 +83,16 @@ em{color:var(--ink);font-style:italic}
 @media print{
   :root{--bg:#fff;--panel:#f2f4f7;--panel2:#fff;--line:#d6dbe2;--line2:#b8c1cc;--ink:#0d1117;--dim:#4b5563;--dimmer:#6b7280;
         --sw:#0d6470;--hw:#8a5009;--swd:#e2f0f2;--cell0:#dbeef1;--cell1:#eef1f5}
+  /* One slide per page, at the same 1280x720 geometry as the screen: every
+     clamp() in this stylesheet resolves against the page box, so a printed
+     slide lays out exactly as a 1280x720 window does. `height:auto` with an
+     aspect-ratio did not do that - the flex children overflowed the box they
+     were given, so the bit strip printed through the footer and the next
+     slide's heading came up the same page. */
+  @page{size:1280px 720px;margin:0}
   .deck{height:auto;overflow:visible;scroll-behavior:auto}.rail,.hint{display:none}
-  .s{height:auto;aspect-ratio:16/9;page-break-after:always;break-after:page}
+  .s{height:720px;page-break-after:always;break-after:page;break-inside:avoid}
+  .s:last-child{page-break-after:auto;break-after:auto}
   .strip .bit{fill:#243040}.figbox img{border-color:#ccd3db}
 }
 </style>

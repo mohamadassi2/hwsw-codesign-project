@@ -1,10 +1,12 @@
 # Speaker guide
 
-The deck is `docs/presentation.html` — arrow keys or scroll, Cmd-P prints one
-slide per page. This file is the talk track, not a spec: for each slide, why
-it is there and the one sentence that has to land. Everything numeric on the
-slides is recomputed by `scripts/check_deck_numbers.py`, so nothing here needs
-to be defended from memory.
+The deck is `docs/presentation.html` — one self-contained file that needs no
+network, so it looks the same on a lecture-room machine with no internet as it
+does here. Arrow keys or scroll; Cmd-P prints one slide per page, landscape.
+This file is the talk track, not a spec: for each slide, why it is there and
+the one sentence that has to land. Everything numeric on the slides is
+recomputed by `scripts/check_deck_numbers.py`, so nothing here needs to be
+defended from memory.
 
 ## Shape
 
