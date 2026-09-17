@@ -527,6 +527,29 @@ if _pf_base and _pf_opt and _md_base and _md_opt and _sym and _bits:
               _m is not None and _m.group(1) in _M1,
               "from benchmarks/mdp/run_benchmark.py")
 
+# ---- the perf capture the forum answer asked for ----------------------------
+# report_mdp section 2 reads four C-side shares straight out of the worker
+# capture, and the deck quotes one for pyflate. They were the most scrutinised
+# part of this submission and nothing recomputed them.
+def _perf_top(path):
+    """{symbol: overhead%} from a `perf report --stdio --no-children` table"""
+    if not os.path.exists(path):
+        return {}
+    out = {}
+    for m in re.finditer(r"^\s+([\d.]+)%\s+\S+\s+\[.\]\s+(\S+)", 
+                         open(path, encoding="utf-8").read(), re.M):
+        out.setdefault(m.group(2).split(".lto_priv")[0], float(m.group(1)))
+    return out
+
+_ptop = _perf_top(results("mdp", "perf_top_base.txt"))
+check(f"results/mdp/perf_top_base.txt has a symbol table ({len(_ptop)} symbols)",
+      len(_ptop) >= 4)
+for _symname in ("tuplehash", "_PyEval_EvalFrameDefault", "long_hash", "lookdict"):
+    if _symname in _ptop:
+        check(f"report_mdp quotes {_symname}'s measured share ({_ptop[_symname]:.1f}%)",
+              f"{_ptop[_symname]:.1f}%" in _flat_md,
+              "from results/mdp/perf_top_base.txt")
+
 # ---- table programming, from the counts the simulation log records ----------
 # "table rows: 120, symbol entries: 882" in results/rtl_sim_guest.log. One entry
 # is an address write plus its data, and a length row carries two data words
@@ -811,6 +834,17 @@ if os.path.exists(_mut):
               "hw/rtl/ changed after the sweep; re-run SUITE=sim_all tb/mutate.sh in the VM")
 
 # ---------------------------------------------------------------- report
+# Most checks here are guarded: `if os.path.exists(...)`, `if _den:`, `if _m:`.
+# A guard that fails skips its checks, and a skipped check looks exactly like a
+# passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
+# and still print FAIL 0. So count them. If an artifact goes missing, the count
+# drops and this fails, naming what to look for.
+MIN_CHECKS = 196
+_ran = len(OK) + len(FAIL)
+if _ran < MIN_CHECKS:
+    FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "
+                f"empty, so its gates were skipped rather than failed")
+
 print(f"PASS {len(OK)}   FAIL {len(FAIL)}\n")
 for line in OK:
     print("  pass  " + line)

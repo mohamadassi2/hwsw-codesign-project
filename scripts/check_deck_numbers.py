@@ -148,6 +148,15 @@ def main():
     check(f"PMI stays at 0 across a record: measured {pmi}",
           pmi and set(pmi) == {"0"} and "PMI" in txt)
 
+    # ---- slide 3's perf share, from the capture it describes ------------------
+    # The forum answer was about this capture, so the one figure the deck draws
+    # from it should not be a number someone typed.
+    _pt = open(f"{ROOT}/results/pyflate/perf_top_base.txt", encoding="utf-8").read()
+    _m = re.search(r"^\s+([\d.]+)%\s+\S+\s+\[.\]\s+_PyEval_EvalFrameDefault", _pt, re.M)
+    check("results/pyflate/perf_top_base.txt names _PyEval_EvalFrameDefault", bool(_m))
+    if _m:
+        want("the interpreter's share of the pyflate worker", round(float(_m.group(1))), "{:d}")
+
     # ---- slide 12's headline is a claim about the figure beside it -----------
     # "The two tallest towers are generator expressions inside the sweep." That
     # is checkable against the capture the slide shows, and nothing checked it.
@@ -420,6 +429,14 @@ def main():
             oks.append(f"{label} ({s})")
         else:
             fails.append(f"{label}: README should say {s}")
+
+    # Same reason as check_report_numbers.py: a guarded check that is skipped
+    # reads as a passing one, so a missing artifact would quietly shrink the
+    # suite instead of failing it.
+    MIN_CHECKS = 109
+    if len(oks) + len(fails) < MIN_CHECKS:
+        fails.append(f"only {len(oks) + len(fails)} checks ran, not {MIN_CHECKS}: "
+                     f"an input is missing or empty, so its gates were skipped")
 
     print(f"PASS {len(oks)}   FAIL {len(fails)}")
     for l in oks:
