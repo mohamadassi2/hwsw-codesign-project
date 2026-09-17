@@ -148,6 +148,20 @@ def main():
     check(f"PMI stays at 0 across a record: measured {pmi}",
           pmi and set(pmi) == {"0"} and "PMI" in txt)
 
+    # ---- slide 12's headline is a claim about the figure beside it -----------
+    # "The two tallest towers are generator expressions inside the sweep." That
+    # is checkable against the capture the slide shows, and nothing checked it.
+    _leaf = collections.Counter()
+    for _l in open(f"{ROOT}/results/mdp/pyspy_base_focus.folded", encoding="utf-8"):
+        _st, _, _n = _l.rpartition(" ")
+        if _n.strip().isdigit():
+            _leaf[_st.split(";")[-1]] += int(_n.strip())
+    _top = _leaf.most_common(3)
+    check("the two tallest towers in mdp's flame graph are generator expressions "
+          f"({', '.join(n.split(' ')[0] for n, _ in _top[:2])})",
+          len(_top) >= 3 and all("<genexpr>" in n for n, _ in _top[:2])
+          and "<genexpr>" not in _top[2][0])
+
     # ---- how much talk the deck actually holds --------------------------------
     # The guide tells the presenter how long the slides take to read, and that
     # figure was hand-typed and had drifted twice. Count it instead: the words

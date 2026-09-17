@@ -450,6 +450,22 @@ if _sym and _cyc:
               "nothing shared with the CPU" not in _flat_pf and f"{_sel:,}" in _pf,
               f"{_sym:,} symbols is {_sel:,} selector writes")
 
+# ---- table programming, from the counts the simulation log records ----------
+# "table rows: 120, symbol entries: 882" in results/rtl_sim_guest.log. One entry
+# is an address write plus its data, and a length row carries two data words
+# (limit then base), so the bus traffic follows from those two counts.
+_mrows = re.search(r"table rows:\s*(\d+), symbol entries:\s*(\d+)", _sl)
+check("the simulation log records the table geometry", bool(_mrows))
+if _mrows:
+    _rows, _syms = int(_mrows.group(1)), int(_mrows.group(2))
+    _entries = _rows + _syms
+    _writes = _rows * 3 + _syms * 2        # addr + 2 data ; addr + 1 data
+    check(f"the report's table-entry count recomputes ({_entries:,})",
+          f"{_entries:,}" in _pf, f"{_rows} length rows + {_syms} symbol entries")
+    check(f"the report's bus-write count recomputes (~{round(_writes, -2):,})",
+          f"{round(_writes, -2):,}" in _pf,
+          f"{_rows} rows x 3 writes + {_syms} symbols x 2 = {_writes:,}")
+
 # ---- mdp: the sweep's share, which was an orphan figure ---------------------
 # "sum/max come to 52.7%" appeared once in the repository and reconstructed from
 # no denominator in any profile. Recompute the three numbers the sentence needs.

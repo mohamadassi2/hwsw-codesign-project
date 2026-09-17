@@ -58,7 +58,7 @@ scripts/check_deck_numbers.py        (3) the same for the slides, the block diag
 scripts/mutate_gates.py              (4) what (2) and (3) actually cover: change one figure in a document and
                                      see whether the checker notices, the way tb/mutate.sh tests the testbench.
                                      A passing gate count counts assertions, not coverage. Today it holds 74 of
-                                     the 84 figures on the slides, 46 of 299 in report_pyflate.txt and 28 of 135
+                                     the 84 figures on the slides, 47 of 299 in report_pyflate.txt and 28 of 135
                                      in report_mdp.txt; the rest are constants of the bzip2 format, assumptions
                                      the slide labels as assumptions, or figures a report states more than once
                                      where one copy still satisfies the check. It fails if any of those drops.

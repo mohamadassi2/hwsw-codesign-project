@@ -36,13 +36,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #       bits, 14 bits per bank), the 7% the assignment asks for, or an
 #       assumption the slide labels as one (200 MHz, 0.6 ms of DMA). None is a
 #       measurement, so there is nothing under results/ to recompute them from.
-#   report_pyflate.txt  46 of 299, report_mdp.txt  28 of 135. The reports are
+#   report_pyflate.txt  47 of 299, report_mdp.txt  28 of 135. The reports are
 #       checked with `"1.141" in report`, which one copy of a repeated figure
 #       satisfies for all of them - the same flaw the deck had until want()
 #       started counting. Fixing it means teaching those 87 checks to count too.
 FLOORS = {
     "docs/presentation.html": 74,
-    "report_pyflate.txt": 46,
+    "report_pyflate.txt": 47,
     "report_mdp.txt": 28,
 }
 
