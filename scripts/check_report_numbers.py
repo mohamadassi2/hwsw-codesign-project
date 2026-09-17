@@ -446,6 +446,16 @@ if _sym and _cyc:
         check(f"5.2 states the selector traffic it used to deny ({_sel:,} writes)",
               "nothing shared with the CPU" not in _flat_pf and f"{_sel:,}" in _pf,
               f"{_sym:,} symbols is {_sel:,} selector writes")
+        # 5.6 prices that traffic at ~5 ms and must then re-check BOTH headline
+        # ratios against it, not only the one that survives it. It gave the
+        # vs-optimized ratio alone, leaving ~4.8x standing where ~4.7x is right.
+        if _pf_base and _pf_opt:
+            _mmio_ms = 245.0
+            for _lbl, _num in (("optimized", _pf_opt * 1e3), ("shipped", _pf_base * 1e3)):
+                _r = _num / _mmio_ms
+                check(f"5.6 re-prices the {_lbl} ratio under its MMIO assumption (~{_r:.1f}x)",
+                      f"~{_r:.1f}x" in _flat_pf,
+                      f"{_num:.0f} ms / {_mmio_ms:.0f} ms is {_r:.2f}x")
 
 # ---------------------------------------------------------------- cited files
 # every repository path either report names must exist

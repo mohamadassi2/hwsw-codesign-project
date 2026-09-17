@@ -736,9 +736,9 @@ inside bench_pyflake() also passes in every run.
     once per 50 symbols, and 148,271 / 50, rounded up, is 2,966 writes per
     block. At roughly a microsecond per round trip those ~5,100 writes are
     about 5 ms - more than the decode itself - which would move the projection
-    from ~240 ms to ~245 ms. The end-to-end ratio still rounds to ~2.0x,
-    because Amdahl's bound and not the
-    accelerator is what sets it, but the host would then spend more time
+    from ~240 ms to ~245 ms: still ~2.0x over the optimized software, but ~4.7x
+    rather than ~4.8x over the shipped benchmark. Amdahl's bound and not the
+    accelerator is what sets both, and the host would then spend more time
     driving the accelerator than the accelerator spends decoding. It is why
     docs/hw_sw_interface.md lists the selector SRAM as the better design:
     18,002 entries of 3 bits is about 7 KB and takes the host out of the

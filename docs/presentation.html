@@ -127,7 +127,7 @@ values per benchmark.</p>
 <div><p><span class="tag sw">perf record</span></p>
 <p>As root on <code>cpu-clock</code>, in the guide&rsquo;s form under <code>python3-dbg</code> and on
 the bare worker under the release interpreter. It sees the interpreter&rsquo;s C frames &mdash;
-<code>_PyEval_EvalFrameDefault</code> is <span class="num">39%</span> of the baseline worker&rsquo;s
+<code>_PyEval_EvalFrameDefault</code> is <span class="num">39%</span> of pyflate&rsquo;s baseline worker
 samples &mdash; but no Python names: CPython 3.10 has no perf trampoline.</p></div>
 <div><p><span class="tag sw">py-spy</span></p>
 <p>Reads frame objects out of process memory, so it sees the Python functions perf cannot name.
@@ -289,7 +289,7 @@ stimulus, not of the design.</p>
 twenty code lengths in the same cycle, so it needs twenty read ports &mdash; no SRAM macro has
 those, and it is counted above as the register file it is. The symbol table has one read port
 and stays SRAM: flattening it into logic too costs <span class="num">49,804</span> cells.
-A direct flat lookup is worse still: the longest code is 20 bits, so a comparator-free table
+A direct flat lookup is worse still: bzip2 allows codes up to 20 bits, so a comparator-free table
 would need <span class="num">2<sup>20</sup></span> entries of 14 bits per bank.</p>
 <p class="lede">Frequency is inferred from topological path length, not static timing &mdash; no cell
 library, no place-and-route.</p></div><div class="foot"><span>Two benchmarks, one accelerator</span><span>Assi &middot; Sefi</span><span>20/23</span></div></section><section class="s hw"><div class="top"><span class="kick on">Accelerator &middot; expected gain</span><span class="kick">21</span></div><div class="body"><h2>What it would buy, with the assumptions on the slide</h2>

@@ -47,10 +47,10 @@ module bitreader #(
     assign cnt_after = (cnt_q > consume) ? (cnt_q - consume) : '0;
 
     // Room for a whole word after this cycle's consume.  Testing cnt_q would
-    // refuse the refill in the cycle that makes room and drop long codes to
-    // 0.84 symbols/cycle (19-bit codes); this form holds 1.000.  No
-    // combinational loop: consume depends only on peek, peek_valid and level,
-    // which come from registers.
+    // refuse the refill in the very cycle that makes room, so a long code would
+    // wait for bits already on their way and the decoder would drop below one
+    // symbol per cycle; this form holds it.  No combinational loop: consume
+    // depends only on peek, peek_valid and level, which come from registers.
     assign in_ready = (cnt_after + INW <= BUFW);
 
     always_comb begin

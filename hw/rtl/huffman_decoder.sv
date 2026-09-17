@@ -82,7 +82,9 @@ module huffman_decoder #(
     // ---- parallel compare: one comparator per code length ------------------
     // `fits` guards the end of stream: a code may not run past the bits really
     // left.  `avail` is a register, so masking here costs nothing on the
-    // peek -> len path; masking after the priority encoder cost 20 gate levels.
+    // peek -> len path; masking after the priority encoder would put the mask in
+    // series with it instead, on the path that has to close every cycle.
+    // docs/synthesis_yosys.txt measures the path this version has.
     logic [MAXBITS:1] hit_raw, fits, hit;
     logic [CW-1:0]    code [MAXBITS+1];
     always_comb begin

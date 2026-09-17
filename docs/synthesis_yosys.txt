@@ -1,5 +1,8 @@
-# Generic synthesis of huffman_accel_top with Yosys 0.68+post.
-# RTL fingerprint: 977c8c33807c7e3380af144e5ac3b8f4  (3 files under hw/rtl/)
+# Generic synthesis of huffman_accel_top with Yosys 0.68.
+# Run in the course VM. The Yosys it packages is 0.9, which predates
+# `for (int i = ...)` and cannot parse this RTL, so the run uses a
+# pip-installed yowasp-yosys in the same guest - hence the version above.
+# RTL fingerprint: 753aafda9d1118f1d90ed59159d783ab  (3 files under hw/rtl/)
 # Flow: hw/synth.ys (read_verilog -sv; hierarchy; proc; flatten; opt; memory
 # -nomap; techmap; abc -g <2-input gates + MUX>; opt_clean; stat; ltp -noff).
 # Regenerate with `make synth` in hw/.
