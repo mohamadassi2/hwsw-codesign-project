@@ -246,7 +246,7 @@ Correctness. scripts/local_check.py runs both versions:
     Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
     -cpu host -accel kvm. Measured by script_mdp.sh; raw files in results/mdp/.
 
-      pyperformance run --bench mdp     5.082 +- 0.078 s  (n=20)
+      pyperformance run --bench mdp --fast  5.082 +- 0.078 s  (n=20)
       pyperf, baseline (vendored copy)  5.098 +- 0.085 s  (n=18)
       pyperf, optimized                 1.309 +- 0.008 s  (n=18)
       speedup  3.90x   (74.3% less time; the assignment asks for 7%)
@@ -334,8 +334,12 @@ Correctness. scripts/local_check.py runs both versions:
     at 2.33 s against 1.30 s while executing the same 31.5 billion instructions,
     because "CPUs utilized" had fallen from 1.00 to 0.58 - the wall clock moved
     and the instruction count did not. script_mdp.sh records that figure for
-    every run in results/mdp/contention.txt and warns below 0.95, so the reader
-    can see the guest had the core rather than take it on trust.
+    every build in results/mdp/contention.txt and warns below 0.95, so the
+    reader can see the guest had the core rather than take it on trust. It is
+    measured during the perf stat invocation rather than during the pyperf run
+    the wall clocks come from; what those runs carry themselves is pyperf's
+    per-run load_avg_1min, 1.00 to 1.33 here on a one-vCPU guest, and the
+    agreement of three independent runs above is what covers them directly.
 
 
 5. Hardware acceleration proposal

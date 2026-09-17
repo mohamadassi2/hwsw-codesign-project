@@ -905,6 +905,43 @@ check(f"prompt.txt quotes the two report coverage floors",
           for _d, _n in _floors.items() if _d.startswith("report")),
       "from the FLOORS table in scripts/mutate_gates.py")
 
+# 4.1 of each report shows the official runner's line as a cross-check on the
+# vendored copy. It showed the command without --fast, so the n=20 read as
+# pyperformance's default rigour rather than the reduced run the script asks
+# for. Take the flags from the frozen script and require the report to show them.
+for _b, _rep in (("pyflate", _pf), ("mdp", _md)):
+    _s = open(os.path.join(ROOT, f"script_{_b}.sh"), encoding="utf-8").read()
+    _m = re.search(r"pyperformance run [^\n|]*--bench \$B([^\n|]*?)-o ", _s)
+    _flags = [w for w in (_m.group(1).split() if _m else []) if w.startswith("--")]
+    check(f"script_{_b}.sh's pyperformance invocation is readable ({' '.join(_flags)})",
+          bool(_flags))
+    for _f in _flags:
+        check(f"{_b}: section 4.1 shows the runner's {_f} flag",
+              re.search(r"pyperformance run --bench " + _b + r"[^\n]*" + re.escape(_f), _rep)
+              is not None,
+              "the script runs it; the report's line must show it")
+
+# The contention guard is measured during perf stat, not during the timed run.
+# What the timed runs carry is pyperf's own per-run load_avg_1min; both reports
+# now quote its range, so recompute it from the JSONs they came from.
+for _b, _rep, _files in (("pyflate", _pf, ("pyflate_base.json", "pyflate_opt.json")),
+                         ("mdp", _md, ("mdp_base.json", "mdp_opt.json"))):
+    _la = []
+    for _fn in _files:
+        _p = results(_b, _fn)
+        if not os.path.exists(_p):
+            continue
+        _d = json.load(open(_p))
+        _la += [float(_r["metadata"]["load_avg_1min"])
+                for _bm in _d["benchmarks"] for _r in _bm["runs"]
+                if "load_avg_1min" in _r.get("metadata", {})]
+    check(f"{_b}: the timed runs record a load average ({len(_la)} runs)", len(_la) > 0)
+    if _la:
+        check(f"{_b}: the report quotes the timed runs' load range "
+              f"({min(_la):.2f} to {max(_la):.2f})",
+              f"{min(_la):.2f} to {max(_la):.2f}" in _flat(_rep),
+              "from the pyperf JSONs the wall clocks come from")
+
 check("README explains the repository layout, as the brief requires",
       re.search(r"^## Layout", open(os.path.join(ROOT, "README.md"), encoding="utf-8").read(), re.M)
       is not None)
@@ -915,7 +952,7 @@ check("README explains the repository layout, as the brief requires",
 # passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
 # and still print FAIL 0. So count them. If an artifact goes missing, the count
 # drops and this fails, naming what to look for.
-MIN_CHECKS = 241
+MIN_CHECKS = 249
 _ran = len(OK) + len(FAIL)
 if _ran < MIN_CHECKS:
     FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "

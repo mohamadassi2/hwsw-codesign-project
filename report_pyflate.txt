@@ -388,7 +388,7 @@ inside bench_pyflake() also passes in every run.
     Guest: Ubuntu 22.04, 1 vCPU, on an Intel Xeon E5-2630 v3 host, booted with
     -cpu host -accel kvm. Measured by script_pyflate.sh; raw files in results/pyflate/.
 
-      pyperformance run --bench pyflate     1.137 +- 0.038 s  (n=20)
+      pyperformance run --bench pyflate --fast  1.137 +- 0.038 s  (n=20)
       pyperf, baseline (vendored copy)  1.141 +- 0.036 s  (n=30)
       pyperf, optimized                 487.4 +- 28.4 ms  (n=30)
       speedup  2.34x   (57.3% less time; the assignment asks for 7%)
@@ -508,8 +508,15 @@ inside bench_pyflake() also passes in every run.
     host's load rather than this code. Both scripts now read that figure from
     perf, print a warning below 0.95 and record it in
     results/<benchmark>/contention.txt - 0.981 to 0.997 across the runs that
-    are shipped. It is the one measurement error that would have been invisible
-    in the numbers themselves.
+    are shipped. Be exact about what that covers: it is measured during the
+    perf stat invocation, not during the pyperf run the wall clocks above come
+    from, so it says the host was quiet around the measurement rather than
+    inside it. The timed runs carry their own indicator, pyperf's per-run
+    load_avg_1min, which is 0.77 to 1.19 here on a one-vCPU guest - a saturated
+    core, not a queue behind it - and the 2.0 to 3.0% spread across three
+    independent runs in 4.3 is the check that does cover them directly. It is
+    the one measurement error that would have been invisible in the numbers
+    themselves.
 
 5. Hardware acceleration proposal
 ----------------------------------------------------------------------------------
