@@ -513,9 +513,9 @@ inside bench_pyflake() also passes in every run.
     from, so it says the host was quiet around the measurement rather than
     inside it. The timed runs carry their own indicator, pyperf's per-run
     load_avg_1min, which is 0.77 to 1.19 here on a one-vCPU guest - a saturated
-    core, not a queue behind it - and the 2.0 to 3.0% spread across three
-    independent runs in 4.3 is the check that does cover them directly. It is
-    the one measurement error that would have been invisible in the numbers
+    core, not a queue behind it - and the run-to-run spread reported at the top
+    of this section is the check that does cover them directly. It is the one
+    measurement error that would have been invisible in the numbers
     themselves.
 
 5. Hardware acceleration proposal
