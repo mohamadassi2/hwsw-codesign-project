@@ -483,6 +483,50 @@ if _sym and _cyc:
               "nothing shared with the CPU" not in _flat_pf and f"{_sel:,}" in _pf,
               f"{_sym:,} symbols is {_sel:,} selector writes")
 
+# ---- the summary and the conclusion, checked where they stand ---------------
+# Every check in this file asks whether a figure appears in the report. A report
+# states its headline numbers several times - 67,562 three times, 399,360 twice -
+# so one copy satisfies them all, and the copy that drifts is the one nobody
+# reads twice: the summary written first and the conclusion written last. Five
+# defects found by hand were exactly that. These look inside those two sections.
+_S1 = _flat(_sect(_pf, "1. Overview", 3000))
+_S6 = _flat(_concl)
+_M1 = _flat(_sect(_md, "1. Overview", 3000))
+_M6 = _flat(_md[_md.rindex("6. Conclusion"):]) if "6. Conclusion" in _md else ""
+check("the four report sections the summary gates read are all present",
+      all((_S1, _S6, _M1, _M6)))
+if _pf_base and _pf_opt and _md_base and _md_opt and _sym and _bits:
+    _pct_pf = 100 * (1 - _pf_opt / _pf_base)
+    _pct_md = 100 * (1 - _md_opt / _md_base)
+    _summary_facts = [
+        ("pyflate overview: the input size",        _S1, f"{_in_bytes:,}"),
+        ("pyflate overview: the output size",       _S1, f"{_out_bytes:,}"),
+        ("pyflate overview: the symbol count",      _S1, f"{_sym:,}"),
+        ("pyflate overview: the bits consumed",     _S1, f"{_bits:,}"),
+        ("pyflate conclusion: the speedup",         _S6, f"{_pf_base/_pf_opt:.2f}x"),
+        ("pyflate conclusion: the baseline",        _S6, f"{_pf_base:.2f} s"),
+        ("pyflate conclusion: the optimized time",  _S6, f"{_pf_opt*1e3:.0f} ms"),
+        ("pyflate conclusion: the time saved",      _S6, f"{_pct_pf:.1f}%"),
+        ("mdp conclusion: the speedup",             _M6, f"{_md_base/_md_opt:.2f}x"),
+        ("mdp conclusion: the baseline",            _M6, f"{_md_base:.3f} s"),
+        ("mdp conclusion: the optimized time",      _M6, f"{_md_opt:.3f} s"),
+        ("mdp conclusion: the time saved",          _M6, f"{_pct_md:.1f}%"),
+    ]
+    for _label, _where, _want in _summary_facts:
+        check(f"{_label} ({_want})", _want in _where,
+              "stated elsewhere in the report, but not here")
+
+    # mdp's two correctness constants belong to the benchmark, not to us: read
+    # them out of the shipped file rather than trusting the overview's copy.
+    _mb_src = open(os.path.join(ROOT, "benchmarks", "mdp", "run_benchmark.py"),
+                   encoding="utf-8").read()
+    for _label, _rx in (("the tolerance evaluate is called with", r"evaluate\((0\.\d+)\)"),
+                        ("the result the benchmark requires", r"(0\.89\d+)")):
+        _m = re.search(_rx, _mb_src)
+        check(f"mdp overview: {_label} is the benchmark's ({_m.group(1) if _m else '?'})",
+              _m is not None and _m.group(1) in _M1,
+              "from benchmarks/mdp/run_benchmark.py")
+
 # ---- table programming, from the counts the simulation log records ----------
 # "table rows: 120, symbol entries: 882" in results/rtl_sim_guest.log. One entry
 # is an address write plus its data, and a length row carries two data words
