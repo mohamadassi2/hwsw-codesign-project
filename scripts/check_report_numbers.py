@@ -886,6 +886,25 @@ for _b, _base, _opt in (("pyflate", _pf_base, _pf_opt), ("mdp", _md_base, _md_op
         _p = 100 * (1 - _opt / _base)
         check(f"{_b} clears the brief's 7% bar ({_p:.1f}% less time)", _p >= 7)
 
+# The coverage figures live in one place - the floors in mutate_gates.py - and
+# two documents quote them. That sentence in prompt.txt had already gone stale
+# once, which is the defect this whole line of work is about.
+_mg = open(os.path.join(ROOT, "scripts", "mutate_gates.py"), encoding="utf-8").read()
+_fl0 = _mg.find("FLOORS = {")
+_floors = dict(re.findall(r'"([\w./-]+)":\s*(\d+),', _mg[_fl0:_mg.find("}", _fl0)]))
+check(f"mutate_gates.py declares a coverage floor per document ({len(_floors)})",
+      len(_floors) == 3)
+_rdme = open(os.path.join(ROOT, "README.md"), encoding="utf-8").read()
+_prm = open(os.path.join(ROOT, "prompt.txt"), encoding="utf-8").read()
+for _doc, _n in sorted(_floors.items()):
+    check(f"README quotes the coverage floor for {_doc} ({_n})",
+          re.search(r"\b" + _n + r"\b", _flat(_rdme)) is not None,
+          "from the FLOORS table in scripts/mutate_gates.py")
+check(f"prompt.txt quotes the two report coverage floors",
+      all(re.search(r"\b" + _n + r"\b", _flat(_prm))
+          for _d, _n in _floors.items() if _d.startswith("report")),
+      "from the FLOORS table in scripts/mutate_gates.py")
+
 check("README explains the repository layout, as the brief requires",
       re.search(r"^## Layout", open(os.path.join(ROOT, "README.md"), encoding="utf-8").read(), re.M)
       is not None)
@@ -896,7 +915,7 @@ check("README explains the repository layout, as the brief requires",
 # passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
 # and still print FAIL 0. So count them. If an artifact goes missing, the count
 # drops and this fails, naming what to look for.
-MIN_CHECKS = 236
+MIN_CHECKS = 241
 _ran = len(OK) + len(FAIL)
 if _ran < MIN_CHECKS:
     FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "

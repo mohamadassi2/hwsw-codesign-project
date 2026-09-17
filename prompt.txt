@@ -214,12 +214,31 @@ Turning the checkers on themselves
     2.34x is on two slides, 487 ms on four. Some gates compared a constant to a
     constant: rewriting the report to say the decode takes 9.99 ms left the
     suite passing. And some figures had no gate at all. The slides are at 74 of
-    84 now; the reports are at 46 of 299 and 26 of 133, and the script prints
-    that rather than letting the gate count imply otherwise.
+    84 now; the reports are at 59 of 299 and 34 of 135, and the script prints
+    that rather than letting the gate count imply otherwise. The floors in
+    mutate_gates.py are the one place those three numbers live; a gate makes
+    README and this file quote them, because the sentence you are reading had
+    already gone stale once.
   - The tool had the defect it was built to find. Its first version scored 84
     of 84, because a checker that fails on the unmutated tree "catches" every
     mutation. It runs a control first now, exactly as tb/mutate.sh does, and
     both failure modes are tested.
+  - "A skipped check reads as a passing one." Almost every gate is guarded by
+    `if os.path.exists(...)` or `if <the parse worked>`, because an artifact can
+    be absent before a run - and a guard that fails removes its checks silently
+    while the summary still says FAIL 0. Emptying results/mdp/cprofile_base.txt
+    deleted six gates, the whole basis of report_mdp section 2, and the suite
+    stayed green. Both checkers now assert how many checks ran. Found by
+    emptying all 59 artifacts under results/ one at a time and asking whether
+    either noticed; thirteen did not.
+  - "Check it against the assignment, not only against itself." Everything had
+    been checked for internal consistency and nothing against Project.pdf,
+    which is the document that decides the mark. The six files it names, the
+    five sections each report must carry, the four parts each script must
+    contain, the eleven things the hardware proposal must include, the 7% bar
+    and the README layout are 38 gates now. They all passed when first written -
+    the submission does satisfy the brief - but a renamed section would have
+    cost marks with the suite green.
   - "A negative check on raw text is not a check." The gate asserting the
     retracted 19.4 kbit figure is absent searched the report as written. Put
     the figure back with the line break falling between "19.4" and "kbit" and
