@@ -524,12 +524,15 @@ inside bench_pyflake() also passes in every run.
     - It is the largest remaining share after the software fix (51.0%,
       section 4.2).
     - It is bit-serial work: peek some bits, compare against a few limits,
-      add, look up. A CPU spends hundreds of instructions per symbol doing
-      that through the interpreter; hardware does the compares in parallel
-      and needs one clock per symbol.
+      add, look up. Through the interpreter that costs ~4,000 cycles of a
+      2.4 GHz core per symbol (section 5.6), which at the IPC of 2.62 we
+      measured is about ten thousand instructions; hardware does the compares
+      in parallel and needs one clock per symbol.
     - Its state is tiny and block-local (six small tables), so the interface
-      is "tables in, bytes in, symbols out" with nothing shared with the CPU
-      during the run.
+      is "tables in, bytes in, symbols out". One piece of control does cross
+      during the run: the host writes tsel at every selector switch, 2,966
+      times for this block. Section 5.6 prices that traffic and
+      docs/hw_sw_interface.md gives the selector SRAM that removes it.
     - The other big piece, the inverse BWT, gains nothing from a datapath: it
       is one dependent memory access per output byte. Lecture 4's point that
       "it's always the memory" applies to it, not to Huffman decoding.

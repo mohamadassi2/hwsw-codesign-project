@@ -429,6 +429,23 @@ if _sym and _cyc:
         _bad = sorted(v for v in _states if v != _want_cps)
         check("every per-symbol cycle figure in the report is the computed one",
               not _bad, f"found {_bad}, expected {_want_cps}")
+        # 5.2 motivates the accelerator with the same cost, in instructions. It
+        # used to say "hundreds", which the cycle figure above contradicts by a
+        # factor of forty - and it is the one sentence an examiner would price.
+        _o = perf_counters(results("pyflate", "perfstat_opt.txt"))
+        if _o.get("cycles"):
+            _ipc = _o["instructions"] / _o["cycles"]
+            _ins = _cps * _ipc
+            check(f"5.2's instruction cost agrees with 5.6's cycle cost "
+                  f"({_want_cps} cycles x IPC {_ipc:.2f} = {_ins:,.0f})",
+                  2000 <= _ins <= 20000 and "ten thousand instructions" in _flat_pf,
+                  f"{_ins:,.0f} instructions per symbol; 5.2 has to say so")
+        # ...and 5.2 must not claim the interface is free of run-time traffic,
+        # which docs/hw_sw_interface.md and 5.6 both contradict.
+        _sel = -(-_sym // 50)          # one selector write per 50 symbols
+        check(f"5.2 states the selector traffic it used to deny ({_sel:,} writes)",
+              "nothing shared with the CPU" not in _flat_pf and f"{_sel:,}" in _pf,
+              f"{_sym:,} symbols is {_sel:,} selector writes")
 
 # ---------------------------------------------------------------- cited files
 # every repository path either report names must exist
