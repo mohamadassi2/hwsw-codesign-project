@@ -214,6 +214,16 @@ if _pf_base and _pf_opt and _pf_base2 and _pf_opt2:
         _mspread = (max(_ratios) - min(_ratios)) / min(_ratios) * 100
         check(f"reproducibility: the stated mdp spread matches the three runs ({_mspread:.1f}%)",
               f"{_mspread:.1f}%" in _rep, f"expected {_mspread:.1f}%")
+    # Both reports state both spreads - report_pyflate's 4.3 carries a joint
+    # table and report_mdp's 4.3 restates it - and each was checked in one
+    # report only, leaving the other copy free to drift.
+    _mrep43 = _flat(_sect(_md, "4.3 Reproducibility"))
+    if _pf_base3 and _pf_opt3 and _pf_base2 and _pf_opt2 and _pf_base and _pf_opt:
+        check(f"reproducibility: report_mdp restates the pyflate spread ({_spread:.1f}%)",
+              f"{_spread:.1f}%" in _mrep43, "its 4.3 quotes both benchmarks")
+    if _md_base3 and _md_opt3 and _md_base2 and _md_opt2 and _md_base and _md_opt:
+        check(f"reproducibility: report_mdp states its own spread ({_mspread:.1f}%)",
+              f"{_mspread:.1f}%" in _mrep43, "its 4.3 quotes both benchmarks")
     check("reproducibility: pyflate shipped speedup quoted",
           f"{_pf_base/_pf_opt:.3f}x" in _rep, f"{_pf_base/_pf_opt:.3f}x, in section 4.3")
     check("reproducibility: pyflate rerun speedup quoted",
@@ -949,6 +959,40 @@ for _b, _rep, _files in (("pyflate", _pf, ("pyflate_base.json", "pyflate_opt.jso
               f"{min(_la):.2f} to {max(_la):.2f}" in _flat(_rep),
               "from the pyperf JSONs the wall clocks come from")
 
+# ---- the denominator every cProfile share in a report divides by -----------
+# If it drifts, all nine shares in the table are wrong together and nothing
+# notices, because each share is checked against it rather than with it.
+def _cprof_den(path, fn):
+    if not os.path.exists(path):
+        return None
+    for m in re.finditer(r"^\s+\d+(?:/\d+)?\s+[\d.]+\s+[\d.]+\s+([\d.]+)\s+[\d.]+\s+(.+)$",
+                         open(path, encoding="utf-8").read(), re.M):
+        if "(" + fn + ")" in m.group(2):
+            return float(m.group(1))
+    return None
+
+
+for _b, _rep, _fn in (("pyflate", _pf, "bench_pyflake"), ("mdp", _md, "bench_mdp")):
+    _den = _cprof_den(results(_b, "cprofile_base.txt"), _fn)
+    check(f"{_b}: cprofile_base.txt has a {_fn} row to divide by", _den is not None)
+    if _den:
+        check(f"{_b}: the report states the profiler's total it divides by ({_den:.3f} s)",
+              f"{_den:.3f}" in _rep, "the cumtime of the benchmark-function row")
+
+# ---- the block geometry the simulation log records -------------------------
+_mgeo = re.search(r"tables: (\d+); symbols: (\d+);", _sl)
+_mlen = re.search(r"code lengths used: (\d+)\.\.(\d+)", _sl)
+check("the simulation log records the block's table count and code lengths",
+      bool(_mgeo and _mlen))
+if _mgeo and _mlen:
+    check(f"the report states how many Huffman tables the block has ({_mgeo.group(1)})",
+          re.search(r"\b" + _mgeo.group(1) + r" tables\b", _flat_pf) is not None,
+          "from 'tables: N' in results/rtl_sim_guest.log")
+    _lo, _hi = _mlen.group(1), _mlen.group(2)
+    check(f"the report states the block's code-length range ({_lo}..{_hi} bits)",
+          re.search(r"between " + _lo + r" and " + _hi + r" bits", _flat_pf) is not None,
+          "from 'code lengths used' in results/rtl_sim_guest.log")
+
 # ---- figures a triage pass found ungated, each reproduced from its artifact --
 # The spread each report states beside its mean, the percentage it derives from
 # the two means, the ablation's own "vs base" column, and the cProfile shares
@@ -982,14 +1026,20 @@ for _b in ("pyflate", "mdp"):
     if not os.path.exists(_ap):
         continue
     _rep = _pf if _b == "pyflate" else _md
-    _ratios = re.findall(r"^  .+?\s{2,}[\d.]+\s+[\d.]+\s+([\d.]+)x$",
-                         open(_ap, encoding="utf-8").read(), re.M)
-    check(f"{_b}: ablation.txt prints a ratio per variant ({len(_ratios)})", len(_ratios) >= 3)
-    for _r in sorted(set(_ratios)):
-        if _r == "1.00":
-            continue                      # the baseline row, ungated by construction
-        check(f"{_b}: the report quotes the ablation ratio {_r}x", f"{_r}x" in _rep,
-              "from the 'vs base' column of ablation.txt")
+    # The ms and the ratio must appear together on one line. Checking the ratio
+    # by containment is not enough: 2.35x occurs three times in section 3.6, so
+    # mutating the table row alone left the suite green - tested.
+    _rows = re.findall(r"^  (.+?)\s{2,}([\d.]+)\s+[\d.]+\s+([\d.]+)x$",
+                       open(_ap, encoding="utf-8").read(), re.M)
+    check(f"{_b}: ablation.txt prints a row per variant ({len(_rows)})", len(_rows) >= 3)
+    for _label, _ms, _r in _rows:
+        # the artifact prints 1115.1, the reports comma-group it as 1,115.1
+        _shown = f"{float(_ms):,.1f}"
+        _line = re.search(r"^.*" + re.escape(_shown) + r"\s*ms\s+" + re.escape(_r) + r"x.*$",
+                          _rep, re.M)
+        check(f"{_b}: the report's ablation row for '{_label[:30]}' pairs "
+              f"{_shown} ms with {_r}x", _line is not None,
+              "both come from the same row of ablation.txt and must stay on one line")
 
 # cProfile shares the reports print in their tables
 for _b, _rep, _tag, _fns in (
@@ -1055,7 +1105,7 @@ check("README explains the repository layout, as the brief requires",
 # passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
 # and still print FAIL 0. So count them. If an artifact goes missing, the count
 # drops and this fails, naming what to look for.
-MIN_CHECKS = 274
+MIN_CHECKS = 286
 _ran = len(OK) + len(FAIL)
 if _ran < MIN_CHECKS:
     FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "
