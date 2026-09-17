@@ -83,7 +83,10 @@ Measuring in the course VM
 Checking the optimizations
   - "Try to break the optimized pyflate: any input on which it differs from
     the original." (Found: the eight-byte refill exposed a bit-order bug in
-    the copy constructor that broke every gzip stream, zero-padding at EOF
+    the copy constructor that broke every gzip stream - scripts/local_check.py
+    now carries five gzip cases so that claim has a test behind it, and an
+    injected bit-order bug is caught by them and by nothing else in the tree,
+    because bzip2 decodes with reversed=False - zero-padding at EOF
     that could loop forever, and a stale bit buffer in dropbits that
     silently corrupted FEXTRA headers. All three fixed and re-fuzzed.)
   - "Try to break the optimized mdp: prove or disprove that the value

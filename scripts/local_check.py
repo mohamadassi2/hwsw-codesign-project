@@ -7,7 +7,7 @@ correctness gate on the optimized code and prints a rough speedup.
 
   python3 scripts/local_check.py [all|pyflate|mdp] [reps]
 """
-import bz2, hashlib, importlib.util, math, os, statistics, sys, tempfile, time, types
+import bz2, gzip, hashlib, importlib.util, math, os, statistics, sys, tempfile, time, types
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -79,6 +79,14 @@ def check_pyflate(reps):
                 raise SystemExit(f"not a bzip2 stream: magic {magic:#06x}")
             return m.bzip2_main(field)
 
+    def decomp_gzip(m, path):
+        with open(path, 'rb') as f:
+            field = m.RBitfield(f)
+            magic = field.readbits(16)
+            if magic != 0x1f8b:
+                raise SystemExit(f"not a gzip stream: magic {magic:#06x}")
+            return m.gzip_main(field)
+
     # compare the raw decompressed bytes as well, not only the md5
     ob, oo = decomp(base), decomp(opt)
     if ob != oo:
@@ -101,6 +109,32 @@ def check_pyflate(reps):
                     raise SystemExit(f"pyflate: baseline and optimized differ on '{name}' (level {level}): {rb} vs {ro}")
             finally:
                 os.unlink(tmp)
+    # The DEFLATE path too. pyperformance only ever decodes bzip2, so nothing
+    # exercised gzip_main - and prompt.txt records that fuzzing once found a
+    # bit-order bug there, a claim with no committed test behind it until now.
+    # Neither decoder finishes a gzip stream on Python 3: the vendored pyflate
+    # assembles its output the Python 2 way and raises TypeError in gzip_main,
+    # and ours raises the same at the same place. That is the point. The Huffman
+    # decoding runs to completion before the assembly does, so a bit-order
+    # difference in our decoder would show up here as a different failure, and
+    # _try compares the outcomes rather than requiring either to succeed.
+    gz = [("empty", b""), ("one byte", b"x"), ("repeated", b"a" * 70000),
+          ("binary", bytes(range(256)) * 300), ("text", b"hello " * 5000)]
+    for name, payload in gz:
+        blob = gzip.compress(payload, 9)
+        with tempfile.NamedTemporaryFile(suffix=".gz", delete=False) as t:
+            t.write(blob)
+            tmp = t.name
+        try:
+            rb = _try(decomp_gzip, base, tmp)
+            ro = _try(decomp_gzip, opt, tmp)
+            if rb != ro:
+                raise SystemExit(f"pyflate: baseline and optimized differ on gzip '{name}': {rb} vs {ro}")
+        finally:
+            os.unlink(tmp)
+    print(f"pyflate: baseline and optimized behave identically on {len(gz)} gzip streams "
+          f"(the vendored decoder's gzip path does not run on Python 3; ours fails the same way)")
+
     print(f"pyflate: baseline and optimized agree on {len(extra) * 2} further bzip2 streams "
           f"(empty, 1 byte, 70 KB of one byte, multi-block; levels 1 and 9)")
 
