@@ -344,10 +344,11 @@ What we deliberately did not do.
     the two largest are the ones that look like housekeeping - replacing a list
     rebuild with a pop and an insert, and replacing a per-byte loop with one
     regex. One note on method, because an earlier version of this
-    table was wrong about it. Two of the three variants are built by
-    substituting source rather than patching functions: the optimized decoder
-    inlines move-to-front into the decode loop and compiles the RLE pass into a
-    regex, so patching the module-level function would have reverted neither.
+    table was wrong about it: two of the three variants are built by
+    substituting source rather than patching functions, because the optimized
+    decoder inlines move-to-front into the decode loop and compiles the RLE
+    pass into a regex, so patching the module-level function would revert
+    neither.
     The 3.1 variant is the exception and can be a function patch, because the
     decode loop looks find_next_symbol up through the class each time the table
     changes - so replacing it there does revert it. scripts/ablation.py shows
@@ -563,8 +564,10 @@ inside bench_pyflake() also passes in every run.
     Internal, between the two modules: peek (20 b) and len (5 b, 1..20).
     Operating frequency: an estimate, not a timing result. ~200 MHz on an FPGA
     and ~400 MHz on an ASIC, neither reachable by this RTL as it stands - the
-    lookup is 98 gate levels deep and sits in a loop that cannot be pipelined
-    without halving throughput; 5.7 gives the basis and the way out. What the
+    longest path is 98 gate levels, and the part of it inside the decode loop -
+    peek, the parallel compare, the priority encoder, the length, the barrel
+    shift - cannot be pipelined without halving throughput; 5.7 gives the basis
+    and the way out. What the
     simulation establishes is throughput: one symbol per clock.
 
 5.4 Architecture (hw/rtl/, see the block diagram)
@@ -702,9 +705,9 @@ inside bench_pyflake() also passes in every run.
 
     Take the optimized run measured in the VM, 487 ms, of which that part is
     51.0% = ~249 ms. In the accelerator the same work is 148,272 cycles. Both
-    clocks below are assumptions, and 5.7 shows neither is reachable by the RTL
-    as it stands - which is why that section also shows how little the answer
-    turns on them:
+    clocks below are assumptions, and 5.3 says this RTL as it stands reaches
+    neither - which is why 5.7, where the basis is, also shows how little the
+    answer turns on them:
         at 200 MHz   0.74 ms
         at 400 MHz   0.37 ms
     Add data movement: 66 KB in and 148,271 x 2 bytes out over PCIe or an AXI
@@ -730,7 +733,8 @@ inside bench_pyflake() also passes in every run.
     once per 50 symbols, and 148,271 / 50, rounded up, is 2,966 writes per
     block. At roughly a microsecond per round trip those ~5,100 writes are
     about 5 ms - more than the decode itself - which would move the projection
-    from ~240 ms to ~245 ms. The end-to-end ratio still rounds to ~2.0x, because Amdahl's bound and not the
+    from ~240 ms to ~245 ms. The end-to-end ratio still rounds to ~2.0x,
+    because Amdahl's bound and not the
     accelerator is what sets it, but the host would then spend more time
     driving the accelerator than the accelerator spends decoding. It is why
     docs/hw_sw_interface.md lists the selector SRAM as the better design:
@@ -742,8 +746,9 @@ inside bench_pyflake() also passes in every run.
     today; DMA and MMIO latencies as above; no overlap between CPU and
     accelerator, so the accelerator's own time is added rather than hidden -
     with overlap it disappears entirely and the bound becomes 487 - 249 = 238
-    ms. The selector list is assumed already in the accelerator (section 5.5
-    explains that it is not, in this version, and what that would cost).
+    ms. The selector list is assumed already in the accelerator; the paragraph
+    below prices what it costs the host to drive it instead, which is what this
+    design does.
 
 5.7 Performance / area / power trade-offs
     Area (docs/synthesis_yosys.txt, generic 2-input gates).
@@ -781,10 +786,8 @@ inside bench_pyflake() also passes in every run.
     the lookup. We did not run FPGA or ASIC timing, so any frequency here is
     an estimate. Section 5.6 does use it, so it is worth saying how little
     turns on it: the decode is 148,272 cycles, which is 0.74 ms at 200 MHz and
-    0.37 ms at 400 MHz, against a 487 ms run. Halving
-    the clock moves the projected run by less than a millisecond and leaves
-    the ratio at 2.0x. What the simulation establishes is throughput, not
-    frequency: one symbol per cycle for all 148,271 symbols.
+    0.37 ms at 400 MHz, against a 487 ms run. What the simulation establishes
+    is throughput, not frequency: one symbol per cycle for all 148,271 symbols.
 
     What the 200 MHz figure cannot assume is a pipeline stage inside the
     compare tree. That tree sits in a single-cycle feedback loop - peek, the

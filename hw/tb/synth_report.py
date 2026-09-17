@@ -55,9 +55,11 @@ Longest combinational path (ltp -noff): length={depth}
 # The path runs from tsel through the table lookups to {endpoint}, the enable of
 # the sticky error flag. That enable is evaluated on every clock, so this is a
 # real single-cycle path: how often the host reads `err` does not enter into it.
-# Nor is it an outlier. Cutting that one condition and re-running ltp leaves a
-# 97-level path ending at sym_valid - the symbol-rate path itself - so the depth
-# is inherent to the lookup, not an artefact of the error flag. What the
+# Nor is it an outlier. Two separate ltp runs on modified copies of the RTL,
+# not part of this flow: cutting that one condition leaves 97 levels ending at
+# sym_valid, the symbol-rate path itself, and moving idx_ok onto the len path
+# instead of the register write takes it to 119 - which is why the RTL keeps it
+# off. The depth is inherent to the lookup, not an artefact of the error flag. What the
 # simulation establishes is throughput, one symbol per cycle for all 148,271
 # symbols; the clock this depth would support is a separate question, and
 # section 5.7 of report_pyflate.txt says what the frequency estimate assumes.

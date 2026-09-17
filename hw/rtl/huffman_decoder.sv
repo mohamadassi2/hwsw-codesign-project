@@ -135,8 +135,9 @@ module huffman_decoder #(
     assign fire      = enable && peek_valid && out_free && !err_q && !underrun_q;
     // `len` is consumed by the bit reader in the same cycle, so `take` stays on
     // the short path: enable, the compare tree and the priority encoder.  idx_ok
-    // gates only the register write below and is kept off this one; putting it
-    // here raised the critical path from 67 to 122 gate levels.
+    // gates only the register write below and is deliberately kept off this
+    // one, which it would lengthen substantially; docs/synthesis_yosys.txt
+    // measures both.
     assign take      = fire && found;
     assign len       = take ? len_c : 5'd0;
     assign len_valid = take;

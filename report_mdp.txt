@@ -11,7 +11,9 @@ Files that belong to this report
   scripts/local_check.py                in-process correctness check used in section 3
   scripts/compare_runs.py               drift between two independent runs (section 4.3)
   results/reproducibility/              two further from-scratch runs in the guest
-  results/mdp/                          what script_mdp.sh wrote in the course VM
+  scripts/ablation_mdp.py               what each of the two changes is worth (section 3.3)
+  results/mdp/                          what script_mdp.sh wrote in the course VM,
+                                        plus ablation.txt from scripts/ablation_mdp.py
 
 To show it live (any machine with python3, no packages needed; a few seconds):
   diff benchmarks/mdp/run_benchmark.py benchmarks/mdp/run_benchmark_opt.py   # the whole change
@@ -187,16 +189,11 @@ interpreter the two are already identical.
 scripts/local_check.py compares the two versions against each other, not only
 against the expected constant, and says which of the two cases it is in.
 
-Correctness. scripts/local_check.py runs both versions:
-    baseline  0.8987358988699915
-    optimized 0.8987358988699915        difference 0.0
-    |optimized - expected| = 8.5e-15  (gate is 1e-6)
-
 3.3 Which of the two earned the speedup
     One ratio for two changes says nothing about which of them mattered, which
     is the same question section 3.6 of report_pyflate.txt exists to answer.
     scripts/ablation_mdp.py reverts one change at a time and times the result;
-    every variant is checked against the benchmark's own tolerance before it is
+    every variant is checked against the benchmark's own 1e-6 gate before it is
     timed, so a variant that computed the wrong value could not appear.
     Measured in the VM (results/mdp/ablation.txt; the minimum of five
     repetitions per variant, the file also lists the medians). These rows are
@@ -216,9 +213,10 @@ Correctness. scripts/local_check.py runs both versions:
     confidently: the largest run-to-run spread across the variants is
     126.7 ms, and the gap between the two changes is 2,017.1 ms.
 
-    The shape is the opposite of pyflate's. There the change we called the
-    algorithmic one turned out to be the smallest of the three that could be
-    separated; here it is almost the whole speedup. The reason is visible in
+    The shape is the opposite of pyflate's. There the change that replaced an
+    algorithm - the canonical decoder of report_pyflate.txt 3.1 - turned out to
+    be the smallest of the three that could be separated; here the change that
+    replaced a data structure is almost the whole speedup. The reason is visible in
     section 2: mdp's cost was never the arithmetic, it was reaching the
     numbers - dictionary lookups on nested namedtuple keys, millions of times
     - and replacing the lookup is the only change that removes that work.
@@ -234,6 +232,11 @@ Correctness. scripts/local_check.py runs both versions:
     That is the opposite of pyflate's move-to-front, where the optimized decode
     loop inlines the work and no patch can reach it.
 
+
+Correctness. scripts/local_check.py runs both versions:
+    baseline  0.8987358988699915
+    optimized 0.8987358988699915        difference 0.0
+    |optimized - expected| = 8.5e-15  (gate is 1e-6)
 
 4. Performance comparison
 ----------------------------------------------------------------------------------

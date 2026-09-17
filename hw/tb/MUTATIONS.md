@@ -34,7 +34,7 @@ word. Mutations 19 and 20 exist only because those two runs do.
 
 ## Result with `make sim_all`: 19 of 20 killed, 1 unreachable
 
-RTL fingerprint: 3b4366cc243a1d77f03b0bfade531375  (3 files under hw/rtl/)
+RTL fingerprint: 977c8c33807c7e3380af144e5ac3b8f4  (3 files under hw/rtl/)
 The score below was measured on that RTL, in the course VM on 17 September
 2026; the run is results/mutation_sweep_guest.log, and tb/mutate.sh prints the
 fingerprint at the top of it. scripts/check_report_numbers.py recomputes the
