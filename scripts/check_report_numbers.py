@@ -833,13 +833,70 @@ if os.path.exists(_mut):
               _mfp.group(1) == fingerprint(sorted(glob.glob(os.path.join(ROOT, "hw", "rtl", "*.sv")))),
               "hw/rtl/ changed after the sweep; re-run SUITE=sim_all tb/mutate.sh in the VM")
 
+# ------------------------------------------------- what the assignment asks for
+# Project.pdf enumerates the deliverables and the sections each report must
+# carry, and the ten things the hardware proposal must include. Nothing checked
+# that list, so a renamed section could have cost marks silently. This is the
+# rubric, in the order the brief gives it.
+for _f in ("report_pyflate.txt", "report_mdp.txt", "script_pyflate.sh",
+           "script_mdp.sh", "README.md", "prompt.txt"):
+    check(f"the brief's required file {_f} is present",
+          os.path.exists(os.path.join(ROOT, _f)))
+
+for _b, _t in (("pyflate", _pf), ("mdp", _md)):
+    for _sec in ("Overview", "Initial analysis", "Optimizations",
+                 "Performance comparison", "Conclusion"):
+        check(f"{_b}: the report has the brief's '{_sec}' section",
+              re.search(r"^\d\.\s*" + _sec, _t, re.M | re.I) is not None)
+    check(f"{_b}: the report has a hardware-acceleration section",
+          re.search(r"^5\.\s*Hardware acceleration", _t, re.M | re.I) is not None)
+
+# The brief lists four things each script must contain.
+for _b in ("pyflate", "mdp"):
+    _sc = open(os.path.join(ROOT, f"script_{_b}.sh"), encoding="utf-8").read()
+    for _part, _needle in (("environment setup", "0. environment"),
+                           ("benchmark execution", "pyperformance"),
+                           ("flame graph generation", "FlameGraph"),
+                           ("post-optimization comparison", "compare")):
+        check(f"script_{_b}.sh contains the brief's '{_part}' part",
+              _needle.lower() in _sc.lower())
+
+# The hardware proposal's own list, item by item.
+_hwif = os.path.join(ROOT, "docs", "hw_sw_interface.md")
+_hwtxt = open(_hwif, encoding="utf-8").read() if os.path.exists(_hwif) else ""
+for _item, _cond in (
+        ("an implementation in SystemVerilog",
+         bool(glob.glob(os.path.join(ROOT, "hw", "rtl", "*.sv")))),
+        ("inputs and outputs with data widths", "5.3 Inputs and outputs" in _pf),
+        ("an expected operating frequency", "Operating frequency" in _pf),
+        ("the architecture: datapath and control", "5.4 Architecture" in _pf),
+        ("the hardware/software interface", "5.5 Hardware/software interface" in _pf),
+        ("the software change it requires", "decode_huffman_block" in _hwtxt),
+        ("a memory-mapped interface and DMA", "DMA" in _hwtxt),
+        ("the justification for this component", "5.2 Why this component" in _pf),
+        ("the expected gain and its assumptions", "5.6 Expected performance" in _pf),
+        ("a block diagram",
+         os.path.exists(os.path.join(ROOT, "docs", "huffman_accel_block_diagram.svg"))),
+        ("performance / area / power trade-offs", "5.7 Performance / area / power" in _pf)):
+    check(f"the hardware proposal includes {_item}", _cond)
+
+# and the bar the brief actually sets
+for _b, _base, _opt in (("pyflate", _pf_base, _pf_opt), ("mdp", _md_base, _md_opt)):
+    if _base and _opt:
+        _p = 100 * (1 - _opt / _base)
+        check(f"{_b} clears the brief's 7% bar ({_p:.1f}% less time)", _p >= 7)
+
+check("README explains the repository layout, as the brief requires",
+      re.search(r"^## Layout", open(os.path.join(ROOT, "README.md"), encoding="utf-8").read(), re.M)
+      is not None)
+
 # ---------------------------------------------------------------- report
 # Most checks here are guarded: `if os.path.exists(...)`, `if _den:`, `if _m:`.
 # A guard that fails skips its checks, and a skipped check looks exactly like a
 # passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
 # and still print FAIL 0. So count them. If an artifact goes missing, the count
 # drops and this fails, naming what to look for.
-MIN_CHECKS = 196
+MIN_CHECKS = 236
 _ran = len(OK) + len(FAIL)
 if _ran < MIN_CHECKS:
     FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "
