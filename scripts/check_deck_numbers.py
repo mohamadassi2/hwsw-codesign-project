@@ -157,6 +157,26 @@ def main():
     if _m:
         want("the interpreter's share of the pyflate worker", round(float(_m.group(1))), "{:d}")
 
+    # ---- slide 14's reason for leaving mdp in software ----------------------
+    # It said the sweep was "too small a share to be worth it". The sampled
+    # profile of the optimized run says 55%. The figure comes from the same
+    # folded file the report cites, so the slide cannot keep an old story.
+    # the slide states the loop's share (lines 293-315), not evaluate's whole
+    # self time - the report gives both, 56.0% and 55.2 points
+    _t = _e = 0
+    for _l in open(f"{ROOT}/results/mdp/pyspy_opt_focus.folded", encoding="utf-8"):
+        _st, _, _n = _l.rpartition(" ")
+        if _n.strip().isdigit():
+            _t += int(_n)
+            _m = re.search(r"evaluate \(run_benchmark_opt\.py:(\d+)\)$", _st.split(";")[-1])
+            if _m and 293 <= int(_m.group(1)) <= 315:
+                _e += int(_n)
+    check("the optimized mdp sampled profile has samples in the sweep loop", _t > 0 and _e > 0)
+    if _t and _e:
+        want("mdp sweep loop share, sampled (slide 14)", round(100 * _e / _t), "{:d}")
+    check("slide 14 no longer calls the sweep too small to be worth it",
+          "too small a share" not in txt)
+
     # ---- slide 12's headline is a claim about the figure beside it -----------
     # "The two tallest towers are generator expressions inside the sweep." That
     # is checkable against the capture the slide shows, and nothing checked it.
@@ -433,7 +453,7 @@ def main():
     # Same reason as check_report_numbers.py: a guarded check that is skipped
     # reads as a passing one, so a missing artifact would quietly shrink the
     # suite instead of failing it.
-    MIN_CHECKS = 109
+    MIN_CHECKS = 112
     if len(oks) + len(fails) < MIN_CHECKS:
         fails.append(f"only {len(oks) + len(fails)} checks ran, not {MIN_CHECKS}: "
                      f"an input is missing or empty, so its gates were skipped")

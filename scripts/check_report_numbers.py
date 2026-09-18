@@ -959,6 +959,36 @@ for _b, _rep, _files in (("pyflate", _pf, ("pyflate_base.json", "pyflate_opt.jso
               f"{min(_la):.2f} to {max(_la):.2f}" in _flat(_rep),
               "from the pyperf JSONs the wall clocks come from")
 
+# ---- mdp section 5's reason for not accelerating the sweep ---------------
+# It said "at most about 35%", cProfile's one-call-frame undercount, and drew
+# the conclusion from it. The sampled profile says 55%. Section 5 must quote
+# the sampled figure, from the folded stacks, and must not fall back to the old.
+_fold = results("mdp", "pyspy_opt_focus.folded")
+if os.path.exists(_fold):
+    _tot = _ev = _loop = 0
+    for _l in open(_fold, encoding="utf-8"):
+        _st, _, _n = _l.rpartition(" ")
+        if not _n.strip().isdigit():
+            continue
+        _n = int(_n); _tot += _n
+        _m = re.search(r"evaluate \(run_benchmark_opt\.py:(\d+)\)$", _st.split(";")[-1])
+        if _m:
+            _ev += _n
+            if 293 <= int(_m.group(1)) <= 315:
+                _loop += _n
+    check("mdp: the optimized sampled profile has samples in evaluate", _tot > 0 and _ev > 0)
+    if _tot and _ev:
+        check(f"mdp 5 quotes evaluate's sampled own share ({100*_ev/_tot:.1f}%)",
+              f"{100*_ev/_tot:.1f}%" in _flat_md, "from results/mdp/pyspy_opt_focus.folded")
+        check(f"mdp 5 quotes the sweep loop's sampled share ({100*_loop/_tot:.1f} points)",
+              f"{100*_loop/_tot:.1f} points" in _flat_md, "lines 293-315 of run_benchmark_opt.py")
+        # like the 62% and 2,768 gates above: the withdrawn figure may appear
+        # only in the sentence that withdraws it
+        _retr = 'quoted the 34.9% as "at most about 35%"'
+        check("mdp 5's 'at most about 35%' survives only in the sentence retracting it",
+              _flat_md.count("at most about 35%") == _flat_md.count(_retr) == 1,
+              f"{_flat_md.count('at most about 35%')} mention(s), {_flat_md.count(_retr)} retracting")
+
 # ---- the denominator every cProfile share in a report divides by -----------
 # If it drifts, all nine shares in the table are wrong together and nothing
 # notices, because each share is checked against it rather than with it.
@@ -1105,7 +1135,7 @@ check("README explains the repository layout, as the brief requires",
 # passing one - emptying results/mdp/cprofile_base.txt used to remove six gates
 # and still print FAIL 0. So count them. If an artifact goes missing, the count
 # drops and this fails, naming what to look for.
-MIN_CHECKS = 286
+MIN_CHECKS = 290
 _ran = len(OK) + len(FAIL)
 if _ran < MIN_CHECKS:
     FAIL.append(f"only {_ran} checks ran, not {MIN_CHECKS}: an input is missing or "

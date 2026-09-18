@@ -4,8 +4,11 @@
 # Two configurations:
 #   1. as built   limit/base as register files (every code length reads them
 #                 in the same cycle, so no SRAM macro can hold them); the
-#                 symbol table as a single-port SRAM. This is the figure the
-#                 report quotes.
+#                 symbol table as an SRAM with one write port (programming)
+#                 and one read port (decode) - the RTL writes symtab in one
+#                 always_ff and reads it in another, so it is simple dual-port
+#                 as written, and the two are never active in the same phase.
+#                 This is the figure the report quotes.
 #   2. all-logic  every table flattened into gates and flops.
 # Treating every table as a memory macro would look much smaller only because
 # `stat` does not count memory cells, so that configuration is not reported.
